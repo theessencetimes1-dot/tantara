@@ -54,7 +54,7 @@ export default function ResearchDocuments() {
     }
   };
   return (
-    <main className="research-docs">
+    <div className="research-docs">
       <Link href="/research" className="research-back">
         <ArrowLeft size={15} /> Back to Research Desk
       </Link>
@@ -99,6 +99,6 @@ export default function ResearchDocuments() {
           </p>
         )}
       </section>
-    </main>
+    </div>
   );
 }

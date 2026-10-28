@@ -8,7 +8,7 @@ import uuid
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import func, select
@@ -429,8 +429,7 @@ def doc_pages(did: str, user=Depends(current_user)):
         }
 
 
-@router.api_route("/documents/{did}/file", methods=["GET", "HEAD"])
-def doc_file(did: str, request: Request, user=Depends(current_user)):
+def _document_file_response(did: str, user):
     with SessionLocal() as s:
         d = owned(s, Document, did, user)
         try:
@@ -444,6 +443,16 @@ def doc_file(did: str, request: Request, user=Depends(current_user)):
     return FileResponse(
         path, filename=filename, media_type=mimetypes.guess_type(filename)[0] or "application/octet-stream"
     )
+
+
+@router.get("/documents/{did}/file", operation_id="get_document_file")
+def doc_file(did: str, user=Depends(current_user)):
+    return _document_file_response(did, user)
+
+
+@router.head("/documents/{did}/file", include_in_schema=False)
+def doc_file_head(did: str, user=Depends(current_user)):
+    return _document_file_response(did, user)
 
 
 class Review(BaseModel):

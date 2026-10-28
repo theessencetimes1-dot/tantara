@@ -51,7 +51,7 @@ def _assert_list_envelope(payload):
 def test_domain_crud_role_isolation_validation_and_pagination(client, path, create, patch):
     owner = _auth(client)
     created = client.post(f"/api/v1/{path}", headers=owner, json=create)
-    assert created.status_code == 200
+    assert created.status_code == (201 if path == "cases" else 200)
     record_id = created.json()["id"]
     assert client.get(f"/api/v1/{path}/{record_id}", headers=owner).status_code == 200
     assert client.patch(f"/api/v1/{path}/{record_id}", headers=owner, json=patch).status_code == 200
@@ -236,3 +236,30 @@ def test_ai_session_saved_community_and_settings_routes(client):
     assert client.get("/api/v1/calendar", headers=headers).status_code == 200
     assert client.get("/api/v1/meta/institutions", headers=headers).status_code == 200
     assert client.get("/api/v1/meta/missing", headers=headers).status_code == 404
+
+
+def test_autofill_apply_parses_date_values_and_rejects_invalid_dates(client):
+    headers = _auth(client)
+    case = client.post("/api/v1/cases", headers=headers, json={"title": "Autofill date validation"})
+    assert case.status_code == 201
+    case_id = case.json()["id"]
+
+    applied = client.post(
+        f"/api/v1/cases/{case_id}/autofill/apply",
+        headers=headers,
+        json={"fields": [{"key": "notice_date", "value": "2030-01-01", "provenance": "verified"}]},
+    )
+    assert applied.status_code == 200
+    assert applied.json()["applied"] == ["notice_date"]
+    detail = client.get(f"/api/v1/cases/{case_id}", headers=headers)
+    assert detail.status_code == 200
+    assert detail.json()["notice_date"].startswith("2030-01-01")
+
+    invalid = client.post(
+        f"/api/v1/cases/{case_id}/autofill/apply",
+        headers=headers,
+        json={"fields": [{"key": "limitation_date", "value": "not-a-date", "provenance": "verified"}]},
+    )
+    assert invalid.status_code == 422
+    assert invalid.json()["error"]["code"] == "validation_error"
+    assert invalid.json()["error"]["details"]["details"][0]["loc"] == ["body", "fields", "limitation_date", "value"]

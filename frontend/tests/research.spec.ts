@@ -121,25 +121,23 @@ async function answerQuestion(page: Page, question: string, via: 'button' | 'sug
     answer?: string;
     citations?: Array<{
       citation_ref?: string;
+      citation_number?: number;
       document_id: string;
       document_title: string;
       chunk_id: string;
       page_number: number;
       excerpt: string;
       retrieval_score?: number;
-      retreival_score?: number;
-      score?: number;
     }>;
     sources?: Array<{
       citation_ref?: string;
+      citation_number?: number;
       document_id: string;
       document_title: string;
       chunk_id: string;
       page_number: number;
       excerpt: string;
       retrieval_score?: number;
-      retreival_score?: number;
-      score?: number;
     }>;
     disclaimer?: string;
     model?: unknown;
@@ -181,7 +179,7 @@ test('citation formatter, source grouping, and human status labels stay readable
       chunk_id: 'chunk-2',
       page_number: 2,
       excerpt: 'Same quotation.',
-      retreival_score: 0.03,
+      retrieval_score: 0.03,
     },
   ];
   expect(citationLink(sources[0])).toEqual({
@@ -410,11 +408,12 @@ test.describe('Research Desk live API controls', () => {
     await capture(page, 'research-desktop-ask-button');
     await page.reload();
     await waitSettled(page);
+    const answerLead = asked
+      .answer!.split(/[\n.]|\[\d+\]/)[0]
+      .replace(/[“”]$/, '')
+      .trim();
     await expect(page.locator('.turn.assistant').last().locator('.answer-text')).toContainText(
-      asked
-        .answer!.split(/[\n.]/)[0]
-        .replace(/[“”\[\]0-9]/g, '')
-        .trim(),
+      answerLead.replace(/[,;:\s]+$/, ''),
     );
     const restoredCitations = asked.citations ?? asked.sources ?? [];
     await expect(page.locator('.turn.assistant').last().locator('.answer-citation')).toHaveCount(
@@ -459,11 +458,16 @@ test.describe('Research Desk live API controls', () => {
     }
     await expect(page.locator('.status-chip').last()).toHaveAttribute('data-status', asked.status);
     const answerKind = asked.answer_kind ?? asked.generation_kind;
-    if (answerKind === 'model_generated') {
-      await expect(page.locator('.status-chip').last()).toContainText('Model response · review sources');
+    if (answerKind === 'model_synthesis') {
+      await expect(page.locator('.status-chip').last()).toContainText('Model synthesis · review sources');
       await expect(page.locator('.answer-provenance')).toContainText(
         String((asked.model as { model: string }).model),
       );
+      const markers = [...asked.answer!.matchAll(/\[(\d+)\]/g)];
+      expect(markers.length).toBeGreaterThan(0);
+      for (const marker of markers) {
+        expect(citations.some((citation) => citation.citation_number === Number(marker[1]))).toBeTruthy();
+      }
     } else {
       expect(answerKind).toBe('cited_excerpts');
       await expect(page.locator('.status-chip').last()).toContainText('Retrieved material only');
@@ -471,7 +475,7 @@ test.describe('Research Desk live API controls', () => {
     await expect(page.locator('.source-relevance').first()).toContainText('relative to this query');
     for (const source of citations) {
       expect(
-        source.retrieval_score ?? source.retreival_score ?? source.score,
+        source.retrieval_score,
         'citation must expose one supported relevance score field',
       ).toBeDefined();
     }
@@ -700,7 +704,15 @@ test.describe('Research Desk live API controls', () => {
       const failed = await answerQuestion(page, 'What is the seat of arbitration in the agreement?');
       expect(failed.status).toBe('model_unavailable');
       expect(failed.model ?? null).toBeNull();
-      expect(failed.citations ?? failed.sources ?? []).toEqual([]);
+      const supports = failed.citations ?? failed.sources ?? [];
+      expect(supports.length).toBeGreaterThan(0);
+      expect(failed.total).toBe(supports.length);
+      for (const support of supports) {
+        expect(support.document_id).toBeTruthy();
+        expect(support.document_title).toBeTruthy();
+        expect(support.page_number).toBeGreaterThan(0);
+        expect(support.chunk_id).toBeTruthy();
+      }
       expect(failed.answer ?? '').not.toMatch(/Mumbai|Chennai|governing law/i);
       await expect(page.getByText('Model unavailable', { exact: true })).toBeVisible();
       await expect(page.locator('.state-callout.no-evidence .answer-text')).toHaveCount(0);

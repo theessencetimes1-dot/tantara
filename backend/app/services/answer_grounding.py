@@ -91,7 +91,7 @@ def select_supports(question: str, hits: list[dict], limit: int = 3):
                 continue
             candidates.append(
                 (
-                    (field_match, overlap, hit.get("score", 0)),
+                    (field_match, overlap, hit.get("retrieval_score", 0)),
                     {
                         "chunk_id": hit["chunk_id"],
                         "document_id": hit["document_id"],

@@ -192,12 +192,12 @@ export default function TasksPage() {
                 e.preventDefault();
                 try {
                   const payload = {
-                    title,
-                    due_at: due ? workspaceDateTimeIso(due) : null,
+                    title: title.trim(),
+                    ...(due ? { due_at: workspaceDateTimeIso(due) } : {}),
                     status,
                     priority,
-                    notes,
-                    case_id: caseId || null,
+                    ...(notes.trim() ? { notes: notes.trim() } : {}),
+                    ...(caseId ? { case_id: caseId } : {}),
                   };
                   if (editing) await endpoints.tasks.update(editing.id, payload);
                   else await endpoints.tasks.create(payload);

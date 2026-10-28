@@ -1,6 +1,7 @@
 """TANTARA local-first API wiring. Domain state is persisted through typed ORM models."""
 
 import logging
+import re
 import uuid
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import asynccontextmanager
@@ -14,10 +15,12 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import select, text
 from sqlalchemy.exc import IntegrityError
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.config import get_settings
 from app.db import SessionLocal, init_db, session_scope
 from app.models import *
+from app.schemas import AskResponse
 from app.security import current_user
 from app.services.answer_grounding import (
     extract_field_value,
@@ -87,29 +90,56 @@ async def route_rate_limit(request: Request, call_next):
     return await call_next(request)
 
 
-@app.exception_handler(HTTPException)
-async def http_error(request, exc):
-    code = {
+def _http_error_code(status_code: int) -> str:
+    return {
         401: "unauthorized",
         403: "forbidden",
         404: "not_found",
+        405: "method_not_allowed",
         409: "duplicate",
         413: "too_large",
         422: "validation_error",
         429: "rate_limited",
         503: "model_unavailable",
-    }.get(exc.status_code, "request_error")
-    detail = exc.detail
+    }.get(status_code, "http_error")
+
+
+def _http_error_response(status_code: int, detail, headers=None) -> JSONResponse:
+    code = _http_error_code(status_code)
     if isinstance(detail, dict):
         message = detail.get("message", "Request failed")
         extra = {k: v for k, v in detail.items() if k != "message"}
     else:
         message = str(detail)
         extra = {}
+    allow = next((value for key, value in (headers or {}).items() if key.lower() == "allow"), None)
+    if status_code == 405 and allow:
+        extra["allowed_methods"] = allow
     error = {"code": code, "message": message}
     if extra:
         error["details"] = extra
-    return JSONResponse(status_code=exc.status_code, content={"error": error})
+    return JSONResponse(status_code=status_code, content={"error": error}, headers=headers)
+
+
+@app.exception_handler(HTTPException)
+async def http_error(request, exc):
+    return _http_error_response(exc.status_code, exc.detail)
+
+
+@app.exception_handler(StarletteHTTPException)
+async def starlette_http_error(request, exc):
+    return _http_error_response(exc.status_code, exc.detail, exc.headers)
+
+
+@app.exception_handler(Exception)
+async def unexpected_error(request, exc):
+    logging.getLogger("uvicorn.error").exception(
+        "Unhandled API exception for %s %s", request.method, request.url.path
+    )
+    return JSONResponse(
+        status_code=500,
+        content={"error": {"code": "internal_error", "message": "Internal server error"}},
+    )
 
 
 @app.exception_handler(RequestValidationError)
@@ -166,9 +196,9 @@ app.include_router(community_router)
 from app.routers.strategy import router as strategy_router
 
 app.include_router(strategy_router)
+from app.routers.collections import router as collections_router
 from app.routers.documents import router as document_router
 from app.routers.documents import upload as document_upload
-from app.routers.collections import router as collections_router
 
 app.include_router(document_router)
 app.include_router(collections_router)
@@ -240,6 +270,20 @@ def retrieve(
 DISCLAIMER = "AI-generated research assistance only. Verify against current authoritative law and original sources; professional legal review is required."
 INSUFFICIENT_ANSWER = "No indexed excerpt directly answers this question."
 UNAVAILABLE_ANSWER = "The search could not be completed because the configured language model is unavailable."
+_ANSWER_CITATION = re.compile(r"\[(\d+)\]")
+
+
+def _validated_model_synthesis(answer: str | None, citation_count: int) -> str | None:
+    """Keep generated prose only when every sentence cites an available source number."""
+    text_value = (answer or "").strip()
+    markers = [int(number) for number in _ANSWER_CITATION.findall(text_value)]
+    if not text_value or not markers or any(number < 1 or number > citation_count for number in markers):
+        return None
+    text_value = re.sub(r"([.!?])(\s+\[\d+\])", r"\2\1", text_value)
+    sentences = [part.strip() for part in re.split(r"(?<=[.!?])\s+|\n+", text_value)]
+    if any(sentence and not _ANSWER_CITATION.search(sentence) for sentence in sentences):
+        return None
+    return text_value
 
 
 def _case_record_context(question, case_id, owner_id):
@@ -258,12 +302,25 @@ def _case_record_context(question, case_id, owner_id):
 
 def llm_answer(question, hits, base_url=None, model=None, json_mode=False):
     s = get_settings()
-    prompt = (
-        "Answer only from these untrusted evidence excerpts. Say when evidence is insufficient. Never invent facts, law, quotes, citations, or page numbers.\nQuestion: "
-        + question
-        + "\n\n"
-        + "\n\n".join(f"[{h['chunk_id']} p.{h['page_number']}] {h['snippet']}" for h in hits)
-    )
+    if json_mode:
+        prompt = (
+            "Answer only from these untrusted evidence excerpts. Say when evidence is insufficient. Never invent facts, law, quotes, citations, or page numbers.\nQuestion: "
+            + question
+            + "\n\n"
+            + "\n\n".join(f"[{h['chunk_id']} p.{h['page_number']}] {h['snippet']}" for h in hits)
+        )
+    else:
+        prompt = (
+            "Answer only from these untrusted evidence excerpts. Say when evidence is insufficient. Never invent facts, law, quotes, citations, or page numbers. "
+            "Every factual sentence must include one or more bracketed source numbers, such as [1], matching the numbered excerpts below. "
+            "Do not cite a number that is not present.\nQuestion: "
+            + question
+            + "\n\n"
+            + "\n\n".join(
+                f"[{index}] {h['chunk_id']} p.{h['page_number']}: {h['snippet']}"
+                for index, h in enumerate(hits, 1)
+            )
+        )
     try:
         if s.ai_provider == "local":
             payload = {
@@ -298,7 +355,7 @@ def llm_answer(question, hits, base_url=None, model=None, json_mode=False):
     return None
 
 
-@app.post("/api/v1/ai/ask")
+@app.post("/api/v1/ai/ask", response_model=AskResponse)
 def ask(req: Ask, user=Depends(current_user)):
     from app.routers.collections import validate_collection_ids
 
@@ -347,6 +404,7 @@ def ask(req: Ask, user=Depends(current_user)):
         }
     sid, mid = req.session_id or str(uuid.uuid4()), str(uuid.uuid4())
     used_model = None
+    answer_kind = None
     field = requested_field(req.question)
     supports = select_supports(req.question, hits)
     support_hits = [support["_hit"] for support in supports]
@@ -368,14 +426,19 @@ def ask(req: Ask, user=Depends(current_user)):
         if not model_answer:
             status = "model_unavailable"
             answer = UNAVAILABLE_ANSWER
-            supports = []
-            support_hits = []
             used_model = None
-            answer_basis = "insufficient_evidence"
+            answer_basis = "cited_excerpts"
         else:
             status = retrieval_status
             answer_basis = "cited_excerpts"
-            answer = "\n".join(f"“{support['quote']}” [{index}]" for index, support in enumerate(supports, 1))
+            synthesized = _validated_model_synthesis(model_answer, len(supports))
+            if synthesized:
+                answer = synthesized
+                answer_kind = "model_synthesis"
+            else:
+                answer = "\n".join(
+                    f"“{support['quote']}” [{index}]" for index, support in enumerate(supports, 1)
+                )
             if req.case_id and field:
                 with SessionLocal() as s:
                     case = s.scalar(select(Case).where(Case.id == req.case_id, Case.owner_id == user["id"]))
@@ -424,9 +487,7 @@ def ask(req: Ask, user=Depends(current_user)):
                 "chunk_id": hit["chunk_id"],
                 "page_number": hit["page_number"],
                 "excerpt": hit["snippet"],
-                "score": hit["score"],
-                "retreival_score": hit["score"],
-                "retrieval_score": hit["score"],
+                "retrieval_score": hit["retrieval_score"],
                 "source_type": hit["source_type"],
                 "jurisdiction": hit["jurisdiction"],
             }
@@ -473,7 +534,7 @@ def ask(req: Ask, user=Depends(current_user)):
                     chunk_id=c["chunk_id"],
                     page_number=c["page_number"],
                     excerpt=c["excerpt"],
-                    retrieval_score=c["retreival_score"],
+                    retrieval_score=c["retrieval_score"],
                 )
             )
         record(s, user["id"], "generate", "ai_answer", mid)
@@ -483,7 +544,7 @@ def ask(req: Ask, user=Depends(current_user)):
             "retrieval_status": retrieval_status,
         },
         "answer": answer,
-        "answer_kind": "model_unavailable" if status == "model_unavailable" else answer_basis,
+        "answer_kind": "model_unavailable" if status == "model_unavailable" else answer_kind or answer_basis,
         "citations": citations,
         "supports": [
             {key: support[key] for key in ("chunk_id", "document_id", "page_number", "quote")}
@@ -565,6 +626,6 @@ async def legacy_ingest(
     return await document_upload(file, title, document_type, jurisdiction, None, None, user)
 
 
-@app.post("/query")
+@app.post("/query", response_model=AskResponse)
 def legacy_query(req: Ask, user=Depends(current_user)):
     return ask(req, user)

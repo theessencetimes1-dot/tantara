@@ -1,6 +1,7 @@
 """Normalized SQLAlchemy 2.x domain schema. Vectors live in FAISS; BLOB is rebuild-only."""
 
 from datetime import UTC, datetime
+from enum import StrEnum
 
 from sqlalchemy import (
     JSON,
@@ -22,6 +23,14 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 class Base(DeclarativeBase):
     pass
+
+
+class CaseEventType(StrEnum):
+    FILED = "filed"
+    FIRST_HEARING = "first_hearing"
+    DOCUMENT_UPLOADED = "document_uploaded"
+    DEADLINE_SET = "deadline_set"
+    ALL_DAY = "all_day_event"
 
 
 def now_utc():

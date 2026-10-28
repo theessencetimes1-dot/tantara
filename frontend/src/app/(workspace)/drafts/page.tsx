@@ -1,9 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { createPortal } from 'react-dom';
+import { useRouter } from 'next/navigation';
 import { Sparkles } from 'lucide-react';
 import { draftsApi, type Row } from '@/features/drafts/api';
+import { workspaceDateTimeDisplay } from '@/lib/datetime';
 import '@/features/drafts/styles.css';
 
 const TYPES = [
@@ -30,7 +31,7 @@ const safeHtml = (value: string, documents: Row[] = []) =>
         const title = citation[2].replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
         const doc = documents.find((x) => textOf(x.title ?? x.filename ?? x.name) === citation[2]);
         const source = doc
-          ? `<a href="/documents/${doc.id}?page=${citation[3]}">${title} · Page ${citation[3]}</a>`
+          ? `<a class="draft-evidence-link" href="/documents/${doc.id}?page=${citation[3]}">${title} · Page ${citation[3]}</a>`
           : 'Source page unavailable';
         return `<p class="draft-evidence" data-chunk-id="${citation[1]}">${citation[4] ? `${citation[4].replaceAll('<', '&lt;').replaceAll('>', '&gt;')} · ` : ''}${source}</p>`;
       }
@@ -70,10 +71,9 @@ const safeHtml = (value: string, documents: Row[] = []) =>
     .join('');
 const stamp = (value: string) => {
   if (!value) return { date: 'Date unavailable', time: 'Time unavailable' };
-  const d = new Date(value);
   return {
-    date: new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(d),
-    time: new Intl.DateTimeFormat(undefined, { timeStyle: 'short' }).format(d),
+    date: workspaceDateTimeDisplay(value, { dateStyle: 'medium' }),
+    time: workspaceDateTimeDisplay(value, { timeStyle: 'short' }),
   };
 };
 const newestFirst = (rows: Row[]) =>
@@ -120,6 +120,7 @@ const versionLabel = (v: Row) =>
     : `Snapshot · ${stamp(v.created_at).date} ${stamp(v.created_at).time}`;
 
 export default function DraftsPage() {
+  const router = useRouter();
   const [templates, setTemplates] = useState<Row[]>([]),
     [cases, setCases] = useState<Row[]>([]),
     [institutions, setInstitutions] = useState<any[]>([]),
@@ -141,10 +142,8 @@ export default function DraftsPage() {
     [saving, setSaving] = useState(false),
     [showDiff, setShowDiff] = useState<string>('');
   const [activeTab, setActiveTab] = useState<'Draft' | 'Review' | 'Sources' | 'History'>('Draft');
-  const [navigation, setNavigation] = useState<HTMLElement | null>(null);
 
   useEffect(() => {
-    setNavigation(document.querySelector<HTMLElement>('.sidebar .nav'));
     draftsApi
       .templates()
       .then((r) => {
@@ -348,17 +347,7 @@ export default function DraftsPage() {
   const institutionItems = institutions.map(textOf).filter(Boolean);
 
   return (
-    <main className="drafts">
-      {navigation &&
-        createPortal(
-          <a
-            href="/drafts"
-            onClick={() => document.querySelector<HTMLButtonElement>('.sidebar-backdrop')?.click()}
-          >
-            AI Drafts
-          </a>,
-          navigation,
-        )}
+    <div className="drafts">
       <header className="drafts-head">
         <div>
           <h1>AI Case Drafts</h1>
@@ -652,6 +641,14 @@ export default function DraftsPage() {
                       className="draft-editor"
                       contentEditable
                       suppressContentEditableWarning
+                      onClick={(event) => {
+                        const link = (event.target as HTMLElement).closest<HTMLAnchorElement>(
+                          'a.draft-evidence-link[href]',
+                        );
+                        if (!link || !event.currentTarget.contains(link)) return;
+                        event.preventDefault();
+                        router.push(link.getAttribute('href')!);
+                      }}
                       onInput={(e) => setContent(editorMarkdown(e.currentTarget))}
                       dangerouslySetInnerHTML={{
                         __html: safeHtml(
@@ -790,6 +787,6 @@ export default function DraftsPage() {
           </div>
         </div>
       )}
-    </main>
+    </div>
   );
 }

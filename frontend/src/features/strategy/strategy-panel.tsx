@@ -1,8 +1,10 @@
 'use client';
 
+import { workspaceDateTimeDisplay } from '@/lib/datetime';
+
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { ArrowUpRight, Check, ClipboardList, Save, Sparkles } from 'lucide-react';
 import {
   strategyApi,
@@ -26,6 +28,7 @@ const fields: Record<StrategyTab, keyof StrategyWrite> = {
 };
 
 export function StrategyPanel({ caseId: routeCaseId }: { caseId?: string }) {
+  const tabId = useId();
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
@@ -235,7 +238,7 @@ export function StrategyPanel({ caseId: routeCaseId }: { caseId?: string }) {
   };
 
   return (
-    <main className="strategy-page">
+    <div className="strategy-page">
       <header className="strategy-head">
         <div>
           <span className="strategy-kicker">CASE WORKSPACE · STRATEGY</span>
@@ -255,6 +258,12 @@ export function StrategyPanel({ caseId: routeCaseId }: { caseId?: string }) {
         <div className="strategy-alert" role="alert">
           {error}
           <button onClick={() => setError('')}>Dismiss</button>
+        </div>
+      )}
+      {!!data?.validation_warnings?.length && (
+        <div className="strategy-alert" role="status">
+          {data.validation_warnings.length} model claim(s) were omitted because their citations did not
+          resolve to retrieved sources. Review the source excerpts before relying on this strategy.
         </div>
       )}
 
@@ -332,13 +341,30 @@ export function StrategyPanel({ caseId: routeCaseId }: { caseId?: string }) {
         )}
       </div>
 
-      <nav className="strategy-tabs" aria-label="Strategy sections" role="tablist">
+      <nav
+        className="strategy-tabs"
+        aria-label="Strategy sections"
+        role="tablist"
+        onKeyDown={(event) => {
+          if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+          event.preventDefault();
+          const currentIndex = strategyTabs.indexOf(tab);
+          const direction = event.key === 'ArrowRight' ? 1 : -1;
+          const nextIndex = (currentIndex + direction + strategyTabs.length) % strategyTabs.length;
+          const nextTab = strategyTabs[nextIndex];
+          selectTab(nextTab);
+          event.currentTarget.querySelectorAll<HTMLButtonElement>('[role="tab"]')[nextIndex]?.focus();
+        }}
+      >
         {strategyTabs.map((label) => (
           <button
             key={label}
             role="tab"
+            id={`${tabId}-tab-${strategyTabs.indexOf(label)}`}
+            aria-controls={`${tabId}-tabpanel`}
             className={tab === label ? 'active' : ''}
             aria-selected={tab === label}
+            tabIndex={tab === label ? 0 : -1}
             onClick={() => selectTab(label)}
           >
             {label}
@@ -346,7 +372,13 @@ export function StrategyPanel({ caseId: routeCaseId }: { caseId?: string }) {
         ))}
       </nav>
 
-      <section className="strategy-content">
+      <section
+        className="strategy-content"
+        role="tabpanel"
+        id={`${tabId}-tabpanel`}
+        aria-labelledby={`${tabId}-tab-${strategyTabs.indexOf(tab)}`}
+        tabIndex={0}
+      >
         <div className="strategy-content-head">
           <div>
             <span className="strategy-kicker">
@@ -447,7 +479,7 @@ export function StrategyPanel({ caseId: routeCaseId }: { caseId?: string }) {
             {dirty
               ? 'Unsaved changes'
               : savedAt
-                ? `Version saved ${new Date(savedAt).toLocaleString()}`
+                ? `Version saved ${workspaceDateTimeDisplay(savedAt)}`
                 : 'No saved version'}
           </span>
           <button
@@ -476,7 +508,7 @@ export function StrategyPanel({ caseId: routeCaseId }: { caseId?: string }) {
         This analysis provides no outcome guarantees. Verify every authority, citation, and proposition before
         relying on it.
       </p>
-    </main>
+    </div>
   );
 }
 

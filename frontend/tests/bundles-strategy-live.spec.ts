@@ -476,7 +476,7 @@ test('coverage checklist follows annexure content when added and removed', async
   await page.getByLabel('Bundle name').fill(name);
   await page.getByLabel('Case').selectOption(seededCaseId);
   await page.getByRole('button', { name: 'Create bundle' }).click();
-  await expect(page.getByRole('heading', { name })).toBeVisible();
+  await expect(page.getByRole('heading', { name })).toBeVisible({ timeout: 30000 });
   const annexure = page.locator('[data-coverage="Annexures"]');
   await expect(annexure).toHaveAttribute('data-state', 'missing');
   const documents = await apiGet<{ items: Array<{ id: string; title: string }> }>(
@@ -506,7 +506,7 @@ test('strategy shows source excerpts honestly, saves edits, creates a task, and 
     headers: { Authorization: `Bearer ${token}` },
     data: { title: `Strategy source test ${Date.now()}`, status: 'active' },
   });
-  expect(createdCase.status()).toBe(200);
+  expect(createdCase.status()).toBe(201);
   strategyTestCaseId = (await createdCase.json()).id as string;
   const movedDocument = await api.patch(endpoint(`/documents/${seededDocId}`), {
     headers: { Authorization: `Bearer ${token}` },

@@ -136,7 +136,7 @@ test('thread shows API authors and real reply total at desktop and mobile sizes'
   await openAuthenticated(page, user, `/community/${selected!.id}`);
   await expect(page.getByRole('heading', { name: `Replies (${count})` })).toBeVisible();
   await expect(page.locator('.community-byline').first()).toContainText(selected!.author_name!);
-  await expect(page.locator('.community-byline').first()).toContainText('UTC');
+  await expect(page.locator('.community-byline').first()).toContainText('Asia/Kolkata');
   await capture(page, 'community-detail-replies-desktop-1440x900.png');
   await page.setViewportSize({ width: 390, height: 844 });
   expect(

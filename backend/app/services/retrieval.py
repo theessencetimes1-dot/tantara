@@ -88,7 +88,9 @@ class RetrievalService:
             rows = session.execute(stmt).all()
             allowed = {r.id: r for r in rows}
             where = "d.owner_id=:owner"
-            tokens = re.findall(r"[\w-]{2,}", question)
+            # Hyphenated legal references are tokenized as their word parts so X-P2
+            # retrieves the same evidence pool as X and does not become a dead FTS term.
+            tokens = re.findall(r"[\w]{2,}", question)
             fts_query = " OR ".join('"' + t.replace('"', '""') + '"' for t in tokens) or '""'
             params = {"owner": owner_id, "query": fts_query}
             if case_id:
@@ -166,9 +168,21 @@ def fuse_rankings(
     semantic_scores=None,
     min_similarity=MIN_SEMANTIC_SIMILARITY,
 ):
-    """Fuse first, then discard semantic-only candidates below the relevance floor."""
-    lrank = {cid: i for i, cid in enumerate(lexical_ids)}
-    vrank = {cid: i for i, cid in enumerate(semantic_ids)}
+    """Fuse unique chunk candidates, keeping each source's earliest rank.
+
+    Scoped and unscoped retrieval use this same candidate rule: duplicate IDs in
+    either index pool count once at their best rank, while an ID present in both
+    pools receives both reciprocal-rank contributions.
+    """
+
+    def first_ranks(candidate_ids):
+        ranks = {}
+        for candidate_id in candidate_ids:
+            ranks.setdefault(candidate_id, len(ranks))
+        return ranks
+
+    lrank = first_ranks(lexical_ids)
+    vrank = first_ranks(semantic_ids)
     ranked = []
     for cid, row in rows.items():
         score = (1 / (k + lrank[cid] + 1) if cid in lrank else 0) + (
@@ -189,8 +203,6 @@ def fuse_rankings(
             "chunk_id": r.id,
             "page_number": r.page_number,
             "snippet": r.content[:900],
-            "score": score,
-            "retreival_score": score,
             "retrieval_score": score,
             "source_type": r.document_type,
             "jurisdiction": r.jurisdiction,

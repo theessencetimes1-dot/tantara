@@ -95,7 +95,11 @@ export function CaseList({
     <section className={`matter-wrap${compact ? ' compact' : ''}`}>
       <div className="matter-head">
         <div>
-          <h1 className="matter-title">{compact ? 'Case Management' : 'Cases'}</h1>
+          {compact ? (
+            <h2 className="matter-title">Case Management</h2>
+          ) : (
+            <h1 className="matter-title">Cases</h1>
+          )}
           {!compact && <p className="subheading">Manage your arbitration matters</p>}
         </div>
         <Link className="matter-action" href="/cases/new">

@@ -279,26 +279,21 @@ test('scanned fixture yields OCR text and reports the job warnings', async ({ re
   expect(job.warnings).toEqual(expect.any(Array));
 });
 
-test('viewer displays extraction warnings returned by ingestion', async ({ page, request }) => {
-  const token = await signIn(request);
+test('viewer formats structured page warnings from real ingestion', async ({ page, request }) => {
+  const { documentId, token } = await uploadFixture(request, 'blank-page-review.pdf');
   const headers = { Authorization: `Bearer ${token}` };
-  const documents = await request.get(`${apiUrl}/documents`, { headers }).then((response) => response.json());
-  const scanned = documents.items.find(
-    (item: { filename: string }) => item.filename === 'scanned-agreement.pdf',
-  );
-  expect(scanned).toBeTruthy();
-  const pagesResponse = await request.get(`${apiUrl}/documents/${scanned.id}/pages`, { headers });
+  const pagesResponse = await request.get(`${apiUrl}/documents/${documentId}/pages`, { headers });
   expect(pagesResponse.ok()).toBeTruthy();
-  const pages = (await pagesResponse.json()).pages as Array<{ warnings: string[] }>;
-  await openWithToken(page, token, `/documents/${scanned.id}`);
-  if (pages.some((item) => item.warnings.length > 0)) {
-    await expect(page.getByText('Extraction warnings')).toBeVisible();
-    for (const warning of pages.flatMap((item) => item.warnings)) {
-      await expect(page.getByText(warning)).toBeVisible();
-    }
-  } else {
-    await expect(page.getByText('Extraction warnings')).toHaveCount(0);
-  }
+  const pages = (await pagesResponse.json()).pages as Array<{
+    warnings: Array<string | { page?: number; warning: string }>;
+  }>;
+  expect(pages[1].warnings).toContainEqual({
+    page: 2,
+    warning: 'No usable text; manual review required',
+  });
+  await openWithToken(page, token, `/documents/${documentId}`);
+  await expect(page.getByRole('note').getByText('Extraction warnings')).toBeVisible();
+  await expect(page.getByRole('note')).toContainText('Page 2: No usable text; manual review required');
 });
 
 test('local extraction is honest and works independently of the configured model', async ({

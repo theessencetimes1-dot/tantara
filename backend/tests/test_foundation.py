@@ -53,7 +53,15 @@ def test_auth_owner_scoping_and_domain_crud(client):
     created = client.post(
         "/api/v1/cases", headers=headers, json={"title": "Example arbitration", "status": "active"}
     )
-    assert created.status_code == 200
+    assert created.status_code == 201
+    invalid_filing_date = client.post(
+        "/api/v1/cases",
+        headers=headers,
+        json={"title": "Future filing date", "filed_at": "2999-12-31"},
+    )
+    assert invalid_filing_date.status_code == 422
+    details = invalid_filing_date.json()["error"]["details"]
+    assert any(detail["loc"][-1] == "filed_at" for detail in details)
     assert client.get("/api/v1/cases?page=1&page_size=1", headers=headers).json()["total"] == 1
     assert client.get("/api/v1/cases/not-a-record", headers=headers).status_code == 404
 

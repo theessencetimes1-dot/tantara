@@ -11,11 +11,14 @@ const webPort = Number(process.env.TANTARA_WEB_PORT ?? (new URL(webBase).port ||
 const testDataDir =
   process.env.TANTARA_TEST_DATA_DIR ?? mkdtempSync(path.join(os.tmpdir(), 'tantara-playwright-'));
 const python = process.env.TANTARA_PYTHON ?? path.join(repoRoot, 'backend/.venv/bin/python');
+const backendLogFile =
+  process.env.TANTARA_BACKEND_LOG_FILE ??
+  path.join(os.tmpdir(), `tantara-playwright-${process.pid}-backend.log`);
 process.env.TANTARA_API_ORIGIN = apiOrigin;
-process.env.TANTARA_WEB_URL = webBase;
 process.env.TANTARA_WEB_URL = webBase;
 process.env.TANTARA_TEST_DATA_DIR = testDataDir;
 process.env.TANTARA_PYTHON = python;
+process.env.TANTARA_BACKEND_LOG_FILE = backendLogFile;
 
 export default defineConfig({
   testDir: './tests',
@@ -47,7 +50,7 @@ export default defineConfig({
   ],
   webServer: [
     {
-      command: `"${python}" ../scripts/seed.py --demo && "${python}" -m uvicorn app.main:app --host 127.0.0.1 --port ${apiPort}`,
+      command: `"${python}" ../scripts/seed.py --demo >> "${backendLogFile}" 2>&1 && exec "${python}" -m uvicorn app.main:app --host 127.0.0.1 --port ${apiPort} >> "${backendLogFile}" 2>&1`,
       url: `${apiOrigin}/health`,
       cwd: path.join(repoRoot, 'backend'),
       env: {

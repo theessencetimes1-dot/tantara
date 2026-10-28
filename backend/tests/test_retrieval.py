@@ -18,8 +18,26 @@ def test_reciprocal_rank_fusion_prefers_consensus_and_real_rows():
     }
     hits = fuse_rankings(rows, ["both", "fts"], ["both", "faiss"], top_k=3)
     assert [x["chunk_id"] for x in hits] == ["both", "fts", "faiss"]
-    assert all(x["score"] > 0 for x in hits)
+    assert all(x["retrieval_score"] > 0 for x in hits)
     assert hits[0]["page_number"] == 1
+
+
+def test_fusion_deduplicates_each_candidate_pool_at_its_earliest_rank():
+    rows = {
+        cid: SimpleNamespace(
+            id=cid,
+            document_id="doc",
+            content=cid,
+            page_number=i,
+            title="Evidence",
+            document_type="Award",
+            jurisdiction="India",
+        )
+        for i, cid in enumerate(("both", "fts", "faiss"), 1)
+    }
+    hits = fuse_rankings(rows, ["both", "both", "fts"], ["both", "faiss", "both"], top_k=3)
+    assert [hit["chunk_id"] for hit in hits] == ["both", "fts", "faiss"]
+    assert len({hit["chunk_id"] for hit in hits}) == len(hits)
 
 
 def test_fusion_does_not_fabricate_scores_for_unretrieved_rows():
@@ -53,7 +71,7 @@ def test_retrieval_applies_case_owner_and_metadata_filters(client):
         files={
             "file": (
                 "retrieval.txt",
-                b"Distinct retrieval marker arbitration award in India.",
+                b"Distinct retrieval marker M4REFCODE-P2 arbitration award in India.",
                 "text/plain",
             )
         },
@@ -66,6 +84,28 @@ def test_retrieval_applies_case_owner_and_metadata_filters(client):
             break
         time.sleep(0.05)
     assert job["status"] == "ready"
+    plain_reference = client.get(
+        "/api/v1/search/documents",
+        headers=headers,
+        params={"query": "M4REFCODE", "page_size": 100},
+    )
+    hyphenated_reference = client.get(
+        "/api/v1/search/documents",
+        headers=headers,
+        params={"query": "M4REFCODE-P2", "page_size": 100},
+    )
+    assert plain_reference.status_code == hyphenated_reference.status_code == 200
+    plain_pairs = {
+        (item["document_id"], item["page_number"])
+        for item in plain_reference.json()["items"]
+        if item["document_id"] == did
+    }
+    hyphenated_pairs = {
+        (item["document_id"], item["page_number"])
+        for item in hyphenated_reference.json()["items"]
+        if item["document_id"] == did
+    }
+    assert plain_pairs and hyphenated_pairs == plain_pairs
 
     from app.db import session_scope
     from app.models import User
@@ -80,6 +120,15 @@ def test_retrieval_applies_case_owner_and_metadata_filters(client):
         document_types=["Award"],
     )
     assert status == "ok" and any(hit["document_id"] == did for hit in single)
+    unscoped, unscoped_status = retrieval_service.search_with_status(
+        "Distinct retrieval marker", owner_id, top_k=100, jurisdiction="India", document_types=["Award"]
+    )
+    scoped_chunk_ids = [hit["chunk_id"] for hit in single]
+    unscoped_chunk_ids = [hit["chunk_id"] for hit in unscoped]
+    assert unscoped_status == "ok" and any(hit["document_id"] == did for hit in unscoped)
+    assert len(scoped_chunk_ids) == len(set(scoped_chunk_ids))
+    assert len(unscoped_chunk_ids) == len(set(unscoped_chunk_ids))
+    assert set(scoped_chunk_ids) <= set(unscoped_chunk_ids)
     page_beyond = client.get(
         "/api/v1/search/documents",
         headers=headers,

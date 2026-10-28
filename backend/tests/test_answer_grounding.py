@@ -6,6 +6,7 @@ import uuid
 from reportlab.pdfgen import canvas
 from sqlalchemy import select
 
+from app import main
 from app.db import SessionLocal
 from app.models import Case, DocumentChunk, User
 from app.security import hash_password
@@ -23,7 +24,7 @@ def _create_case(client, headers, *, title="Grounding Probe Memorandum", seat="M
         headers=headers,
         json={"title": title, "seat": seat, "claimant": "Alpha Ltd", "respondent": "Beta Ltd"},
     )
-    assert response.status_code == 200, response.text
+    assert response.status_code == 201, response.text
     return response.json()
 
 
@@ -130,8 +131,38 @@ def test_answer_quotes_page_two_evidence_and_surfaces_case_conflict(client):
         }
     ]
     assert result["context_fields"] == []
-    assert citation["score"] == citation["retrieval_score"] == citation["retreival_score"]
+    assert "retreival_score" not in citation
+    assert citation["retrieval_score"] > 0
     _assert_marker_integrity(result)
+
+
+def test_ai_ask_returns_valid_model_prose_and_falls_back_on_invalid_citations(client, monkeypatch):
+    headers = _auth(client)
+    case = _create_case(client, headers)
+    _upload_pdf(client, headers, case["id"])
+    question = "What is the seat of arbitration in the probe memorandum?"
+    monkeypatch.setattr(main, "llm_answer", lambda *_args, **_kwargs: "The seat is Chennai [1].")
+    response = client.post(
+        "/api/v1/ai/ask", headers=headers, json={"question": question, "case_id": case["id"]}
+    )
+    assert response.status_code == 200, response.text
+    result = response.json()
+    assert result["answer"] == "The seat is Chennai [1]."
+    assert result["answer_kind"] == "model_synthesis"
+    assert result["answer_basis"] == "cited_excerpts"
+    assert result["citations"][0]["citation_number"] == 1
+    assert re.search(r"\[1\]", result["answer"])
+    assert result["answer"] != "\n".join(
+        f"“{support['quote']}” [{index}]" for index, support in enumerate(result["supports"], 1)
+    )
+
+    monkeypatch.setattr(main, "llm_answer", lambda *_args, **_kwargs: "Unsupported conclusion [99].")
+    fallback = client.post(
+        "/api/v1/ai/ask", headers=headers, json={"question": question, "case_id": case["id"]}
+    ).json()
+    assert fallback["answer_kind"] == "cited_excerpts"
+    assert "Unsupported conclusion" not in fallback["answer"]
+    _assert_marker_integrity(fallback)
 
 
 def test_case_record_only_answer_is_labeled_and_not_inserted_into_answer(client):
@@ -165,10 +196,10 @@ def test_noise_query_returns_empty_insufficient_evidence(client):
     assert "No indexed excerpt" in result["answer"]
 
 
-def test_dead_model_returns_no_citations_or_fabricated_support(client):
+def test_dead_model_retains_retrieved_citations_without_fabricating_an_answer(client):
     headers = _auth(client)
     case = _create_case(client, headers)
-    _upload_pdf(client, headers, case["id"])
+    document_id = _upload_pdf(client, headers, case["id"])
     configured = client.patch(
         "/api/v1/settings/ai",
         headers=headers,
@@ -186,9 +217,14 @@ def test_dead_model_returns_no_citations_or_fabricated_support(client):
     ).json()
     assert result["status"] == "model_unavailable"
     assert result["model"] is None
-    assert result["citations"] == result["supports"] == []
-    assert result["answer_basis"] == "insufficient_evidence"
+    assert result["citations"] and result["supports"]
+    assert result["total"] == result["citation_count"] == len(result["citations"])
+    assert result["answer_basis"] == "cited_excerpts"
+    assert "language model is unavailable" in result["answer"]
     assert "Chennai" not in result["answer"] and "Mumbai" not in result["answer"]
+    assert {item["document_id"] for item in result["citations"]} == {document_id}
+    assert all(item["page_number"] >= 1 and item["retrieval_score"] > 0 for item in result["citations"])
+    assert {item["chunk_id"] for item in result["supports"]} == {item["chunk_id"] for item in result["citations"]}
 
 
 def test_anonymous_foreign_case_and_researcher_access_boundaries(client):

@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
+import { calendarEventLabel } from './event-label';
 import {
   WORKSPACE_TIME_ZONE,
   calendarDateParts,
@@ -20,28 +21,17 @@ type Event = {
   starts_at?: string;
   date?: string;
   type?: string;
+  event_type?: string;
   case_title?: string;
   case_id?: string;
+  detail?: string;
   all_day?: boolean;
 };
-const eventLabels: Record<string, string> = {
-  all_day_event: 'All day',
-  event: 'All day',
-  deadline: 'Deadline',
-  first_hearing: 'First hearing',
-  hearing_completed: 'Hearing completed',
-};
-function eventLabel(event: Event) {
-  return (
-    eventLabels[event.type || ''] ||
-    eventLabels[event.title] ||
-    (event.title || 'Case event').replaceAll('_', ' ').replace(/\b\w/g, (c) => c.toUpperCase())
-  );
-}
 function isAllDay(event: Event) {
+  if (event.all_day !== undefined) return event.all_day;
   if (
-    event.all_day === true ||
     event.type === 'all_day_event' ||
+    event.event_type === 'all_day_event' ||
     event.type === 'event' ||
     event.title === 'all_day_event'
   )
@@ -71,6 +61,27 @@ function eventDate(event: Event) {
 function eventDayKey(event: Event) {
   const value = event.at || event.starts_at || event.date || '';
   return isAllDay(event) && /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : workspaceDateKey(value, zone);
+}
+function eventCaseTitle(event: Event, caseTitles: Map<string, string>) {
+  return event.case_title || caseTitles.get(event.case_id || '') || '';
+}
+function eventDescription(event: Event) {
+  const title = (event.title || '').trim();
+  const normalizedType = (event.event_type || event.type || '').replaceAll('_', ' ').trim();
+  return [event.type, event.event_type, normalizedType].some(
+    (value) => value && title.toLocaleLowerCase() === value.toLocaleLowerCase(),
+  )
+    ? ''
+    : title;
+}
+function eventAccessibleLabel(event: Event, caseTitles: Map<string, string>) {
+  const caseTitle = eventCaseTitle(event, caseTitles);
+  const parts = [`View ${calendarEventLabel(event)}`];
+  const description = eventDescription(event);
+  if (description) parts.push(description);
+  if (caseTitle) parts.push(caseTitle);
+  parts.push(eventDayKey(event));
+  return parts.join(' · ');
 }
 function dayKey(day: Date) {
   return `${day.getUTCFullYear()}-${String(day.getUTCMonth() + 1).padStart(2, '0')}-${String(day.getUTCDate()).padStart(2, '0')}`;
@@ -134,7 +145,7 @@ export default function CalendarPage() {
             },
             (_, i) => calendarDay(cursorParts.year, cursorParts.month, i + 1),
           ),
-    [view, cursor, firstDay],
+    [view, cursorParts.month, cursorParts.year, firstDay],
   );
   const today = workspaceDateKey(new Date(), zone);
   const back = () =>
@@ -220,7 +231,7 @@ export default function CalendarPage() {
                       className="calendar-agenda-row"
                       key={event.id}
                       onClick={() => setSelectedEvent(event)}
-                      aria-label={`View ${eventLabel(event)}`}
+                      aria-label={eventAccessibleLabel(event, caseTitles)}
                     >
                       {!isAllDay(event) && (
                         <time>
@@ -232,10 +243,9 @@ export default function CalendarPage() {
                         </time>
                       )}
                       <span>
-                        {eventLabel(event)}
-                        {event.case_title || caseTitles.get(event.case_id || '')
-                          ? ` · ${event.case_title || caseTitles.get(event.case_id || '')}`
-                          : ''}
+                        {calendarEventLabel(event)}
+                        {eventDescription(event) ? ` · ${eventDescription(event)}` : ''}
+                        {eventCaseTitle(event, caseTitles) ? ` · ${eventCaseTitle(event, caseTitles)}` : ''}
                       </span>
                     </button>
                   ))}
@@ -290,7 +300,7 @@ export default function CalendarPage() {
                       className="calendar-event"
                       key={event.id}
                       onClick={() => setSelectedEvent(event)}
-                      aria-label={`View ${eventLabel(event)}`}
+                      aria-label={eventAccessibleLabel(event, caseTitles)}
                     >
                       {!isAllDay(event) && (
                         <time>
@@ -302,7 +312,9 @@ export default function CalendarPage() {
                         </time>
                       )}
                       {!isAllDay(event) && ' '}
-                      {eventLabel(event)}
+                      {calendarEventLabel(event)}
+                      {eventDescription(event) ? ` · ${eventDescription(event)}` : ''}
+                      {eventCaseTitle(event, caseTitles) ? ` · ${eventCaseTitle(event, caseTitles)}` : ''}
                     </button>
                   ))}
                 </div>
@@ -319,8 +331,12 @@ export default function CalendarPage() {
             >
               ×
             </button>
-            <h2>{eventLabel(selectedEvent)}</h2>
-            <p>{selectedEvent.case_title || caseTitles.get(selectedEvent.case_id || '') || 'Case event'}</p>
+            <h2>{calendarEventLabel(selectedEvent)}</h2>
+            {eventDescription(selectedEvent) && <p>{eventDescription(selectedEvent)}</p>}
+            <p>{eventCaseTitle(selectedEvent, caseTitles) || 'Case event'}</p>
+            {selectedEvent.detail &&
+              selectedEvent.detail !== selectedEvent.title &&
+              selectedEvent.detail !== calendarEventLabel(selectedEvent) && <p>{selectedEvent.detail}</p>}
             <p>
               {isAllDay(selectedEvent)
                 ? 'All day'

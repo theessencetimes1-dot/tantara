@@ -160,7 +160,7 @@ export default function AutofillPage() {
   };
 
   return (
-    <main className="autofill">
+    <div className="autofill">
       <header className="autofill-head">
         <div>
           <h1>Smart Autofill</h1>
@@ -378,6 +378,6 @@ export default function AutofillPage() {
           </div>
         )}
       </section>
-    </main>
+    </div>
   );
 }

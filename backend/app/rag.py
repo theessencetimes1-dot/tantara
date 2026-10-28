@@ -34,9 +34,7 @@ def answer(question, top_k=5, jurisdiction="India", document_types=None, owner_i
             "document_type": hit["source_type"],
             "page_number": hit["page_number"],
             "content": hit["snippet"],
-            "score": hit["score"],
             "retrieval_score": hit["retrieval_score"],
-            "retreival_score": hit["retreival_score"],
         }
         for hit in hits
     ]
@@ -54,9 +52,9 @@ def answer(question, top_k=5, jurisdiction="India", document_types=None, owner_i
     if not generated:
         return {
             "status": "model_unavailable",
-            "answer": "",
+            "answer": "The search could not be completed because the configured language model is unavailable.",
             "answer_kind": "model_unavailable",
-            "sources": [],
+            "sources": sources,
             "model": None,
             "disclaimer": DISCLAIMER,
         }

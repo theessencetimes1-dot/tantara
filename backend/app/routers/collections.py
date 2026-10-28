@@ -48,11 +48,16 @@ def list_collections(
             .group_by(KnowledgeCollection.id)
             .order_by(KnowledgeCollection.name)
         )
-        total = session.scalar(
-            select(func.count()).select_from(
-                select(KnowledgeCollection.id).where(KnowledgeCollection.owner_id == user["id"]).subquery()
+        total = (
+            session.scalar(
+                select(func.count()).select_from(
+                    select(KnowledgeCollection.id)
+                    .where(KnowledgeCollection.owner_id == user["id"])
+                    .subquery()
+                )
             )
-        ) or 0
+            or 0
+        )
         rows = session.execute(statement.offset((page - 1) * page_size).limit(page_size)).all()
         return {
             "items": [_serialize(row, count) for row, count in rows],
@@ -79,6 +84,28 @@ def validate_collection_ids(ids: list[str] | None, owner_id: str) -> list[str] |
     if owned != set(requested):
         raise HTTPException(404, "Knowledge collection not found")
     return requested
+
+
+@router.get("/{collection_id}")
+def get_collection(collection_id: str, user=Depends(current_user)):
+    with SessionLocal() as session:
+        collection = session.scalar(
+            select(KnowledgeCollection).where(
+                KnowledgeCollection.id == collection_id,
+                KnowledgeCollection.owner_id == user["id"],
+            )
+        )
+        if collection is None:
+            raise HTTPException(404, "Knowledge collection not found")
+        document_count = (
+            session.scalar(
+                select(func.count(Document.id)).where(
+                    Document.owner_id == user["id"], Document.collection_id == collection_id
+                )
+            )
+            or 0
+        )
+        return _serialize(collection, document_count)
 
 
 @router.post("", status_code=201)
@@ -130,11 +157,14 @@ def update_collection(collection_id: str, payload: CollectionInput, user=Depends
             raise HTTPException(409, "A collection with this name already exists")
         collection.name = name
         collection.description = payload.description.strip()
-        count = session.scalar(
-            select(func.count(Document.id)).where(
-                Document.owner_id == user["id"], Document.collection_id == collection_id
+        count = (
+            session.scalar(
+                select(func.count(Document.id)).where(
+                    Document.owner_id == user["id"], Document.collection_id == collection_id
+                )
             )
-        ) or 0
+            or 0
+        )
         return _serialize(collection, count)
 
 

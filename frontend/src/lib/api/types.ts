@@ -36,6 +36,7 @@ export type Upcoming = {
   case_title?: string;
   at: string;
   due_in_days: number;
+  event_type?: string;
 };
 export type Case = { id: string; title: string; reference_number?: string; status?: string };
 export type SettingsData = Record<string, unknown>;

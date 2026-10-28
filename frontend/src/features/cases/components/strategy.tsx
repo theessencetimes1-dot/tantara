@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
 import { toast } from 'sonner';
@@ -19,6 +19,7 @@ const tabs = [
   'Strategy Plan',
 ] as const;
 export function StrategyPanel({ id }: { id: string }) {
+  const tabId = useId();
   const [tab, T] = useState<(typeof tabs)[number]>(tabs[0]),
     [value, V] = useState('');
   const q = useQuery({
@@ -63,10 +64,30 @@ export function StrategyPanel({ id }: { id: string }) {
   };
   return (
     <div>
-      <div className="matter-tabs">
-        {tabs.map((x) => (
+      <div
+        className="matter-tabs"
+        role="tablist"
+        aria-label="Case strategy sections"
+        onKeyDown={(event) => {
+          if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+          event.preventDefault();
+          const currentIndex = tabs.indexOf(tab);
+          const direction = event.key === 'ArrowRight' ? 1 : -1;
+          const nextIndex = (currentIndex + direction + tabs.length) % tabs.length;
+          const nextTab = tabs[nextIndex];
+          T(nextTab);
+          V('');
+          event.currentTarget.querySelectorAll<HTMLButtonElement>('[role="tab"]')[nextIndex]?.focus();
+        }}
+      >
+        {tabs.map((x, index) => (
           <button
             key={x}
+            id={`${tabId}-tab-${index}`}
+            role="tab"
+            aria-controls={`${tabId}-tabpanel`}
+            aria-selected={x === tab}
+            tabIndex={x === tab ? 0 : -1}
             className={x === tab ? 'active' : ''}
             onClick={() => {
               T(x);
@@ -77,52 +98,59 @@ export function StrategyPanel({ id }: { id: string }) {
           </button>
         ))}
       </div>
-      {q.isLoading ? (
-        <p>Loading strategy…</p>
-      ) : q.isError ? (
-        <p className="matter-error">Strategy is unavailable.</p>
-      ) : (
-        <>
-          <div style={{ padding: 12 }}>
-            <textarea
-              aria-label={tab}
-              value={value || text}
-              onChange={(e) => V(e.target.value)}
-              rows={8}
-              style={{
-                width: '100%',
-                border: '1px solid #dce2eb',
-                borderRadius: 8,
-                padding: 12,
-              }}
-            />
-            {tab === 'Legal Arguments' && (
-              <p className="subheading">
-                Arguments with citations are source supported; entries without source citations are
-                hypotheses. Check each citation before relying on it.
-              </p>
-            )}
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'end', gap: 9 }}>
-            <button
-              onClick={async () => {
-                try {
-                  await api.post(`/cases/${id}/strategy/generate`);
-                  await q.refetch();
-                  toast.success('Strategy generated');
-                } catch (e) {
-                  toast.error(e instanceof Error ? e.message : 'Unable to generate strategy');
-                }
-              }}
-            >
-              Generate strategy
-            </button>
-            <button className="matter-action" onClick={() => void save()}>
-              Save strategy
-            </button>
-          </div>
-        </>
-      )}
+      <section
+        id={`${tabId}-tabpanel`}
+        role="tabpanel"
+        aria-labelledby={`${tabId}-tab-${tabs.indexOf(tab)}`}
+        tabIndex={0}
+      >
+        {q.isLoading ? (
+          <p>Loading strategy…</p>
+        ) : q.isError ? (
+          <p className="matter-error">Strategy is unavailable.</p>
+        ) : (
+          <>
+            <div style={{ padding: 12 }}>
+              <textarea
+                aria-label={tab}
+                value={value || text}
+                onChange={(e) => V(e.target.value)}
+                rows={8}
+                style={{
+                  width: '100%',
+                  border: '1px solid #dce2eb',
+                  borderRadius: 8,
+                  padding: 12,
+                }}
+              />
+              {tab === 'Legal Arguments' && (
+                <p className="subheading">
+                  Arguments with citations are source supported; entries without source citations are
+                  hypotheses. Check each citation before relying on it.
+                </p>
+              )}
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'end', gap: 9 }}>
+              <button
+                onClick={async () => {
+                  try {
+                    await api.post(`/cases/${id}/strategy/generate`);
+                    await q.refetch();
+                    toast.success('Strategy generated');
+                  } catch (e) {
+                    toast.error(e instanceof Error ? e.message : 'Unable to generate strategy');
+                  }
+                }}
+              >
+                Generate strategy
+              </button>
+              <button className="matter-action" onClick={() => void save()}>
+                Save strategy
+              </button>
+            </div>
+          </>
+        )}
+      </section>
     </div>
   );
 }

@@ -1,8 +1,8 @@
 'use client';
 import Link from 'next/link';
-import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { useParams, usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ApiError } from '@/lib/api/client';
 import { workspaceDateTimeInput, workspaceDateTimeIso } from '@/lib/datetime';
 import { casesApi } from '@/features/cases/api';
@@ -90,6 +90,7 @@ function Records({
 export default function CaseDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
+  const pathname = usePathname();
   const params = useSearchParams();
   const queryClient = useQueryClient();
   const [editor, setEditor] = useState('');
@@ -99,7 +100,20 @@ export default function CaseDetailPage() {
   const [editorRole, setEditorRole] = useState('counsel');
   const [saving, setSaving] = useState(false);
   const [recordId, setRecordId] = useState('');
-  const tab = params.get('tab') || 'Overview';
+  const requestedTab = params.get('tab');
+  const [selectedTab, setSelectedTab] = useState(
+    requestedTab && tabs.includes(requestedTab) ? requestedTab : 'Overview',
+  );
+  useEffect(() => {
+    setSelectedTab(requestedTab && tabs.includes(requestedTab) ? requestedTab : 'Overview');
+  }, [requestedTab]);
+  const tab = selectedTab;
+  const selectTab = (nextTab: string) => {
+    setSelectedTab(nextTab);
+    const query = new URLSearchParams(params.toString());
+    query.set('tab', nextTab);
+    router.replace(`${pathname}?${query}`, { scroll: false });
+  };
   const c = useQuery({
     queryKey: ['case', id],
     queryFn: () => casesApi.get(id),
@@ -256,21 +270,44 @@ export default function CaseDetailPage() {
           Edit case
         </Link>
       </header>
-      <nav className="matter-tabs case-detail-tabs" aria-label="Case sections" role="tablist">
+      <nav
+        className="matter-tabs case-detail-tabs"
+        aria-label="Case sections"
+        role="tablist"
+        onKeyDown={(event) => {
+          if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+          event.preventDefault();
+          const currentIndex = tabs.indexOf(tab);
+          const direction = event.key === 'ArrowRight' ? 1 : -1;
+          const nextIndex = (currentIndex + direction + tabs.length) % tabs.length;
+          const nextTab = tabs[nextIndex];
+          selectTab(nextTab);
+          event.currentTarget.querySelectorAll<HTMLButtonElement>('[role="tab"]')[nextIndex]?.focus();
+        }}
+      >
         {tabs.map((name) => (
           <button
             type="button"
             key={name}
             role="tab"
+            id={`case-${id}-tab-${name.toLowerCase().replaceAll(/[^a-z0-9]+/g, '-')}`}
+            aria-controls={`case-${id}-tabpanel`}
             className={tab === name ? 'active' : ''}
             aria-selected={tab === name}
-            onClick={() => setTab(name)}
+            tabIndex={tab === name ? 0 : -1}
+            onClick={() => selectTab(name)}
           >
             {name}
           </button>
         ))}
       </nav>
-      <section className="matter-card case-detail-panel">
+      <section
+        className="matter-card case-detail-panel"
+        role="tabpanel"
+        id={`case-${id}-tabpanel`}
+        aria-labelledby={`case-${id}-tab-${tab.toLowerCase().replaceAll(/[^a-z0-9]+/g, '-')}`}
+        tabIndex={0}
+      >
         {tab === 'Overview' ? (
           <div className="grid dashboard-columns">
             <div>

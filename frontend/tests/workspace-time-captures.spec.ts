@@ -69,6 +69,60 @@ test('dashboard case table headers remain separate at desktop width', async ({ p
   await page.screenshot({ path: '../docs/screenshots/dashboard-1440x900.png', fullPage: false });
 });
 
+test('dashboard labels seeded calendar event kinds for people', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  const token = await loginToken(page);
+  const response = await page.request.get(`${api}/dashboard/upcoming?days=30`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  expect(response.ok()).toBeTruthy();
+  const upcoming = (await response.json()) as Array<{
+    id: string;
+    type: string;
+    event_type?: string;
+    title: string;
+  }>;
+  const allDay = upcoming.find((event) => event.event_type === 'all_day_event');
+  expect(allDay, 'demo seed includes an upcoming all-day calendar event').toBeTruthy();
+  await page.addInitScript((value) => {
+    localStorage.setItem('tantara_token', value);
+    document.cookie = `tantara_token=${value}; Path=/; SameSite=Lax`;
+  }, token);
+  await page.goto('/dashboard');
+  const row = page.locator('.upcoming-row').filter({ hasText: allDay!.title });
+  await expect(row).toBeVisible();
+  await expect(row).toContainText('All day');
+  await expect(row).not.toContainText(/all_day_event/);
+  await assertCaptureReady(page);
+});
+
+test('loaded dashboard matters slot stays inside the mobile viewport', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await authenticate(page);
+  await page.goto('/dashboard');
+  const slot = page.locator('.matters-slot');
+  const tabs = slot.locator('.matter-tabs button');
+  await expect(tabs).toHaveCount(5);
+  for (const tab of await tabs.all()) await expect(tab).toBeVisible();
+  await expect(slot.locator('.matter-mobile-cards .matter-mobile-case').first()).toBeVisible();
+  const geometry = await page.evaluate(() => {
+    const slot = document.querySelector<HTMLElement>('.matters-slot')!;
+    const tabs = slot.querySelector<HTMLElement>('.matter-tabs')!;
+    const rect = slot.getBoundingClientRect();
+    return {
+      viewport: window.innerWidth,
+      scrollWidth: document.documentElement.scrollWidth,
+      slotRight: rect.right,
+      tabClientWidth: tabs.clientWidth,
+      tabScrollWidth: tabs.scrollWidth,
+    };
+  });
+  expect(geometry.viewport).toBe(390);
+  expect(geometry.scrollWidth, JSON.stringify(geometry)).toBeLessThanOrEqual(390);
+  expect(geometry.slotRight, JSON.stringify(geometry)).toBeLessThanOrEqual(390);
+  expect(geometry.tabScrollWidth, JSON.stringify(geometry)).toBeLessThanOrEqual(geometry.tabClientWidth);
+});
+
 test('captures the real seeded bundle list and 44-page bundle detail', async ({ page }) => {
   test.setTimeout(120_000);
   await page.setViewportSize({ width: 1440, height: 900 });

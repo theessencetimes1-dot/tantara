@@ -12,8 +12,10 @@ node_modules/
 out/
 dist/
 .venv/
+.venv
 venv/
 __pycache__/
+*.tsbuildinfo
 *.py[cod]
 .pytest_cache/
 .ruff_cache/

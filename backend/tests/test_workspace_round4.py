@@ -4,6 +4,8 @@ import uuid
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
+import numpy as np
+import pytest
 from sqlalchemy import create_engine, func, select, text
 
 from app import config
@@ -73,11 +75,15 @@ def test_database_and_faiss_store_share_resolved_data_root(client):
     assert store().root.resolve() == settings.data_dir / "index"
 
 
-def test_demo_seed_has_multpage_content_calendar_extractions_and_feed(client, monkeypatch):
+def test_demo_seed_has_multpage_content_calendar_extractions_and_feed(client, monkeypatch, capsys):
+    seed_source = (Path(__file__).resolve().parents[2] / "scripts" / "seed.py").read_text()
+    for raw_event_type in ("first_hearing", "all_day_event", "document_uploaded", "deadline_set"):
+        assert raw_event_type not in seed_source
     monkeypatch.setattr(sys, "argv", ["seed.py", "--demo"])
     runpy.run_path(str(Path(__file__).resolve().parents[2] / "scripts" / "seed.py"), run_name="seed_test")[
         "main"
     ]()
+    seed_output = capsys.readouterr().out
     today = datetime.now(UTC).date()
     with SessionLocal() as session:
         documents = session.scalars(select(Document).where(Document.is_demo.is_(True))).all()
@@ -105,9 +111,19 @@ def test_demo_seed_has_multpage_content_calendar_extractions_and_feed(client, mo
         assert session.scalar(select(func.count(CommunityPost.id))) >= 5
         assert session.scalar(select(func.count(CommunityReply.id))) >= 5
         tasks = session.scalars(select(Task).where(Task.is_demo.is_(True), Task.status != "done")).all()
+        assert len(tasks) == 18
+        task_title_counts = {}
+        for task in tasks:
+            task_title_counts[task.title] = task_title_counts.get(task.title, 0) + 1
+        assert len(task_title_counts) >= 10
+        assert max(task_title_counts.values()) <= 2
         assert any(task.due_at is None for task in tasks)
         assert any(task.due_at and task.due_at.date() < today for task in tasks)
         assert any(task.due_at and task.due_at.date() == today for task in tasks)
+        assert sum(task.due_at is None for task in tasks) == 3
+        assert sum(task.due_at is not None and task.due_at.date() < today for task in tasks) == 4
+        assert sum(task.due_at is not None and task.due_at.date() == today for task in tasks) == 2
+        assert sum(task.due_at is not None and task.due_at.date() > today for task in tasks) == 9
         assert all(row.is_demo for row in documents + pages + events)
         demo_clients = session.scalars(select(Client).where(Client.is_demo.is_(True))).all()
         assert any(
@@ -143,6 +159,18 @@ def test_demo_seed_has_multpage_content_calendar_extractions_and_feed(client, mo
         )
         root_case_id = session.scalar(select(Case.id).where(Case.owner_id == owner_id))
         root_client_id = session.scalar(select(Client.id).where(Client.owner_id == owner_id))
+        for model in (Client, Case, Document, Task, FilingBundle, Hearing):
+            owner_counts = dict(
+                session.execute(select(model.owner_id, func.count()).group_by(model.owner_id)).all()
+            )
+            advocate_count = int(owner_counts.get(owner_id, 0))
+            researcher_count = int(owner_counts.get(junior_id, 0))
+            total_count = sum(int(count) for count in owner_counts.values())
+            assert (
+                f"{model.__tablename__}: advocate@tantara.local={advocate_count} "
+                f"researcher@tantara.local={researcher_count} "
+                f"other={total_count - advocate_count - researcher_count} total={total_count}"
+            ) in seed_output
         assert junior_id and junior_id != owner_id
         assert staff_id and staff_id not in {owner_id, junior_id}
         shared_demo_posts = session.scalars(
@@ -276,7 +304,7 @@ def test_demo_seed_has_multpage_content_calendar_extractions_and_feed(client, mo
         f"/api/v1/clients/{root_client_id}",
     ):
         response = client.get(foreign_path, headers=junior_headers)
-        assert response.status_code in {403, 404}, (foreign_path, response.text)
+        assert response.status_code == 404, (foreign_path, response.text)
         assert "ABC Pvt." not in response.text and "Aarav" not in response.text
         body = (
             {"description": "stolen"}
@@ -286,7 +314,7 @@ def test_demo_seed_has_multpage_content_calendar_extractions_and_feed(client, mo
             else {"title": "stolen"}
         )
         mutation = client.patch(foreign_path, headers=junior_headers, json=body)
-        assert mutation.status_code in {403, 404}, (foreign_path, mutation.status_code, mutation.text)
+        assert mutation.status_code == 403, (foreign_path, mutation.status_code, mutation.text)
     junior_summary = client.get("/api/v1/dashboard/summary", headers=junior_headers).json()
     assert junior_summary["active_cases"] == 1 and junior_summary["documents_processed"] == 1
     junior_calendar = client.get("/api/v1/calendar", headers=junior_headers).json()
@@ -298,6 +326,167 @@ def test_demo_seed_has_multpage_content_calendar_extractions_and_feed(client, mo
     assert client.get(
         f"/api/v1/community/posts/{root_post_id}/replies", headers=junior_headers
     ).status_code in {403, 404}
+
+
+def test_demo_seed_refuses_nonempty_workspace_without_changing_counts(client, monkeypatch, capsys):
+    with SessionLocal() as session:
+        owner_id = session.scalar(select(User.id).where(User.email == "advocate@tantara.local"))
+    with session_scope() as session:
+        session.add(Client(id="refusal-client", owner_id=owner_id, name="Existing workspace client"))
+        session.add(
+            Case(id="refusal-case", owner_id=owner_id, title="Existing workspace case", is_demo=False)
+        )
+        session.add(
+            Task(id="refusal-task", owner_id=owner_id, title="Existing workspace task", is_demo=False)
+        )
+
+    seed = runpy.run_path(
+        str(Path(__file__).resolve().parents[2] / "scripts" / "seed.py"), run_name="seed_refusal"
+    )
+    with SessionLocal() as session:
+        before = seed["workspace_table_counts"](session)
+    monkeypatch.setattr(sys, "argv", ["seed.py", "--demo"])
+    with pytest.raises(SystemExit) as result:
+        seed["main"]()
+    assert result.value.code == 2
+    output = capsys.readouterr().out
+    assert str(config.get_settings().data_dir) in output
+    assert "clients=1" in output
+    assert "cases=1" in output
+    assert "tasks=1" in output
+    with SessionLocal() as session:
+        after = seed["workspace_table_counts"](session)
+    assert after == before
+
+
+def test_force_reset_removes_demo_rows_files_and_vectors_but_preserves_user_data(client, monkeypatch):
+    from app.config import get_settings
+
+    with SessionLocal() as session:
+        owner_id = session.scalar(select(User.id).where(User.email == "advocate@tantara.local"))
+    data_dir = get_settings().data_dir
+    uploads = data_dir / "uploads"
+    bundles = data_dir / "bundles"
+    uploads.mkdir(parents=True, exist_ok=True)
+    bundles.mkdir(parents=True, exist_ok=True)
+    demo_upload = uploads / "demo-reset.pdf"
+    user_upload = uploads / "user-preserved.pdf"
+    demo_bundle = bundles / "demo-reset.pdf"
+    demo_upload.write_bytes(b"demo document")
+    user_upload.write_bytes(b"user document")
+    demo_bundle.write_bytes(b"demo bundle")
+    demo_document_id, user_document_id = str(uuid.uuid4()), str(uuid.uuid4())
+    demo_chunk_id, user_chunk_id = str(uuid.uuid4()), str(uuid.uuid4())
+    with session_scope() as session:
+        demo_case = Case(id="demo-reset-case", owner_id=owner_id, title="Demo reset case", is_demo=True)
+        session.add(demo_case)
+        session.add(Client(id="demo-reset-client", owner_id=owner_id, name="Demo reset", is_demo=True))
+        session.add(Client(id="user-preserved-client", owner_id=owner_id, name="User data", is_demo=False))
+        session.add(
+            FilingBundle(
+                id="demo-reset-bundle",
+                owner_id=owner_id,
+                case_id=demo_case.id,
+                name="Demo reset bundle",
+                output_path="bundles/demo-reset.pdf",
+                is_demo=True,
+            )
+        )
+        session.add(
+            Document(
+                id=demo_document_id,
+                owner_id=owner_id,
+                case_id=demo_case.id,
+                title="Demo reset document",
+                filename=demo_upload.name,
+                stored_path="uploads/demo-reset.pdf",
+                content_hash="b" * 64,
+                is_demo=True,
+            )
+        )
+        session.add(
+            Document(
+                id=user_document_id,
+                owner_id=owner_id,
+                title="User preserved document",
+                filename=user_upload.name,
+                stored_path="uploads/user-preserved.pdf",
+                content_hash="c" * 64,
+                is_demo=False,
+            )
+        )
+        session.add_all(
+            [
+                DocumentChunk(
+                    id=demo_chunk_id,
+                    document_id=demo_document_id,
+                    chunk_index=0,
+                    content="demo indexed chunk",
+                    embedding_blob=np.ones(384, dtype="float32").tobytes(),
+                    is_demo=True,
+                ),
+                DocumentChunk(
+                    id=user_chunk_id,
+                    document_id=user_document_id,
+                    chunk_index=0,
+                    content="user indexed chunk",
+                    embedding_blob=np.ones(384, dtype="float32").tobytes(),
+                    is_demo=False,
+                ),
+            ]
+        )
+        session.flush()
+        session.add(
+            CaseEvent(
+                id="demo-reset-event",
+                owner_id=owner_id,
+                case_id=demo_case.id,
+                type="all_day_event",
+                occurred_at=datetime.now(UTC).replace(tzinfo=None),
+                detail="demo event",
+                is_demo=True,
+            )
+        )
+    store().add(
+        [
+            (demo_chunk_id, np.ones(384, dtype="float32")),
+            (user_chunk_id, np.ones(384, dtype="float32")),
+        ]
+    )
+    (data_dir / "demo-fixtures").mkdir(parents=True, exist_ok=True)
+    (data_dir / "demo-fixtures" / "generated.pdf").write_bytes(b"generated fixture")
+
+    seed = runpy.run_path(
+        str(Path(__file__).resolve().parents[2] / "scripts" / "seed.py"), run_name="seed_reset"
+    )
+
+    class ResetReached(Exception):
+        pass
+
+    remove_demo_data = seed["remove_demo_data"]
+
+    def reset_then_stop():
+        remove_demo_data()
+        raise ResetReached
+
+    seed["main"].__globals__["remove_demo_data"] = reset_then_stop
+    monkeypatch.setattr(sys, "argv", ["seed.py", "--demo", "--force-reset"])
+    with pytest.raises(ResetReached):
+        seed["main"]()
+    with SessionLocal() as session:
+        assert session.get(Case, "demo-reset-case") is None
+        assert session.get(Client, "demo-reset-client") is None
+        assert session.get(FilingBundle, "demo-reset-bundle") is None
+        assert session.get(Document, demo_document_id) is None
+        assert session.get(Document, user_document_id) is not None
+        assert session.get(Client, "user-preserved-client") is not None
+        assert session.get(DocumentChunk, demo_chunk_id) is None
+        assert session.get(DocumentChunk, user_chunk_id) is not None
+    assert not demo_upload.exists()
+    assert not demo_bundle.exists()
+    assert user_upload.exists()
+    assert not (data_dir / "demo-fixtures").exists()
+    assert store().id_set() == {user_chunk_id}
 
 
 def test_empty_seed_retains_only_the_local_advocate_and_no_rows(client, monkeypatch):

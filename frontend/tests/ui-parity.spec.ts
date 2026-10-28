@@ -39,13 +39,45 @@ test('workspace navigation exposes all module routes and each route resolves', a
   await page.goto('/dashboard');
   const nav = page.getByRole('navigation', { name: 'Main navigation' });
   const paths = await nav
-    .locator('a')
+    .getByRole('link')
     .evaluateAll((links) => links.map((link) => new URL((link as HTMLAnchorElement).href).pathname));
   for (const route of moduleRoutes) expect(paths).toContain(route);
   const appOrigin = new URL(page.url()).origin;
   for (const route of paths) {
     const response = await request.get(`${appOrigin}${route}`);
     expect(response?.status(), `${route} should resolve`).toBeLessThan(400);
+  }
+  for (const route of moduleRoutes) {
+    await page.goto(route, { waitUntil: 'domcontentloaded' });
+    await expect(nav).toBeVisible();
+    await expect(page.locator('main'), `${route} should have one main landmark`).toHaveCount(1);
+    const visibleLinks = nav.getByRole('link');
+    await expect(visibleLinks).toHaveCount(14);
+    for (let index = 0; index < 14; index += 1) await expect(visibleLinks.nth(index)).toBeVisible();
+    const visiblePaths = await visibleLinks.evaluateAll((links) =>
+      links
+        .filter((link) => (link as HTMLElement).getClientRects().length > 0)
+        .map((link) => new URL((link as HTMLAnchorElement).href).pathname),
+    );
+    expect(new Set(visiblePaths).size, `${route} sidebar should not duplicate links`).toBe(14);
+    expect([...visiblePaths].sort(), `${route} should expose every module in the rail`).toEqual(
+      [...moduleRoutes].sort(),
+    );
+    const railLinks = page.locator('.sidebar .nav a[href]').filter({ visible: true });
+    await expect(railLinks, `${route} should expose all links in the visible rail`).toHaveCount(14);
+    const railPaths = await railLinks.evaluateAll((links) =>
+      links.map((link) => new URL((link as HTMLAnchorElement).href).pathname),
+    );
+    expect(new Set(railPaths).size, `${route} rail should not duplicate hrefs`).toBe(14);
+    expect([...railPaths].sort(), `${route} visible rail should include every module route`).toEqual(
+      [...moduleRoutes].sort(),
+    );
+    const current = nav.locator('a[aria-current="page"]');
+    await expect(current, `${route} should have one current rail link`).toHaveCount(1);
+    await expect(current).toHaveAttribute('href', route);
+    if (route === '/documents') {
+      await expect(page.getByRole('navigation', { name: 'Documents navigation' })).toHaveCount(0);
+    }
   }
   for (const [route, label] of [
     ['/autofill', 'Smart Autofill'],
@@ -78,9 +110,16 @@ test('settings section navigation keeps one visible page-level current link', as
   const pageCurrent = page.locator('a[aria-current="page"]');
   await expect(pageCurrent).toHaveCount(1);
   await expect(pageCurrent).toHaveAttribute('href', '/settings/profile');
-  await expect(
-    page.getByRole('navigation', { name: 'Settings navigation' }).getByRole('link', { name: 'Profile' }),
-  ).toHaveAttribute('aria-current', 'location');
+  const profile = page
+    .getByRole('navigation', { name: 'Settings navigation' })
+    .getByRole('link', { name: 'Profile' });
+  await expect(profile).toHaveAttribute('aria-current', 'location');
+  const activeStyle = await profile.evaluate((element) => ({
+    color: getComputedStyle(element).color,
+    backgroundColor: getComputedStyle(element).backgroundColor,
+  }));
+  expect(activeStyle.color).toBe('rgb(55, 48, 163)');
+  expect(activeStyle.backgroundColor).toBe('rgb(238, 240, 255)');
 });
 
 test('shared shell matches measured desktop target geometry and artwork', async ({ page, request }) => {
@@ -129,6 +168,8 @@ test('dashboard renders four metrics before Ask TANTARA and keeps both secondary
 }) => {
   await authenticate(page, request);
   await page.goto('/dashboard');
+  await expect(page.locator('h1')).toHaveCount(1);
+  await expect(page.getByRole('heading', { level: 2, name: 'Case Management' })).toBeVisible();
   const cards = page.locator('.dashboard-primary .metric-grid .metric');
   await expect(cards).toHaveCount(4);
   await expect(cards.nth(0)).toContainText('Active Cases');
@@ -145,6 +186,9 @@ test('dashboard renders four metrics before Ask TANTARA and keeps both secondary
   ]) {
     await expect(ask.getByRole('button', { name: chip })).toBeVisible();
   }
+  const caseManagement = page.getByRole('link', { name: 'View all cases' });
+  await expect(caseManagement).toBeVisible();
+  await expect(caseManagement).toHaveAttribute('href', '/cases');
   await expect(page.locator('.secondary-summary .secondary-summary-item')).toHaveCount(2);
 });
 

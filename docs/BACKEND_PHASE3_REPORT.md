@@ -40,7 +40,7 @@ Owner tests use a second advocate account for case-scoped resources and assert 4
 
 ## Contract stability
 
-Search hits and AI citations assert both `retrieval_score` and legacy `retreival_score` exist and are equal. Paginated list envelopes are asserted for domain collections, documents, search, AI sessions/saved items, case events, community replies, security events, draft templates, and draft versions. Root `/health`, `/ingest/file`, and `/query` are exercised and their response shapes checked.
+Search hits and AI citation tests require the canonical `retrieval_score` field and assert the misspelled alias is absent. Paginated list envelopes are asserted for domain collections, documents, search, AI sessions/saved items, case events, community replies, security events, draft templates, and draft versions. Root `/health`, `/ingest/file`, and `/query` are exercised and their response shapes checked.
 
 `GET /api/v1/documents/{id}/file` is tested for a 206 byte range with exact `Content-Range`, a full no-Range 200 response, and `HEAD` 200 with the full `Content-Length`. `tantara_admin_password` is documented in `BACKEND_API.md` as a local-only `tantara-local` default that must be changed before use outside an isolated local workspace. A tracked-worktree scan for common API-key/token/private-key formats found no matches outside `sensitive/`; `sensitive/` was not read.
 
