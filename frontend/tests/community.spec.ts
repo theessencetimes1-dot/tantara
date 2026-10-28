@@ -3,7 +3,7 @@ import { mkdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 const backend = `${process.env.TANTARA_API_ORIGIN ?? 'http://127.0.0.1:8010'}/api/v1`;
-const captures = resolve(process.cwd(), '../captures-fe7');
+const captures = resolve(process.cwd(), 'test-results/community-captures');
 mkdirSync(captures, { recursive: true });
 
 type UserLogin = { access_token: string; user: { id: string; name: string; email: string; role: string } };
@@ -111,6 +111,46 @@ test('seeded feed, navigation, and tag filter render at desktop and mobile sizes
   expect(titles.length).toBeGreaterThan(0);
   for (const title of titles) expect(title.toLowerCase()).toContain('construction');
   await capture(page, 'community-feed-filtered-construction-mobile-390x844.png');
+});
+
+test('community post and its dashboard activity use the same workspace wall clock', async ({
+  page,
+  request,
+}) => {
+  const user = await login(request, 'advocate@tantara.local');
+  const title = `Workspace clock comparison ${Date.now()}`;
+  const created = await api(request, user.access_token, '/community/posts', {
+    method: 'POST',
+    data: {
+      title,
+      body: 'Timestamp comparison evidence.',
+      kind: 'discussion',
+      visibility: 'private',
+      tags: [],
+    },
+  });
+  expect(created.status()).toBe(200);
+  const post = (await created.json()) as { id: string; created_at: string };
+  expect(post.created_at).toMatch(/[+-]\d{2}:\d{2}|Z$/);
+
+  await page.addInitScript((token) => {
+    localStorage.setItem('tantara_token', token);
+    document.cookie = `tantara_token=${token}; Path=/; SameSite=Lax`;
+  }, user.access_token);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/community');
+  const postCard = page.locator('.community-post').filter({ hasText: title });
+  await expect(postCard).toBeVisible();
+  const timestampPattern = /[A-Z][a-z]{2} \d{1,2}, \d{4}, \d{1,2}:\d{2} [AP]M · Asia\/Kolkata/;
+  const communityTimestamp = (await postCard.innerText()).match(timestampPattern)?.[0];
+
+  await page.goto('/dashboard');
+  const activity = page.locator(`.activity-row[data-object-id="${post.id}"]`);
+  await expect(activity).toBeVisible();
+  const dashboardTimestamp = (await activity.innerText()).match(timestampPattern)?.[0];
+  expect(communityTimestamp).toBeTruthy();
+  expect(dashboardTimestamp).toBeTruthy();
+  expect(communityTimestamp).toBe(dashboardTimestamp);
 });
 
 test('thread shows API authors and real reply total at desktop and mobile sizes', async ({

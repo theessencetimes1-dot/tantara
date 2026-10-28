@@ -1,7 +1,7 @@
 import { expect, request, test, type APIRequestContext, type Page } from '@playwright/test';
 
 const apiOrigin = (process.env.TANTARA_API_ORIGIN ?? 'http://127.0.0.1:8010').replace(/\/$/, '');
-const shots = '../docs/screenshots';
+const shots = 'test-results';
 
 async function authenticate(page: Page, api: APIRequestContext) {
   const response = await api.post(`${apiOrigin}/api/v1/auth/login`, {
@@ -57,4 +57,57 @@ test('capture honest model-unavailable state with editable review skeleton', asy
     });
     await api.dispose();
   }
+});
+
+test('demo draft is identified as a scaffold while generated unstructured text keeps the review alert', async ({
+  page,
+  request,
+}) => {
+  const token = await authenticate(page, request);
+  const headers = { Authorization: `Bearer ${token}` };
+  const list = await request.get(`${apiOrigin}/api/v1/drafts?page=1&page_size=100`, { headers });
+  expect(list.status()).toBe(200);
+  const demoDraft = (await list.json()).items.find((row: { is_demo?: boolean }) => row.is_demo);
+  expect(demoDraft, 'demo seed includes a never-generated outline scaffold').toBeTruthy();
+
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto(`/drafts?id=${demoDraft.id}`);
+  await expect(
+    page.getByRole('heading', { name: 'Template scaffold — nothing generated yet' }),
+  ).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Generate draft' })).toBeVisible();
+  await expect(page.locator('.draft-unrecognized')).toHaveCount(0);
+  await expect(
+    page.getByRole('heading', { name: 'Generated text needs editing — structure not recognised' }),
+  ).toHaveCount(0);
+  await expect(page.getByText('No citations yet — generate or attach sources.')).toBeVisible();
+
+  const created = await request.post(`${apiOrigin}/api/v1/drafts`, {
+    headers,
+    data: {
+      title: 'Generated unstructured review',
+      document_type: 'Pleading',
+      content_markdown:
+        '# Unstructured generated content\n\nPlain generated paragraph without a recognised section.',
+    },
+  });
+  expect(created.status()).toBe(200);
+  const draft = await created.json();
+  const version = await request.post(`${apiOrigin}/api/v1/drafts/${draft.id}/versions`, {
+    headers,
+    data: {
+      content_markdown: draft.content_markdown,
+      change_note: 'Generated model outline',
+    },
+  });
+  expect(version.status()).toBe(200);
+  await page.goto(`/drafts?id=${draft.id}`);
+  await expect(
+    page.getByRole('heading', { name: 'Generated text needs editing — structure not recognised' }),
+  ).toBeVisible();
+  await expect(page.locator('.draft-unrecognized')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Retry' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Template scaffold — nothing generated yet' })).toHaveCount(
+    0,
+  );
 });

@@ -90,6 +90,6 @@ test('client profile uses case detail width, real contact fields, and linked cas
   }
 
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(1440);
-  await mkdir(path.resolve(process.cwd(), '../docs/screenshots'), { recursive: true });
-  await page.screenshot({ path: '../docs/screenshots/client-detail-1440.png' });
+  await mkdir(path.resolve(process.cwd(), 'test-results'), { recursive: true });
+  await page.screenshot({ path: 'test-results/client-detail-1440.png' });
 });

@@ -142,6 +142,9 @@ export default function DraftsPage() {
     [saving, setSaving] = useState(false),
     [showDiff, setShowDiff] = useState<string>('');
   const [activeTab, setActiveTab] = useState<'Draft' | 'Review' | 'Sources' | 'History'>('Draft');
+  const hasGenerationProvenance = Boolean(draft?.generation_kind || draft?.model?.model || draft?.model_name);
+  const isTemplateScaffold = Boolean(draft?.is_demo && !hasGenerationProvenance);
+  const hasUnrecognizedStructure = !recognizedStructure(content);
 
   useEffect(() => {
     draftsApi
@@ -601,7 +604,24 @@ export default function DraftsPage() {
                 Model: {draft.model?.model ?? draft.model_name ?? 'Not reported'} · Response:{' '}
                 {draft.generation_kind ?? 'Not reported'}
               </p>
-              {activeTab === 'Draft' && !recognizedStructure(content) ? (
+              {activeTab === 'Draft' && isTemplateScaffold && (
+                <section className="draft-template-scaffold" role="status">
+                  <h3>Template scaffold — nothing generated yet</h3>
+                  <p>This demo outline is a starting structure. No model generation has been run.</p>
+                  <button
+                    className="draft-primary"
+                    onClick={() => {
+                      setDraft(null);
+                      setContent('');
+                      setActiveTab('Draft');
+                      router.push('/drafts#draft-builder');
+                    }}
+                  >
+                    Generate draft
+                  </button>
+                </section>
+              )}
+              {activeTab === 'Draft' && hasUnrecognizedStructure && hasGenerationProvenance ? (
                 <section className="draft-unrecognized" role="alert">
                   <h3>Generated text needs editing — structure not recognised</h3>
                   <p>
@@ -618,6 +638,14 @@ export default function DraftsPage() {
               ) : (
                 activeTab === 'Draft' && (
                   <>
+                    {activeTab === 'Draft' &&
+                      hasUnrecognizedStructure &&
+                      !hasGenerationProvenance &&
+                      !isTemplateScaffold && (
+                        <p className="draft-structure-note" role="status">
+                          Draft structure is not recognised. Review and edit the text before relying on it.
+                        </p>
+                      )}
                     {content.includes('[REVIEW') && (
                       <section className="draft-review-summary" aria-label="Review markers">
                         <h3>Review required</h3>
@@ -780,7 +808,13 @@ export default function DraftsPage() {
                     </div>
                   ))
                 ) : (
-                  <p>No citations returned by the service.</p>
+                  <p>
+                    {isTemplateScaffold
+                      ? 'No citations yet — generate or attach sources.'
+                      : hasGenerationProvenance
+                        ? 'No citations returned by the service.'
+                        : 'No citations attached yet.'}
+                  </p>
                 )}
               </section>
             </aside>

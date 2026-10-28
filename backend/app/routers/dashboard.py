@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy import func, select
 
 from app.db import SessionLocal
-from app.models import AuditEvent, Case, CaseEvent, Document, Draft, Hearing, Task
+from app.models import AuditEvent, Case, CaseEvent, Document, Draft, Hearing, Task, User
 from app.security import current_user
 from app.timezone import to_utc_iso, to_workspace_iso, to_workspace_naive, workspace_now
 
@@ -38,6 +38,56 @@ def _case_event_item(event: CaseEvent, case_titles: dict[str, str]) -> dict:
         "at": to_workspace_iso(event.occurred_at),
         "all_day": event.occurred_at.time() == time.min,
     }
+
+
+_ACTIVITY_ACTIONS = {
+    "create": "Created",
+    "update": "Updated",
+    "delete": "Deleted",
+    "generate": "Generated",
+    "apply": "Applied",
+    "restore": "Restored",
+}
+
+_ACTIVITY_OBJECTS = {
+    "ai_answer": "AI answer",
+    "ai_read": "AI document read",
+    "bundle": "filing bundle",
+    "bundle_items": "filing bundle items",
+    "bundle_sections": "filing bundle sections",
+    "case_autofill": "case autofill",
+    "case_event": "case event",
+    "case_events": "case events",
+    "case_participant": "case participant",
+    "case_strategy": "case strategy",
+    "cases": "case",
+    "clients": "client",
+    "community_post": "community post",
+    "community_posts": "community post",
+    "community_reply": "community reply",
+    "document": "document",
+    "documents": "document",
+    "draft": "draft",
+    "draft_section": "draft section",
+    "draft_version": "draft version",
+    "draft_versions": "draft versions",
+    "extraction_fields": "document fields",
+    "filing_bundles": "filing bundle",
+    "hearings": "hearing",
+    "notes": "note",
+    "password": "password",
+    "profile": "profile",
+    "tasks": "task",
+    "workspace": "workspace",
+}
+
+
+def _activity_title(action: str, object_type: str) -> str:
+    verb = _ACTIVITY_ACTIONS.get(action, action.replace("_", " ").capitalize())
+    subject = _ACTIVITY_OBJECTS.get(object_type)
+    if subject is None:
+        subject = " ".join(part.capitalize() if part.casefold() == "ai" else part for part in object_type.split("_"))
+    return f"{verb} {subject}"
 
 
 @router.get("/dashboard/summary")
@@ -79,12 +129,18 @@ def activity(user=Depends(current_user)):
             .order_by(AuditEvent.created_at.desc())
             .limit(20)
         ).all()
+        actor_ids = {row.actor_id for row in rows}
+        actors = {
+            actor.id: actor.name
+            for actor in s.scalars(select(User).where(User.id.in_(actor_ids))).all()
+        } if actor_ids else {}
     return [
         {
             "id": r.id,
+            "object_id": r.object_id,
             "type": r.action,
-            "actor": user["name"],
-            "title": f"{r.action.title()} {r.object_type}",
+            "actor": actors.get(r.actor_id, "Unknown actor"),
+            "title": _activity_title(r.action, r.object_type),
             "case_id": None,
             "at": to_utc_iso(r.created_at),
         }

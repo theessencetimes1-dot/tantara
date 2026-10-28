@@ -68,7 +68,7 @@ test('captures seeded document and search states before fixture uploads', async 
   await page.setViewportSize({ width: 1440, height: 900 });
   await openWithToken(page, token, '/documents');
   await expect(page.locator('.documents-table tbody tr').first()).toBeVisible({ timeout: 30000 });
-  await page.screenshot({ path: '../docs/screenshots/documents-library-desktop-1440-real.png' });
+  await page.screenshot({ path: 'test-results/documents-library-desktop-1440-real.png' });
   const documentsResponse = await request.get(`${apiUrl}/documents?page_size=100`, {
     headers: { Authorization: `Bearer ${token}` },
   });
@@ -87,7 +87,7 @@ test('captures seeded document and search states before fixture uploads', async 
   await expect(page.locator('.pdf-page-surface canvas').first()).toHaveAttribute('data-rendered', 'true', {
     timeout: 60000,
   });
-  await page.screenshot({ path: '../docs/screenshots/documents-seeded-viewer-desktop-1440-real.png' });
+  await page.screenshot({ path: 'test-results/documents-seeded-viewer-desktop-1440-real.png' });
   await page.goto('/documents');
   await expect(page.getByRole('heading', { name: 'Documents', exact: true })).toBeVisible();
   await page.setViewportSize({ width: 390, height: 844 });
@@ -97,7 +97,7 @@ test('captures seeded document and search states before fixture uploads', async 
   await expect(page.getByLabel('Filter by status')).toHaveValue('');
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.screenshot({
-    path: '../docs/screenshots/documents-library-empty-desktop-1440-real.png',
+    path: 'test-results/documents-library-empty-desktop-1440-real.png',
   });
 
   await page.goto('/search');
@@ -107,7 +107,7 @@ test('captures seeded document and search states before fixture uploads', async 
   await expect(page.locator('.search-hit').first()).not.toContainText('Untitled document');
   await expect(page.getByText(/fusion rank score.*not a confidence value/i)).toBeVisible();
   await page.screenshot({
-    path: '../docs/screenshots/documents-search-desktop-1440-real.png',
+    path: 'test-results/documents-search-desktop-1440-real.png',
   });
 });
 
@@ -150,7 +150,7 @@ test('uploaded multi-page PDF deep-link scrolls to and highlights page 2', async
   expect(skipLinkBounds!.y + skipLinkBounds!.height).toBeLessThanOrEqual(0);
   expect(mainBounds!.x).toBeGreaterThan(0);
   await page.screenshot({
-    path: '../docs/screenshots/documents-viewer-page2-desktop-1440-real.png',
+    path: 'test-results/documents-viewer-page2-desktop-1440-real.png',
   });
   const mobilePage = await page.context().newPage();
   await mobilePage.setViewportSize({ width: 390, height: 844 });
@@ -254,7 +254,7 @@ test('AI Read renders real API fields and persists an edited field after reload'
   );
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.screenshot({
-    path: '../docs/screenshots/documents-ai-read-success-desktop-1440-real.png',
+    path: 'test-results/documents-ai-read-success-desktop-1440-real.png',
   });
 });
 

@@ -1,9 +1,10 @@
 import uuid
 
 import pytest
+from sqlalchemy import select
 
 from app.db import session_scope
-from app.models import User
+from app.models import AuditEvent, User
 from app.security import create_token, hash_password
 
 
@@ -263,3 +264,58 @@ def test_autofill_apply_parses_date_values_and_rejects_invalid_dates(client):
     assert invalid.status_code == 422
     assert invalid.json()["error"]["code"] == "validation_error"
     assert invalid.json()["error"]["details"]["details"][0]["loc"] == ["body", "fields", "limitation_date", "value"]
+
+
+def test_dashboard_activity_humanizes_audit_rows_and_uses_the_stored_actor(client):
+    owner_headers = _auth(client)
+    with session_scope() as session:
+        owner = session.scalar(select(User).where(User.email == "advocate@tantara.local"))
+        actor = session.scalar(select(User).where(User.email == "researcher@tantara.local"))
+        assert owner
+        if actor is None:
+            actor = User(
+                id=str(uuid.uuid4()),
+                name="Mira Shah",
+                email="researcher@example.local",
+                password_hash=hash_password("tantara-local"),
+                role="researcher",
+            )
+            session.add(actor)
+            session.flush()
+        session.add(
+            AuditEvent(
+                id=str(uuid.uuid4()),
+                owner_id=owner.id,
+                actor_id=actor.id,
+                action="apply",
+                object_type="case_autofill",
+                object_id=str(uuid.uuid4()),
+            )
+        )
+
+    response = client.get("/api/v1/dashboard/activity", headers=owner_headers)
+    assert response.status_code == 200
+    items = response.json()
+    applied = next(item for item in items if item["title"] == "Applied case autofill")
+    assert applied["actor"] == "Mira Shah"
+    assert all("_" not in item["title"] for item in items)
+
+
+def test_draft_detail_retains_generation_provenance_from_its_version_history(client):
+    headers = _auth(client)
+    created = client.post(
+        "/api/v1/drafts",
+        headers=headers,
+        json={"title": "Generated provenance", "document_type": "Pleading", "content_markdown": "# Draft"},
+    )
+    assert created.status_code == 200
+    draft_id = created.json()["id"]
+    version = client.post(
+        f"/api/v1/drafts/{draft_id}/versions",
+        headers=headers,
+        json={"content_markdown": "# Draft", "change_note": "Generated model outline"},
+    )
+    assert version.status_code == 200
+    detail = client.get(f"/api/v1/drafts/{draft_id}", headers=headers)
+    assert detail.status_code == 200
+    assert detail.json()["generation_kind"] == "model_generated"

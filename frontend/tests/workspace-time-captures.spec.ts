@@ -37,7 +37,7 @@ test('captures seeded Tasks at 1440 by 900 without test-created records', async 
   await expect(page.locator('.task-groups')).toBeVisible();
   await assertCaptureReady(page);
   await expect(page.getByText('Workspace wall time check')).toHaveCount(0);
-  await page.screenshot({ path: '../docs/screenshots/tasks-1440x900.png', fullPage: false });
+  await page.screenshot({ path: 'test-results/tasks-1440x900.png', fullPage: false });
 });
 
 test('captures seeded Calendar at 1440 by 900 without test-created records', async ({ page }) => {
@@ -48,7 +48,7 @@ test('captures seeded Calendar at 1440 by 900 without test-created records', asy
   await expect(page.locator('[data-calendar-settled="true"]')).toBeVisible();
   await assertCaptureReady(page);
   await expect(page.getByText('UTC calendar all-day proof')).toHaveCount(0);
-  await page.screenshot({ path: '../docs/screenshots/calendar-1440x900.png', fullPage: false });
+  await page.screenshot({ path: 'test-results/calendar-1440x900.png', fullPage: false });
 });
 
 test('dashboard case table headers remain separate at desktop width', async ({ page }) => {
@@ -62,11 +62,32 @@ test('dashboard case table headers remain separate at desktop width', async ({ p
   await expect(table.getByRole('columnheader', { name: /Next Hearing/ })).toBeVisible();
   const tribunal = await table.locator('thead th').nth(1).boundingBox();
   const hearing = await table.locator('thead th').nth(2).boundingBox();
+  const tableScroll = page.locator('.matter-wrap.compact .matter-table-scroll');
+  const statusTabs = page.locator('.matter-wrap.compact .matter-tabs');
+  const tabDimensions = await statusTabs.evaluate((element) => ({
+    scrollWidth: element.scrollWidth,
+    clientWidth: element.clientWidth,
+  }));
+  expect(tabDimensions.scrollWidth).toBe(tabDimensions.clientWidth);
+  for (const tab of await statusTabs.getByRole('button').all()) await expect(tab).toBeVisible();
+  const statusCells = table.locator('tbody .status-pill');
   expect(tribunal).toBeTruthy();
   expect(hearing).toBeTruthy();
   expect(tribunal!.x + tribunal!.width).toBeLessThanOrEqual(hearing!.x);
+  const dimensions = await tableScroll.evaluate((element) => ({
+    scrollWidth: element.scrollWidth,
+    clientWidth: element.clientWidth,
+  }));
+  expect(dimensions.scrollWidth).toBe(dimensions.clientWidth);
+  for (const header of await table.locator('thead th').all()) {
+    const box = await header.boundingBox();
+    expect(box).toBeTruthy();
+    expect(box!.x + box!.width).toBeLessThanOrEqual(1440);
+  }
+  await expect(statusCells).toHaveCount(5);
+  for (const chip of await statusCells.all()) await expect(chip).toBeVisible();
   await assertCaptureReady(page);
-  await page.screenshot({ path: '../docs/screenshots/dashboard-1440x900.png', fullPage: false });
+  await page.screenshot({ path: 'test-results/dashboard-1440x900.png', fullPage: false });
 });
 
 test('dashboard labels seeded calendar event kinds for people', async ({ page }) => {
@@ -171,7 +192,7 @@ test('captures the real seeded bundle list and 44-page bundle detail', async ({ 
   await expect(row).toContainText(/\d+(\.\d+)? (B|KB|MB)/);
   await expect(row).toContainText(new RegExp(`${bundle!.section_count} section`));
   await assertCaptureReady(page);
-  await page.screenshot({ path: '../docs/screenshots/bundles-list-1440.png', fullPage: false });
+  await page.screenshot({ path: 'test-results/bundles-list-1440.png', fullPage: false });
 
   await page.goto(`/bundles/${bundle!.id}`, { waitUntil: 'domcontentloaded', timeout: 60_000 });
   await expect(page.getByRole('heading', { name: bundle!.name })).toBeVisible();
@@ -186,7 +207,7 @@ test('captures the real seeded bundle list and 44-page bundle detail', async ({ 
   await expect(page.getByTestId('pdf-page-canvas')).toBeVisible();
   await expect(page.getByTestId('pdf-page-count')).toHaveText('44');
   await assertCaptureReady(page);
-  await page.screenshot({ path: '../docs/screenshots/bundles-detail-1440.png', fullPage: false });
+  await page.screenshot({ path: 'test-results/bundles-detail-1440.png', fullPage: false });
 });
 
 test('captures a seeded document with its full accessible title', async ({ page }) => {
@@ -209,7 +230,7 @@ test('captures a seeded document with its full accessible title', async ({ page 
   await expect(title).toHaveAttribute('aria-label', seededDocument!.title);
   await expect(title).toHaveAttribute('title', seededDocument!.title);
   await assertCaptureReady(page);
-  await page.screenshot({ path: '../docs/screenshots/documents-title-1440.png', fullPage: false });
+  await page.screenshot({ path: 'test-results/documents-title-1440.png', fullPage: false });
 });
 
 test('research omits an unknown source count instead of showing a placeholder', async ({ page }) => {
@@ -221,5 +242,5 @@ test('research omits an unknown source count instead of showing a placeholder', 
   await expect(page.locator('.source-count')).toHaveCount(0);
   await expect(page.locator('.sources-card')).not.toContainText('—');
   await assertCaptureReady(page);
-  await page.screenshot({ path: '../docs/screenshots/research-count-1440.png', fullPage: false });
+  await page.screenshot({ path: 'test-results/research-count-1440.png', fullPage: false });
 });

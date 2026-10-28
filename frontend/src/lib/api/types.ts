@@ -22,6 +22,7 @@ export type Summary = {
 };
 export type Activity = {
   id: string;
+  object_id?: string;
   type: string;
   actor?: string;
   title: string;

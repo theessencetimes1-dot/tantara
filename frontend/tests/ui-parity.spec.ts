@@ -198,3 +198,48 @@ test('strategy evidence follow-up arrives prefilled in Research Desk', async ({ 
   await page.goto(`/research?case_id=case-evidence&question=${encodeURIComponent(question)}`);
   await expect(page.getByRole('textbox', { name: 'Research question' })).toHaveValue(question);
 });
+
+test('deep-linked workspace routes retain one main landmark after real content loads', async ({
+  page,
+  request,
+}) => {
+  const apiOrigin = process.env.TANTARA_API_ORIGIN ?? 'http://127.0.0.1:8010';
+  const login = await request.post(`${apiOrigin}/api/v1/auth/login`, {
+    data: { email: 'advocate@tantara.local', password: 'tantara-local' },
+  });
+  expect(login.ok()).toBeTruthy();
+  const token = (await login.json()).access_token as string;
+  const headers = { Authorization: `Bearer ${token}` };
+  const list = async (path: string) => {
+    const response = await request.get(`${apiOrigin}/api/v1/${path}`, { headers });
+    expect(response.ok(), `${path} should load from the seeded API`).toBeTruthy();
+    return response.json();
+  };
+  const [cases, clients, documents, bundles, posts] = await Promise.all([
+    list('cases?page_size=1'),
+    list('clients?page_size=1'),
+    list('documents?page_size=1'),
+    list('bundles?page_size=1'),
+    list('community/posts?page_size=1'),
+  ]);
+  const routes = [
+    ['/research/documents', 'Research library'],
+    [`/cases/${cases.items[0].id}/strategy`, 'AI Strategy Advisor'],
+    [`/clients/${clients.items[0].id}`, clients.items[0].name],
+    [`/documents/${documents.items[0].id}`, documents.items[0].title],
+    [`/bundles/${bundles.items[0].id}`, bundles.items[0].name],
+    [`/community/${posts.items[0].id}`, posts.items[0].title],
+  ];
+  await page.addInitScript((value) => {
+    localStorage.setItem('tantara_token', value);
+    document.cookie = `tantara_token=${value}; Path=/; SameSite=Lax`;
+  }, token);
+  for (const [route, heading] of routes) {
+    await page.goto(route, { waitUntil: 'domcontentloaded' });
+    await expect(page.getByRole('heading', { level: 1 }).first(), `${route} heading`).toBeVisible({
+      timeout: 30_000,
+    });
+    await expect(page.getByRole('heading', { level: 1 }).first()).toContainText(heading);
+    await expect(page.locator('main'), `${route} should expose one main landmark`).toHaveCount(1);
+  }
+});

@@ -123,7 +123,29 @@ Resource reads are owner-scoped: requesting another user's case, document, draft
 
 ## API contracts
 
-Collection endpoints use the envelope `{items, total, page, page_size, pages}`. The calendar endpoint preserves its legacy bare-array response by default; callers that need pagination metadata can request `?envelope=true`. Search uses the `query` parameter (not `q`) and supports owner-scoped collection filters. Errors use `{error: {code, message, details?}}`; validation rejects unknown request fields with `validation_error` and an `extra_forbidden` detail. Wrong HTTP methods use `method_not_allowed`.
+Collection endpoints use the envelope `{items, total, page, page_size, pages}`. The calendar endpoint preserves its legacy bare-array response by default; callers that need pagination metadata can request `?envelope=true`. Both `GET /api/v1/search` and `GET /api/v1/search/documents` require the parameter `query`; the accepted filters are `page`, `page_size`, `limit`, `case_ids`, `document_types`, `collection_id`, and `collection_ids`. Omitting or renaming `query` returns HTTP 422 with `validation_error`. Errors use `{error: {code, message, details?}}`; validation rejects unknown request fields with an `extra_forbidden` detail. Wrong HTTP methods use `method_not_allowed`.
+
+Resource creation status codes are part of the API contract:
+
+| Create endpoint | Success status |
+|---|---:|
+| `POST /api/v1/cases` | 201 Created |
+| `POST /api/v1/collections` | 201 Created |
+| `POST /api/v1/clients` | 200 OK |
+| `POST /api/v1/hearings` | 200 OK |
+| `POST /api/v1/tasks` | 200 OK |
+| `POST /api/v1/drafts` | 200 OK |
+| `POST /api/v1/bundles` | 200 OK |
+| `POST /api/v1/notes` | 200 OK |
+| `POST /api/v1/community/posts` | 200 OK |
+| `POST /api/v1/drafts/generate` | 200 OK |
+| `POST /api/v1/drafts/{id}/versions` | 200 OK |
+| `POST /api/v1/community/posts/{id}/replies` | 200 OK |
+| `POST /api/v1/cases/{id}/participants` | 200 OK |
+| `POST /api/v1/cases/{id}/events` | 200 OK |
+| `POST /api/v1/documents/upload` | 202 Accepted |
+| `POST /api/v1/bundles/{id}/generate` | 202 Accepted |
+| `POST /api/v1/settings/data/import` | 202 Accepted |
 
 The most-used endpoints are:
 
@@ -137,7 +159,7 @@ The most-used endpoints are:
 
 ## Hybrid retrieval
 
-The retrieval service searches SQLite FTS5 using BM25 and FAISS `IndexFlatIP` using normalized embedding vectors. It fuses the independently ranked candidate pools with reciprocal-rank fusion (RRF), then labels the resulting score **Relevance**. Search and question answering apply owner and selected-collection scope before ranking; citations preserve `document_id`, `chunk_id`, and `page_number` so the UI can open the source page. The model is used for answer generation, not for retrieval itself. If it is unreachable, the API keeps the honest unavailable response and does not invent a conclusion.
+The retrieval service searches SQLite FTS5 using BM25 and FAISS `IndexFlatIP` using normalized embedding vectors. It fuses the independently ranked candidate pools with reciprocal-rank fusion (RRF), then labels the resulting score **Relevance**. Search and question answering apply owner and selected-collection scope before ranking; citations preserve `document_id`, `chunk_id`, and `page_number` so the UI can open the source page. Multi-term FTS queries are an OR of quoted tokens, not a phrase or AND; SQLite's `unicode61` tokenizer splits hyphenated terms such as `co-operative` into `co` and `operative`. The model is used for answer generation, not for retrieval itself. If it is unreachable, the API keeps the honest unavailable response and does not invent a conclusion.
 
 ```mermaid
 flowchart LR
@@ -188,23 +210,26 @@ cd ../backend
 
 Playwright starts an isolated migrated and demo-seeded backend and frontend using the configured test origins. Its test API origin is `TANTARA_API_ORIGIN`; the web origin is `TANTARA_WEB_URL`.
 
+The route-by-route target comparison, remaining visual differences, and the Playwright specs that reproduce the captures are recorded in [`docs/UI_COMPARISON.md`](docs/UI_COMPARISON.md).
+With a freshly seeded backend on `127.0.0.1:8010` and the app on `127.0.0.1:3010`, regenerate the complete screenshot set with `cd frontend && node scripts/capture-readme-screenshots.mjs`; the script rejects a case census other than 12 and known Playwright fixture residue before writing any image.
+
 ## Workspace screenshots
 
 These desktop and mobile captures come from the authenticated, demo-seeded workspace. Capture times are read from each image file mtime in UTC; desktop and mobile times are recorded separately.
 
 | Module | Desktop (1440×900) | Mobile (390×844) | Rendered | Desktop captured (UTC) | Mobile captured (UTC) |
 |---|---|---|---|---|
-| Dashboard | ![Dashboard desktop](docs/screenshots/dashboard-1440x900.png) | ![Dashboard mobile](docs/screenshots/dashboard-390x844.png) | 1440×900 / 390×844 | 10-28 20:01 | 10-28 11:59 |
-| Cases | ![Cases desktop](docs/screenshots/cases-1440x900.png) | ![Cases mobile](docs/screenshots/cases-390x844.png) | 1440×900 / 390×844 | 10-28 11:59 | 10-28 11:59 |
-| Clients | ![Clients desktop](docs/screenshots/clients-1440x900.png) | ![Clients mobile](docs/screenshots/clients-390x844.png) | 1440×900 / 390×844 | 10-28 11:59 | 10-28 11:59 |
-| Tasks | ![Tasks desktop](docs/screenshots/tasks-1440x900.png) | ![Tasks mobile](docs/screenshots/tasks-390x844.png) | 1440×900 / 390×844 | 10-28 20:01 | 10-28 11:59 |
-| Calendar | ![Calendar desktop](docs/screenshots/calendar-1440x900.png) | ![Calendar mobile](docs/screenshots/calendar-390x844.png) | 1440×900 / 390×844 | 10-28 20:01 | 10-28 11:59 |
-| Documents | ![Documents desktop](docs/screenshots/documents-1440x900.png) | ![Documents mobile](docs/screenshots/documents-390x844.png) | 1440×900 / 390×844 | 10-28 11:59 | 10-28 11:59 |
-| Search | ![Search desktop](docs/screenshots/search-1440x900.png) | ![Search mobile](docs/screenshots/search-390x844.png) | 1440×900 / 390×844 | 10-28 12:06 | 10-28 12:06 |
-| Research | ![Research desktop](docs/screenshots/research-1440x900.png) | ![Research mobile](docs/screenshots/research-390x844.png) | 1440×900 / 390×844 | 10-28 11:59 | 10-28 11:59 |
-| Drafts | ![Drafts desktop](docs/screenshots/drafts-1440x900.png) | ![Drafts mobile](docs/screenshots/drafts-390x844.png) | 1440×900 / 390×844 | 10-28 11:59 | 10-28 11:59 |
-| Autofill | ![Autofill desktop](docs/screenshots/autofill-1440x900.png) | ![Autofill mobile](docs/screenshots/autofill-390x844.png) | 1440×900 / 390×844 | 10-28 12:06 | 10-28 12:06 |
-| Bundles | ![Bundles desktop](docs/screenshots/bundles-1440x900.png) | ![Bundles mobile](docs/screenshots/bundles-390x844.png) | 1440×900 / 390×844 | 10-28 11:59 | 10-28 11:59 |
-| Strategy | ![Strategy desktop](docs/screenshots/strategy-1440x900.png) | ![Strategy mobile](docs/screenshots/strategy-390x844.png) | 1440×900 / 390×844 | 10-28 12:06 | 10-28 12:06 |
-| Community | ![Community desktop](docs/screenshots/community-1440x900.png) | ![Community mobile](docs/screenshots/community-390x844.png) | 1440×900 / 390×844 | 10-28 11:59 | 10-28 11:59 |
-| Settings | ![Settings desktop](docs/screenshots/settings-profile-1440x900.png) | ![Settings mobile](docs/screenshots/settings-profile-390x844.png) | 1440×900 / 390×844 | 10-28 11:59 | 10-28 11:59 |
+| Dashboard | ![Dashboard desktop](docs/screenshots/dashboard-1440x900.png) | ![Dashboard mobile](docs/screenshots/dashboard-390x844.png) | 1440×900 / 390×844 | 2026-10-28 20:43 UTC | 2026-10-28 20:43 UTC |
+| Cases | ![Cases desktop](docs/screenshots/cases-1440x900.png) | ![Cases mobile](docs/screenshots/cases-390x844.png) | 1440×900 / 390×844 | 2026-10-28 20:43 UTC | 2026-10-28 20:43 UTC |
+| Clients | ![Clients desktop](docs/screenshots/clients-1440x900.png) | ![Clients mobile](docs/screenshots/clients-390x844.png) | 1440×900 / 390×844 | 2026-10-28 20:43 UTC | 2026-10-28 20:43 UTC |
+| Tasks | ![Tasks desktop](docs/screenshots/tasks-1440x900.png) | ![Tasks mobile](docs/screenshots/tasks-390x844.png) | 1440×900 / 390×844 | 2026-10-28 20:43 UTC | 2026-10-28 20:43 UTC |
+| Calendar | ![Calendar desktop](docs/screenshots/calendar-1440x900.png) | ![Calendar mobile](docs/screenshots/calendar-390x844.png) | 1440×900 / 390×844 | 2026-10-28 20:43 UTC | 2026-10-28 20:43 UTC |
+| Documents | ![Documents desktop](docs/screenshots/documents-1440x900.png) | ![Documents mobile](docs/screenshots/documents-390x844.png) | 1440×900 / 390×844 | 2026-10-28 20:43 UTC | 2026-10-28 20:43 UTC |
+| Search | ![Search desktop](docs/screenshots/search-1440x900.png) | ![Search mobile](docs/screenshots/search-390x844.png) | 1440×900 / 390×844 | 2026-10-28 20:43 UTC | 2026-10-28 20:43 UTC |
+| Research | ![Research desktop](docs/screenshots/research-1440x900.png) | ![Research mobile](docs/screenshots/research-390x844.png) | 1440×900 / 390×844 | 2026-10-28 20:43 UTC | 2026-10-28 20:43 UTC |
+| Drafts | ![Drafts desktop](docs/screenshots/drafts-1440x900.png) | ![Drafts mobile](docs/screenshots/drafts-390x844.png) | 1440×900 / 390×844 | 2026-10-28 20:43 UTC | 2026-10-28 20:43 UTC |
+| Autofill | ![Autofill desktop](docs/screenshots/autofill-1440x900.png) | ![Autofill mobile](docs/screenshots/autofill-390x844.png) | 1440×900 / 390×844 | 2026-10-28 20:43 UTC | 2026-10-28 20:43 UTC |
+| Bundles | ![Bundles desktop](docs/screenshots/bundles-1440x900.png) | ![Bundles mobile](docs/screenshots/bundles-390x844.png) | 1440×900 / 390×844 | 2026-10-28 20:43 UTC | 2026-10-28 20:43 UTC |
+| Strategy | ![Strategy desktop](docs/screenshots/strategy-1440x900.png) | ![Strategy mobile](docs/screenshots/strategy-390x844.png) | 1440×900 / 390×844 | 2026-10-28 20:43 UTC | 2026-10-28 20:43 UTC |
+| Community | ![Community desktop](docs/screenshots/community-1440x900.png) | ![Community mobile](docs/screenshots/community-390x844.png) | 1440×900 / 390×844 | 2026-10-28 20:43 UTC | 2026-10-28 20:43 UTC |
+| Settings | ![Settings desktop](docs/screenshots/settings-profile-1440x900.png) | ![Settings mobile](docs/screenshots/settings-profile-390x844.png) | 1440×900 / 390×844 | 2026-10-28 20:43 UTC | 2026-10-28 20:43 UTC |
