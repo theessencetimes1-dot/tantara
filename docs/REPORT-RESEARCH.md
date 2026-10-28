@@ -30,8 +30,8 @@ After the last valid full run, a final assertion was added for the mobile menu b
 
 Authenticated captures use real seeded API data, have no loading skeletons or Next.js dev badge, and are under `frontend/docs/screenshots/`.
 
-- Desktop (1440px wide): `research-desktop-answer-citations.png`, `research-desktop-insufficient-evidence.png`, `research-desktop-model-unavailable.png`, `research-desktop-no-evidence.png`, `research-desktop-scope-selected.png`, `research-desktop-history-refreshed.png`, and `research-desktop-empty.png`.
-- Mobile (390×844): `research-mobile-answer-citations.png`, `research-mobile-insufficient-evidence.png`, `research-mobile-model-unavailable.png`, `research-mobile-no-evidence.png`, and `research-mobile-empty.png` (composer visible in the initial view).
+- Desktop (1440px wide): `capture not retained`, `capture not retained`, `capture not retained`, `capture not retained`, `capture not retained`, `capture not retained`, and `capture not retained`.
+- Mobile (390×844): `capture not retained`, `capture not retained`, `capture not retained`, `capture not retained`, and `capture not retained` (composer visible in the initial view).
 - Additional interaction captures cover the citation destination, refreshed/restored history, saved answer, scope, library, suggestion, Ask, and Retry states.
 
 The citation click reaches `/documents/{id}?page=N&chunk=...` and the viewer title matches the cited document. **The page-scroll/highlight handoff remains blocked by the Documents viewer:** this v1.1.0 `/api/v1/documents/{id}/pages` response is `{ "pages": [...] }`, while the current viewer only consumes a bare array or `{ "items": [...] }`. It consequently renders no `#page-N` element and has no “Page number” input. The Research lane did not change the Documents feature, and no claim is made that the cited page or chunk highlight was visible in the viewer capture.
@@ -78,14 +78,14 @@ Commands and results:
 
 All files are in `frontend/docs/screenshots/`; desktop captures use 1440px width and mobile captures use 390×844. The final successful lane run refreshed the desktop answer/citations, empty, history, scope, insufficient-evidence, no-evidence, unavailable, and retry captures; mobile answer/citations, empty, insufficient-evidence, no-evidence, and unavailable captures; and added:
 
-- `research-mobile-source-group-expanded.png`
-- `research-mobile-citation-arrival.png`
-- `research-mobile-copy-feedback.png`
-- `research-desktop-pdf-downloaded.png`
-- `research-desktop-upload-destination.png`
-- `research-desktop-upload-complete.png`
+- `capture not retained`
+- `capture not retained`
+- `capture not retained`
+- `capture not retained`
+- `capture not retained`
+- `capture not retained`
 
-The current `research-mobile-insufficient-evidence.png` remains from the earlier, clipped capture. I updated its Playwright capture to scroll the complete state card into view. After 3014 became free I tried the focused recapture, but the live ask returned `status: "error"` and “No indexed excerpt directly answers this question” instead of a genuine insufficiency response; I did not capture that as an insufficiency state. A prior complete lane run passed 9/9 before this capture-only assertion change; this later focused attempt failed before capture. This specific mobile PNG is stale evidence and needs replacement on a run where the configured model returns the genuine insufficiency state.
+The current `capture not retained` remains from the earlier, clipped capture. I updated its Playwright capture to scroll the complete state card into view. After 3014 became free I tried the focused recapture, but the live ask returned `status: "error"` and “No indexed excerpt directly answers this question” instead of a genuine insufficiency response; I did not capture that as an insufficiency state. A prior complete lane run passed 9/9 before this capture-only assertion change; this later focused attempt failed before capture. This specific mobile PNG is stale evidence and needs replacement on a run where the configured model returns the genuine insufficiency state.
 
 ### Remaining integration gaps
 

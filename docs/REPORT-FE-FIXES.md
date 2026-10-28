@@ -39,12 +39,12 @@ Executed from `frontend/`:
 
 ## Screenshot artifacts
 
-- `docs/screenshots/home-desktop.png`
-- `docs/screenshots/home-mobile.png`
-- `docs/screenshots/dashboard-desktop.png`
-- `docs/screenshots/dashboard-mobile.png`
-- `docs/screenshots/settings-local-ai-desktop.png`
-- `docs/screenshots/settings-local-ai-mobile.png`
+- `capture not retained`
+- `capture not retained`
+- `capture not retained`
+- `capture not retained`
+- `capture not retained`
+- `capture not retained`
 
 ## Remaining phase work
 

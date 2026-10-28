@@ -2,7 +2,7 @@
 
 ## Round 6 — L4f follow-up
 
-The mandatory Step 0 cleanup was completed first. Nine pending `target-crops/*.png` reference files were committed one file per commit, then `luna/frontend-documents` was pushed. Pushed head: `2603aaa5c0e27c1ae7f4ebe26cef44152cfa1f35`.
+The mandatory Step 0 cleanup was completed first. Nine pending reference crops, no longer retained in the repository, were committed one file per commit, then `luna/frontend-documents` was pushed. Pushed head: `2603aaa5c0e27c1ae7f4ebe26cef44152cfa1f35`.
 
 | L4f finding | Change made | Proof status |
 |---|---|---|
@@ -46,7 +46,7 @@ The L4f code and test commits were pushed at `488bbfee05a2fec1ff8f0a65bd1810da85
 | AI extraction could expose arrays/JSON or repeated text as a summary | Extraction values are unwrapped and rendered as prose, empty evidence is labelled “Not extracted,” duplicate text is removed, and long summary text is bounded until expanded. Provenance uses human-readable labels while preserving machine values in `data-*`. | E2E rejects raw JSON and enum keys, asserts the real summary prose and candidate provenance, and expands the summary to verify the full value. Fixture extraction tests remain explicitly named `-fixture`. |
 | Endpoint details could leak in errors | Error copy omits configured hosts, URLs and ports. | Dead-endpoint test configures `http://127.0.0.1:9/v1`; asserts no candidate fields and no visible `https?://` or `:\\d{2,5}`. Separate tests cover authentication, embedding, extraction, response-loading, model-unavailable and no-evidence states. |
 | Capture dimensions and black artifacts were unreliable | Capture tests set the viewport themselves and capture the viewport (not an unbounded full page). Screenshot helpers assert exact dimensions and sample corner pixels for near-black contamination. Removed older mobile captures that still showed an open drawer, a black band, or non-viewport metadata crops. | Round 5 screenshots are 1440×900 or 390×844. The capture tests fail on a black sampled corner; a post-run audit confirmed the new Round 5 captures have no near-black corners. |
-| Upload outcome needed real proof | Upload runs through the UI, the ingestion job is polled to `ready`, and the uploaded PDF renders. AI extraction is requested from the real API and the rendered field must include its source page. Cleanup retries transient connection resets and must succeed. | `documents-round5.spec.ts` upload outcome test; its capture is named `-fixture.png` because its document is a generated fixture. |
+| Upload outcome needed real proof | Upload runs through the UI, the ingestion job is polled to `ready`, and the uploaded PDF renders. AI extraction is requested from the real API and the rendered field must include its source page. Cleanup retries transient connection resets and must succeed. | `documents-round5.spec.ts` upload outcome test; its capture is no longer retained; the document was a generated fixture. |
 | Library fixture count and stale count could be mistaken for live data | Real corpus captures use the seeded backend; fixture and controlled failure captures are suffixed `-fixture`. List failures do not present an old count as current. | Mobile test compares the live API’s eight demo records to the displayed cards. The real library capture is separate from the fixture captures. |
 
 ## Verification
@@ -81,42 +81,42 @@ The real viewer and AI Read captures show the seeded demo document **`page-three
 
 | Viewer capture | Visible page | Document identity |
 |---|---:|---|
-| `documents-round5-viewer-desktop-1440-real.png` | 1 of 5 | `page-three-motion.pdf`; SHA-256 `ab7f8914425ba71199556afddc6c2947a171234ff3c56ec8d4102a56da2559a6` |
-| `documents-round5-viewer-mobile-390-real.png` | 1 of 5 | `page-three-motion.pdf`; SHA-256 `ab7f8914425ba71199556afddc6c2947a171234ff3c56ec8d4102a56da2559a6` |
-| `documents-viewer-page2-desktop-1440-real.png` | 2 of 5 | `page-three-motion.pdf`; SHA-256 `ab7f8914425ba71199556afddc6c2947a171234ff3c56ec8d4102a56da2559a6` |
-| `documents-viewer-page2-mobile-390-real.png` | 2 of 5 | `page-three-motion.pdf`; SHA-256 `ab7f8914425ba71199556afddc6c2947a171234ff3c56ec8d4102a56da2559a6` |
-| `documents-round5-metadata-desktop-1440-real.png` | 1 of 5 | `page-three-motion.pdf`; SHA-256 `ab7f8914425ba71199556afddc6c2947a171234ff3c56ec8d4102a56da2559a6` |
-| `documents-round5-metadata-mobile-390-real.png` | 1 of 5 | `page-three-motion.pdf`; SHA-256 `ab7f8914425ba71199556afddc6c2947a171234ff3c56ec8d4102a56da2559a6` |
-| `documents-round5-airead-desktop-1440-populated-real.png` | 1 of 5 | `page-three-motion.pdf`; SHA-256 `ab7f8914425ba71199556afddc6c2947a171234ff3c56ec8d4102a56da2559a6` |
-| `documents-round5-airead-mobile-390-populated-real.png` | 1 of 5 | `page-three-motion.pdf`; SHA-256 `ab7f8914425ba71199556afddc6c2947a171234ff3c56ec8d4102a56da2559a6` |
-| `documents-round5-citation-page3-desktop-1440-real.png` | 3 of 5 | `page-three-motion.pdf`; SHA-256 `ab7f8914425ba71199556afddc6c2947a171234ff3c56ec8d4102a56da2559a6` |
-| `documents-round5-citation-page3-mobile-390-real.png` | 3 of 5 | `page-three-motion.pdf`; SHA-256 `ab7f8914425ba71199556afddc6c2947a171234ff3c56ec8d4102a56da2559a6` |
+| `capture not retained` | 1 of 5 | `page-three-motion.pdf`; SHA-256 `ab7f8914425ba71199556afddc6c2947a171234ff3c56ec8d4102a56da2559a6` |
+| `capture not retained` | 1 of 5 | `page-three-motion.pdf`; SHA-256 `ab7f8914425ba71199556afddc6c2947a171234ff3c56ec8d4102a56da2559a6` |
+| `capture not retained` | 2 of 5 | `page-three-motion.pdf`; SHA-256 `ab7f8914425ba71199556afddc6c2947a171234ff3c56ec8d4102a56da2559a6` |
+| `capture not retained` | 2 of 5 | `page-three-motion.pdf`; SHA-256 `ab7f8914425ba71199556afddc6c2947a171234ff3c56ec8d4102a56da2559a6` |
+| `capture not retained` | 1 of 5 | `page-three-motion.pdf`; SHA-256 `ab7f8914425ba71199556afddc6c2947a171234ff3c56ec8d4102a56da2559a6` |
+| `capture not retained` | 1 of 5 | `page-three-motion.pdf`; SHA-256 `ab7f8914425ba71199556afddc6c2947a171234ff3c56ec8d4102a56da2559a6` |
+| `capture not retained` | 1 of 5 | `page-three-motion.pdf`; SHA-256 `ab7f8914425ba71199556afddc6c2947a171234ff3c56ec8d4102a56da2559a6` |
+| `capture not retained` | 1 of 5 | `page-three-motion.pdf`; SHA-256 `ab7f8914425ba71199556afddc6c2947a171234ff3c56ec8d4102a56da2559a6` |
+| `capture not retained` | 3 of 5 | `page-three-motion.pdf`; SHA-256 `ab7f8914425ba71199556afddc6c2947a171234ff3c56ec8d4102a56da2559a6` |
+| `capture not retained` | 3 of 5 | `page-three-motion.pdf`; SHA-256 `ab7f8914425ba71199556afddc6c2947a171234ff3c56ec8d4102a56da2559a6` |
 
 Desktop captures (1440×900):
 
-- `docs/screenshots/documents-round5-viewer-desktop-1440-real.png` — rendered page and toolbar.
-- `docs/screenshots/documents-round5-metadata-desktop-1440-real.png` — metadata grid.
-- `docs/screenshots/documents-round5-airead-desktop-1440-populated-real.png` — completed extraction and rendered viewer.
-- `docs/screenshots/documents-round5-citation-page3-desktop-1440-real.png` — Page 3 citation result and supporting passage.
-- `docs/screenshots/documents-round5-download-viewer-desktop-1440-real.png` — PDF download outcome.
+- `capture not retained` — rendered page and toolbar.
+- `capture not retained` — metadata grid.
+- `capture not retained` — completed extraction and rendered viewer.
+- `capture not retained` — Page 3 citation result and supporting passage.
+- `capture not retained` — PDF download outcome.
 
 Mobile captures (390×844):
 
-- `docs/screenshots/documents-round5-library-mobile-390-real.png` — eight seeded documents as cards.
-- `docs/screenshots/documents-round5-viewer-mobile-390-real.png` — rendered viewer.
-- `docs/screenshots/documents-round5-metadata-mobile-390-real.png` — metadata grid.
-- `docs/screenshots/documents-round5-airead-mobile-390-populated-real.png` — completed extraction with bounded summary.
-- `docs/screenshots/documents-round5-citation-page3-mobile-390-real.png` — citation result and supporting passage.
+- `capture not retained` — eight seeded documents as cards.
+- `capture not retained` — rendered viewer.
+- `capture not retained` — metadata grid.
+- `capture not retained` — completed extraction with bounded summary.
+- `capture not retained` — citation result and supporting passage.
 
-The generated multi-page upload capture is `docs/screenshots/documents-round5-upload-outcome-desktop-1440-fixture.png` and is explicitly fixture-labelled. Mobile empty and search states use real API data. Mobile failure, model-unavailable (empty extraction response controlled in the test), and no-evidence states are fixture-labelled; they are not presented as real seeded-corpus extraction results.
+The generated multi-page upload capture is `capture not retained` and is explicitly fixture-labelled. Mobile empty and search states use real API data. Mobile failure, model-unavailable (empty extraction response controlled in the test), and no-evidence states are fixture-labelled; they are not presented as real seeded-corpus extraction results.
 
 Additional settled mobile state captures (390×844):
 
-- `docs/screenshots/documents-round5-search-mobile-390-real.png` — real seeded search results with resolved document titles.
-- `docs/screenshots/documents-round5-empty-mobile-390-real.png` — real library query with no matching rows.
-- `docs/screenshots/documents-round5-failure-mobile-390-fixture.png` — controlled documents API failure.
-- `docs/screenshots/documents-round5-ai-read-unavailable-mobile-390-fixture.png` — dead model configuration, with an empty extraction response, no candidate fields, and no endpoint text.
-- `docs/screenshots/documents-round5-ai-read-no-evidence-mobile-390-fixture.png` — controlled no-evidence response.
+- `capture not retained` — real seeded search results with resolved document titles.
+- `capture not retained` — real library query with no matching rows.
+- `capture not retained` — controlled documents API failure.
+- `capture not retained` — dead model configuration, with an empty extraction response, no candidate fields, and no endpoint text.
+- `capture not retained` — controlled no-evidence response.
 
 ## Remaining gaps
 

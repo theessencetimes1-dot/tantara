@@ -68,6 +68,7 @@ _ACTIVITY_OBJECTS = {
     "document": "document",
     "documents": "document",
     "draft": "draft",
+    "drafts": "draft",
     "draft_section": "draft section",
     "draft_version": "draft version",
     "draft_versions": "draft versions",

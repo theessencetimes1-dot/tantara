@@ -18,7 +18,7 @@
 
 The screenshot harness now records keyboard focus on both the global search button and Ask TANTARA input, invalid-email/short-password validation, and the offline panel with its technical command expanded. It then restores the API fixture, retries, and confirms metrics load again.
 
-The backend was not available to the browser capture harness with the needed local CORS/auth setup, so these screenshots use the existing Playwright-only API fixtures. The shipped frontend contains no fixture data and continues to call the configured API. The offline-recovery screenshot is a paired sequence: `states-offline-desktop.png` records the expanded offline state and `states-offline-recovered-desktop.png` records the successful retry.
+The backend was not available to the browser capture harness with the needed local CORS/auth setup, so these screenshots use the existing Playwright-only API fixtures. The shipped frontend contains no fixture data and continues to call the configured API. The offline-recovery screenshot is a paired sequence: `capture not retained` records the expanded offline state and `capture not retained` records the successful retry.
 
 ## Intentional scope decisions
 
@@ -38,19 +38,19 @@ Command chain: `pnpm format && pnpm lint && pnpm typecheck && pnpm build && pnpm
 
 Screenshot paths:
 
-- `docs/screenshots/home-desktop.png`
-- `docs/screenshots/home-mobile.png`
-- `docs/screenshots/dashboard-desktop.png`
-- `docs/screenshots/dashboard-mobile.png`
-- `docs/screenshots/settings-local-ai-desktop.png`
-- `docs/screenshots/settings-local-ai-mobile.png`
-- `docs/screenshots/states-focus-desktop.png`
-- `docs/screenshots/states-ai-input-focus-desktop.png`
-- `docs/screenshots/states-validation-desktop.png`
-- `docs/screenshots/states-offline-desktop.png`
-- `docs/screenshots/states-offline-recovered-desktop.png`
+- `capture not retained`
+- `capture not retained`
+- `capture not retained`
+- `capture not retained`
+- `capture not retained`
+- `capture not retained`
+- `capture not retained`
+- `capture not retained`
+- `capture not retained`
+- `capture not retained`
+- `capture not retained`
 
-## Visual fidelity self-assessment: Dashboard vs `frontend.png`
+## Visual fidelity self-assessment: Dashboard vs `docs/design/frontend.png`
 
 The desktop capture matches the target’s four primary metrics, their icon/color roles, indigo Ask TANTARA panel, white input and suggestion chips, compact navy sidebar, rectangular search, and warm legal photography. The new right column establishes the case-module slot before the hearings card; the secondary totals read as one grouped summary card. The mobile capture preserves loaded metrics, research controls and hearings without page-wide overflow.
 

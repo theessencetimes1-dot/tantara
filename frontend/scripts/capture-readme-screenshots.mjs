@@ -1,10 +1,16 @@
 import { chromium } from '@playwright/test';
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import { assertCaptureReady } from './capture-guards.mjs';
 
 const apiOrigin = process.env.TANTARA_API_ORIGIN ?? 'http://127.0.0.1:8010';
 const webOrigin = process.env.TANTARA_WEB_URL ?? 'http://127.0.0.1:3010';
 const output = path.resolve(process.cwd(), '../docs/screenshots');
+const workspaceTimeZone =
+  process.env.NEXT_PUBLIC_WORKSPACE_TIME_ZONE ?? process.env.TANTARA_WORKSPACE_TIME_ZONE ?? 'Asia/Kolkata';
+const password = process.env.TANTARA_E2E_PASSWORD;
+if (!password?.trim())
+  throw new Error('TANTARA_E2E_PASSWORD is required to capture authenticated screenshots');
 const modules = [
   ['Dashboard', '/dashboard', 'dashboard'],
   ['Cases', '/cases', 'cases'],
@@ -25,12 +31,16 @@ const forbidden =
   /E2E Matter|Strategy source test|Minimal case|All-day event check|UTC calendar all-day proof|1793[0-9]{6}/;
 const browser = await chromium.launch({ headless: true });
 try {
-  const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, timezoneId: 'UTC' });
+  await mkdir(output, { recursive: true });
+  const context = await browser.newContext({
+    viewport: { width: 1440, height: 900 },
+    timezoneId: workspaceTimeZone,
+  });
   const page = await context.newPage();
   const login = await page.request.post(`${apiOrigin}/api/v1/auth/login`, {
     data: {
       email: process.env.TANTARA_E2E_EMAIL ?? 'advocate@tantara.local',
-      password: process.env.TANTARA_E2E_PASSWORD ?? 'tantara-local',
+      password,
     },
   });
   if (!login.ok()) throw new Error(`Login failed: ${login.status()} ${await login.text()}`);
@@ -79,13 +89,73 @@ try {
           census.total,
           { timeout: 30_000 },
         );
+        const summaryResponse = await page.request.get(`${apiOrigin}/api/v1/dashboard/summary`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!summaryResponse.ok()) throw new Error(`Dashboard summary failed: ${summaryResponse.status()}`);
+        const summary = await summaryResponse.json();
+        const browserToday = await page.evaluate((zone) => {
+          const parts = new Intl.DateTimeFormat('en-CA', {
+            timeZone: zone,
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+          }).formatToParts(new Date());
+          const values = Object.fromEntries(parts.map(({ type, value }) => [type, value]));
+          return `${values.year}-${values.month}-${values.day}`;
+        }, workspaceTimeZone);
+        if (summary.today !== browserToday) {
+          throw new Error(
+            `Dashboard API date ${summary.today} differs from current ${workspaceTimeZone} date ${browserToday}`,
+          );
+        }
+        const greetingDate = await page.locator('h1.title + .subheading').innerText();
+        const expectedGreetingDate = await page.evaluate(
+          ({ today, zone }) => {
+            const [year, month, day] = today.split('-').map(Number);
+            return new Date(Date.UTC(year, month - 1, day, 12)).toLocaleDateString('en-GB', {
+              timeZone: zone,
+              weekday: 'long',
+              day: 'numeric',
+              month: 'long',
+              year: 'numeric',
+            });
+          },
+          { today: summary.today, zone: workspaceTimeZone },
+        );
+        if (greetingDate !== expectedGreetingDate) {
+          throw new Error(
+            `Dashboard greeting date ${JSON.stringify(greetingDate)} differs from ${workspaceTimeZone} date ${JSON.stringify(expectedGreetingDate)}`,
+          );
+        }
       }
       await page
-        .waitForFunction(() => !/Loading…|Loading\.\.\./.test(document.body.innerText), { timeout: 30_000 })
+        .waitForFunction(() => !/Loading/i.test(document.body.innerText), { timeout: 30_000 })
         .catch(() => {
           throw new Error(`${route} did not finish loading before capture`);
         });
       const bodyText = await page.locator('body').innerText();
+      let hasRenderedDocumentPage = false;
+      const requiresRenderedDocumentPage = route === '/documents' && viewport.width >= 768;
+      if (requiresRenderedDocumentPage) {
+        await page.locator('.document-preview-pane .pdf-page-label').first().waitFor({
+          state: 'visible',
+          timeout: 30_000,
+        });
+        await page.waitForFunction(
+          () => {
+            const canvas = document.querySelector('.document-preview-pane .pdf-page-surface canvas');
+            return canvas instanceof HTMLCanvasElement && canvas.dataset.rendered === 'true';
+          },
+          undefined,
+          { timeout: 30_000 },
+        );
+        hasRenderedDocumentPage = true;
+      }
+      assertCaptureReady(route, bodyText, {
+        hasRenderedDocumentPage,
+        requireRenderedDocumentPage: requiresRenderedDocumentPage,
+      });
       if (forbidden.test(bodyText))
         throw new Error(`Refusing contaminated ${route} capture: ${bodyText.match(forbidden)?.[0]}`);
       const navCount = await page.locator('.sidebar .nav a[href]').count();
