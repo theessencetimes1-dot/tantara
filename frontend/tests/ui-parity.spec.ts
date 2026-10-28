@@ -58,7 +58,7 @@ test('workspace navigation exposes all module routes and each route resolves', a
     await expect(link).toHaveAttribute('href', route);
     await link.click();
     await page.waitForURL((url) => url.pathname === route, { waitUntil: 'commit', timeout: 15_000 });
-    const activeNavLink = nav.locator('a[aria-current="page"]:visible');
+    const activeNavLink = page.locator('a[aria-current="page"]');
     await expect(activeNavLink).toHaveCount(1);
     await expect(activeNavLink).toHaveAttribute('href', route);
     const dashboardLink = page.getByRole('link', { name: 'Dashboard', exact: true }).first();
@@ -70,6 +70,17 @@ test('workspace navigation exposes all module routes and each route resolves', a
     await expect(activeNavLink).toHaveCount(1);
     await expect(activeNavLink).toHaveAttribute('href', '/dashboard');
   }
+});
+
+test('settings section navigation keeps one visible page-level current link', async ({ page, request }) => {
+  await authenticate(page, request);
+  await page.goto('/settings/profile');
+  const pageCurrent = page.locator('a[aria-current="page"]');
+  await expect(pageCurrent).toHaveCount(1);
+  await expect(pageCurrent).toHaveAttribute('href', '/settings/profile');
+  await expect(
+    page.getByRole('navigation', { name: 'Settings navigation' }).getByRole('link', { name: 'Profile' }),
+  ).toHaveAttribute('aria-current', 'location');
 });
 
 test('shared shell matches measured desktop target geometry and artwork', async ({ page, request }) => {

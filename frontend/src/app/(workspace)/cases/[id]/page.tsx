@@ -256,13 +256,14 @@ export default function CaseDetailPage() {
           Edit case
         </Link>
       </header>
-      <nav className="matter-tabs case-detail-tabs" aria-label="Case sections">
+      <nav className="matter-tabs case-detail-tabs" aria-label="Case sections" role="tablist">
         {tabs.map((name) => (
           <button
             type="button"
             key={name}
+            role="tab"
             className={tab === name ? 'active' : ''}
-            aria-current={tab === name ? 'page' : undefined}
+            aria-selected={tab === name}
             onClick={() => setTab(name)}
           >
             {name}

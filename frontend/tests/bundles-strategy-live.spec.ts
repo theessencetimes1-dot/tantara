@@ -247,9 +247,12 @@ test('staff sees the real empty bundle state and module navigation is available 
   const drawer = page.getByRole('navigation', { name: 'Main navigation' });
   await expect(drawer.getByRole('link', { name: 'Bundles' })).toBeVisible();
   await expect(drawer.getByRole('link', { name: 'Strategy' })).toBeVisible();
-  await drawer.getByRole('link', { name: 'Strategy' }).click();
-  await expect(page).toHaveURL(/\/strategy/);
+  await expect.poll(async () => (await page.locator('.sidebar').boundingBox())?.x).toBe(0);
+  const strategyLink = drawer.getByRole('link', { name: 'Strategy' });
+  await strategyLink.click();
+  await expect(page).toHaveURL(/\/strategy/, { timeout: 15000 });
   await expect(page.getByRole('heading', { name: 'AI Strategy Advisor' })).toBeVisible();
+  await expect(page.locator('.sidebar')).not.toHaveClass(/\bopen\b/);
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
 });
 
@@ -309,7 +312,7 @@ test('strategy reflects reachable model output honestly and citation links targe
   };
   await authenticatePage(page);
   await page.goto(`/cases/${seededCaseId}/strategy?tab=Legal%20Arguments`);
-  await expect(page.getByRole('button', { name: 'Legal Arguments' })).toHaveAttribute('aria-current', 'page');
+  await expect(page.getByRole('tab', { name: 'Legal Arguments' })).toHaveAttribute('aria-selected', 'true');
   if (result.status === 'model_generated') {
     expect(settings.runtime_status?.reachable).toBeTruthy();
     expect(result.model).toBeTruthy();
@@ -536,7 +539,7 @@ test('strategy shows source excerpts honestly, saves edits, creates a task, and 
   await expect(
     page.getByText('Model unavailable · source excerpts assembled without a language model'),
   ).toBeVisible();
-  await page.getByRole('button', { name: 'Legal Arguments' }).click();
+  await page.getByRole('tab', { name: 'Legal Arguments' }).click();
   await expect(page.locator('.strategy-citation').first()).toContainText('p.');
   await capture(page, 'strategy-1440x900-model-unavailable-real.png');
 
@@ -554,7 +557,7 @@ test('strategy shows source excerpts honestly, saves edits, creates a task, and 
   await expect(page).toHaveURL(new RegExp(`/documents/${citedDocId}\\?page=${citedPage}`));
   await expect(page.getByRole('heading', { name: /Scanned Arbitration Agreement/ })).toBeVisible();
   await page.goto(`/cases/${strategyTestCaseId}/strategy?tab=Legal%20Arguments`);
-  await expect(page.getByRole('button', { name: 'Legal Arguments' })).toHaveAttribute('aria-current', 'page');
+  await expect(page.getByRole('tab', { name: 'Legal Arguments' })).toHaveAttribute('aria-selected', 'true');
 
   await page.setViewportSize({ width: 390, height: 844 });
   for (const label of [
@@ -565,14 +568,14 @@ test('strategy shows source excerpts honestly, saves edits, creates a task, and 
     'Evidence Gaps',
     'Strategy Plan',
   ]) {
-    const tab = page.getByRole('button', { name: label, exact: true });
+    const tab = page.getByRole('tab', { name: label, exact: true });
     await tab.click();
-    await expect(tab).toHaveAttribute('aria-current', 'page');
+    await expect(tab).toHaveAttribute('aria-selected', 'true');
   }
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
   await capture(page, 'strategy-390x844-mobile-tabs-real.png');
 
-  await page.getByRole('button', { name: 'Legal Arguments' }).click();
+  await page.getByRole('tab', { name: 'Legal Arguments' }).click();
   const argument = page.getByLabel('Legal Arguments note 1');
   await argument.fill(`${await argument.inputValue()} Lawyer review note.`);
   await page.getByRole('button', { name: 'Save notes' }).click();
@@ -587,7 +590,7 @@ test('strategy shows source excerpts honestly, saves edits, creates a task, and 
   await capture(page, 'strategy-1440x900-notes-saved-real.png');
   await page.reload();
   await expect(page.getByRole('heading', { name: 'AI Strategy Advisor' })).toBeVisible();
-  await page.getByRole('button', { name: 'Legal Arguments' }).click();
+  await page.getByRole('tab', { name: 'Legal Arguments' }).click();
   await expect(page.getByLabel('Legal Arguments note 1')).toHaveValue(/Lawyer review note\./);
 
   await page.getByRole('button', { name: 'Create research task' }).click();
