@@ -452,17 +452,20 @@ export function CommunityThread({ id }: { id: string }) {
   const [busy, setBusy] = useState(false);
 
   const loadThread = useCallback(async () => {
-    const [postResult, replyResult, identity, savedPosts, caseResult] = await Promise.all([
-      communityApi.post(id),
-      communityApi.replies(id),
-      communityApi.me(),
-      communityApi.list(1, '', '', true),
-      communityApi.cases(),
-    ]);
+    const [postResult, replyResult] = await Promise.all([communityApi.post(id), communityApi.replies(id)]);
     const response = replyResult as Page<CommunityReply>;
     setPost(postResult);
     setReplies(response.items || []);
     setReplyTotal(response.total);
+
+    // The discussion itself should render as soon as its own data arrives.
+    // Identity, saved-state and case-name lookups only decorate the thread and
+    // should not keep the whole page stuck on its loading state.
+    const [identity, savedPosts, caseResult] = await Promise.all([
+      communityApi.me(),
+      communityApi.list(1, '', '', true),
+      communityApi.cases(),
+    ]);
     setMe(identity);
     setSaved(savedPosts.items.some((item) => item.id === id));
     setCaseNames(Object.fromEntries(caseResult.items.map((item) => [item.id, item.title])));

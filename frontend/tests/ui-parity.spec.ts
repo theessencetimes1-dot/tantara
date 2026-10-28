@@ -75,6 +75,18 @@ test('workspace navigation exposes all module routes and each route resolves', a
     const current = nav.locator('a[aria-current="page"]');
     await expect(current, `${route} should have one current rail link`).toHaveCount(1);
     await expect(current).toHaveAttribute('href', route);
+    const canonicalRailLabels: Record<string, string> = {
+      '/bundles': 'Bundles',
+      '/strategy': 'Strategy',
+    };
+    if (canonicalRailLabels[route]) await expect(current).toHaveText(canonicalRailLabels[route]);
+    const canonicalPageHeadings: Record<string, string> = {
+      '/bundles': 'Filing Bundles',
+      '/strategy': 'AI Strategy Advisor',
+    };
+    if (canonicalPageHeadings[route]) {
+      await expect(page.getByRole('heading', { level: 1, name: canonicalPageHeadings[route] })).toBeVisible();
+    }
     if (route === '/documents') {
       await expect(page.getByRole('navigation', { name: 'Documents navigation' })).toHaveCount(0);
     }

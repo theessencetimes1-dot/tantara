@@ -61,13 +61,13 @@ All listed captures are intended to be real-backend captures (`fixture-backed: n
 
 | Expected filename | Viewport | State and data endpoint | Result |
 | --- | --- | --- | --- |
-| `drafts-list-desktop-1440.png`, `drafts-list-mobile-390.png` | 1440×900, 390×844 | 21-row seeded list, separated metadata, visible Start a draft; `GET /api/v1/drafts`, `GET /api/v1/cases` | Not captured: 3014 occupied by `fe4`. |
-| `draft-editor-desktop-1440.png`, `draft-editor-mobile-390.png` | 1440×900, 390×844 | Case-sourced review draft with editable sections and review marker; `POST /api/v1/drafts`, `GET /api/v1/drafts` | Not captured: 3014 occupied by `fe4`. This is a case-sourced editor surface, not proof that the model generated usable pleading text. |
-| `draft-review-needed-desktop-1440.png`, `draft-review-needed-mobile-390.png` | 1440×900, 390×844 | Live generated model response withheld behind structure warning; `POST /api/v1/drafts/generate` | Not captured: 3014 occupied by `fe4`. |
-| `draft-version-history-desktop-1440.png`, `draft-version-history-mobile-390.png` | 1440×900, 390×844 | Saved unique edit, restore confirmation, current marker and history tab; `POST /api/v1/drafts/{rid}/versions`, `GET /api/v1/drafts/{rid}/versions`, `POST /api/v1/drafts/{rid}/versions/{vid}/restore` | Not captured: 3014 occupied by `fe4`. |
-| `autofill-preview-desktop-1440.png`, `autofill-preview-mobile-390.png` | 1440×900, 390×844 | Per-field provenance, source and accepted review state; `GET /api/v1/cases/{cid}/autofill`, `POST /api/v1/cases/{cid}/autofill/preview` | Not captured: 3014 occupied by `fe4`. |
-| `autofill-applied-desktop-1440.png`, `autofill-applied-mobile-390.png` | 1440×900, 390×844 | Accepted sourced value and provenance persisted in the draft; `POST /api/v1/cases/{cid}/autofill/apply`, `POST /api/v1/drafts/{rid}/versions`, `GET /api/v1/drafts/{rid}` | Not captured: 3014 occupied by `fe4`. |
-| `draft-model-unavailable-desktop-1440.png`, `draft-model-unavailable-mobile-390.png` | 1440×900, 390×844 | Dead-port unavailable state and real retry attempt; `PATCH /api/v1/settings/ai`, `POST /api/v1/drafts/generate` | Not captured: 3014 occupied by `fe4`. |
+| `capture not retained`, `capture not retained` | 1440×900, 390×844 | 21-row seeded list, separated metadata, visible Start a draft; `GET /api/v1/drafts`, `GET /api/v1/cases` | Not captured: 3014 occupied by `fe4`. |
+| `capture not retained`, `capture not retained` | 1440×900, 390×844 | Case-sourced review draft with editable sections and review marker; `POST /api/v1/drafts`, `GET /api/v1/drafts` | Not captured: 3014 occupied by `fe4`. This is a case-sourced editor surface, not proof that the model generated usable pleading text. |
+| `capture not retained`, `capture not retained` | 1440×900, 390×844 | Live generated model response withheld behind structure warning; `POST /api/v1/drafts/generate` | Not captured: 3014 occupied by `fe4`. |
+| `capture not retained`, `capture not retained` | 1440×900, 390×844 | Saved unique edit, restore confirmation, current marker and history tab; `POST /api/v1/drafts/{rid}/versions`, `GET /api/v1/drafts/{rid}/versions`, `POST /api/v1/drafts/{rid}/versions/{vid}/restore` | Not captured: 3014 occupied by `fe4`. |
+| `capture not retained`, `capture not retained` | 1440×900, 390×844 | Per-field provenance, source and accepted review state; `GET /api/v1/cases/{cid}/autofill`, `POST /api/v1/cases/{cid}/autofill/preview` | Not captured: 3014 occupied by `fe4`. |
+| `capture not retained`, `capture not retained` | 1440×900, 390×844 | Accepted sourced value and provenance persisted in the draft; `POST /api/v1/cases/{cid}/autofill/apply`, `POST /api/v1/drafts/{rid}/versions`, `GET /api/v1/drafts/{rid}` | Not captured: 3014 occupied by `fe4`. |
+| `capture not retained`, `capture not retained` | 1440×900, 390×844 | Dead-port unavailable state and real retry attempt; `PATCH /api/v1/settings/ai`, `POST /api/v1/drafts/generate` | Not captured: 3014 occupied by `fe4`. |
 
 ## Commands and results
 

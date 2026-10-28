@@ -211,7 +211,7 @@ cd ../backend
 Playwright starts an isolated migrated and demo-seeded backend and frontend using the configured test origins. Its test API origin is `TANTARA_API_ORIGIN`; the web origin is `TANTARA_WEB_URL`.
 
 The route-by-route target comparison, remaining visual differences, and the Playwright specs that reproduce the captures are recorded in [`docs/UI_COMPARISON.md`](docs/UI_COMPARISON.md).
-With a freshly seeded backend on `127.0.0.1:8010` and the app on `127.0.0.1:3010`, regenerate the complete screenshot set with `cd frontend && node scripts/capture-readme-screenshots.mjs`; the script rejects a case census other than 12 and known Playwright fixture residue before writing any image.
+With a freshly seeded backend on `127.0.0.1:8010` and the app on `127.0.0.1:3010`, regenerate the complete screenshot set with `cd frontend && node scripts/capture-readme-screenshots.mjs`; set `TANTARA_E2E_PASSWORD` in the process environment first (the capture tool has no credential default). The script uses the configured workspace time zone, rejects a case census other than 12 and known Playwright fixture residue, and checks dashboard hydration and rendered PDF content before writing images.
 
 ## Workspace screenshots
 
@@ -219,17 +219,17 @@ These desktop and mobile captures come from the authenticated, demo-seeded works
 
 | Module | Desktop (1440×900) | Mobile (390×844) | Rendered | Desktop captured (UTC) | Mobile captured (UTC) |
 |---|---|---|---|---|
-| Dashboard | ![Dashboard desktop](docs/screenshots/dashboard-1440x900.png) | ![Dashboard mobile](docs/screenshots/dashboard-390x844.png) | 1440×900 / 390×844 | 2026-10-28 20:43 UTC | 2026-10-28 20:43 UTC |
-| Cases | ![Cases desktop](docs/screenshots/cases-1440x900.png) | ![Cases mobile](docs/screenshots/cases-390x844.png) | 1440×900 / 390×844 | 2026-10-28 20:43 UTC | 2026-10-28 20:43 UTC |
-| Clients | ![Clients desktop](docs/screenshots/clients-1440x900.png) | ![Clients mobile](docs/screenshots/clients-390x844.png) | 1440×900 / 390×844 | 2026-10-28 20:43 UTC | 2026-10-28 20:43 UTC |
-| Tasks | ![Tasks desktop](docs/screenshots/tasks-1440x900.png) | ![Tasks mobile](docs/screenshots/tasks-390x844.png) | 1440×900 / 390×844 | 2026-10-28 20:43 UTC | 2026-10-28 20:43 UTC |
-| Calendar | ![Calendar desktop](docs/screenshots/calendar-1440x900.png) | ![Calendar mobile](docs/screenshots/calendar-390x844.png) | 1440×900 / 390×844 | 2026-10-28 20:43 UTC | 2026-10-28 20:43 UTC |
-| Documents | ![Documents desktop](docs/screenshots/documents-1440x900.png) | ![Documents mobile](docs/screenshots/documents-390x844.png) | 1440×900 / 390×844 | 2026-10-28 20:43 UTC | 2026-10-28 20:43 UTC |
-| Search | ![Search desktop](docs/screenshots/search-1440x900.png) | ![Search mobile](docs/screenshots/search-390x844.png) | 1440×900 / 390×844 | 2026-10-28 20:43 UTC | 2026-10-28 20:43 UTC |
-| Research | ![Research desktop](docs/screenshots/research-1440x900.png) | ![Research mobile](docs/screenshots/research-390x844.png) | 1440×900 / 390×844 | 2026-10-28 20:43 UTC | 2026-10-28 20:43 UTC |
-| Drafts | ![Drafts desktop](docs/screenshots/drafts-1440x900.png) | ![Drafts mobile](docs/screenshots/drafts-390x844.png) | 1440×900 / 390×844 | 2026-10-28 20:43 UTC | 2026-10-28 20:43 UTC |
-| Autofill | ![Autofill desktop](docs/screenshots/autofill-1440x900.png) | ![Autofill mobile](docs/screenshots/autofill-390x844.png) | 1440×900 / 390×844 | 2026-10-28 20:43 UTC | 2026-10-28 20:43 UTC |
-| Bundles | ![Bundles desktop](docs/screenshots/bundles-1440x900.png) | ![Bundles mobile](docs/screenshots/bundles-390x844.png) | 1440×900 / 390×844 | 2026-10-28 20:43 UTC | 2026-10-28 20:43 UTC |
-| Strategy | ![Strategy desktop](docs/screenshots/strategy-1440x900.png) | ![Strategy mobile](docs/screenshots/strategy-390x844.png) | 1440×900 / 390×844 | 2026-10-28 20:43 UTC | 2026-10-28 20:43 UTC |
-| Community | ![Community desktop](docs/screenshots/community-1440x900.png) | ![Community mobile](docs/screenshots/community-390x844.png) | 1440×900 / 390×844 | 2026-10-28 20:43 UTC | 2026-10-28 20:43 UTC |
-| Settings | ![Settings desktop](docs/screenshots/settings-profile-1440x900.png) | ![Settings mobile](docs/screenshots/settings-profile-390x844.png) | 1440×900 / 390×844 | 2026-10-28 20:43 UTC | 2026-10-28 20:43 UTC |
+| Dashboard | ![Dashboard desktop](docs/screenshots/dashboard-1440x900.png) | ![Dashboard mobile](docs/screenshots/dashboard-390x844.png) | 1440×900 / 390×844 | 2026-10-28 22:04 UTC | 2026-10-28 22:04 UTC |
+| Cases | ![Cases desktop](docs/screenshots/cases-1440x900.png) | ![Cases mobile](docs/screenshots/cases-390x844.png) | 1440×900 / 390×844 | 2026-10-28 22:04 UTC | 2026-10-28 22:04 UTC |
+| Clients | ![Clients desktop](docs/screenshots/clients-1440x900.png) | ![Clients mobile](docs/screenshots/clients-390x844.png) | 1440×900 / 390×844 | 2026-10-28 22:04 UTC | 2026-10-28 22:04 UTC |
+| Tasks | ![Tasks desktop](docs/screenshots/tasks-1440x900.png) | ![Tasks mobile](docs/screenshots/tasks-390x844.png) | 1440×900 / 390×844 | 2026-10-28 22:04 UTC | 2026-10-28 22:04 UTC |
+| Calendar | ![Calendar desktop](docs/screenshots/calendar-1440x900.png) | ![Calendar mobile](docs/screenshots/calendar-390x844.png) | 1440×900 / 390×844 | 2026-10-28 22:04 UTC | 2026-10-28 22:04 UTC |
+| Documents | ![Documents desktop](docs/screenshots/documents-1440x900.png) | ![Documents mobile](docs/screenshots/documents-390x844.png) | 1440×900 / 390×844 | 2026-10-28 22:04 UTC | 2026-10-28 22:04 UTC |
+| Search | ![Search desktop](docs/screenshots/search-1440x900.png) | ![Search mobile](docs/screenshots/search-390x844.png) | 1440×900 / 390×844 | 2026-10-28 22:04 UTC | 2026-10-28 22:04 UTC |
+| Research | ![Research desktop](docs/screenshots/research-1440x900.png) | ![Research mobile](docs/screenshots/research-390x844.png) | 1440×900 / 390×844 | 2026-10-28 22:04 UTC | 2026-10-28 22:04 UTC |
+| Drafts | ![Drafts desktop](docs/screenshots/drafts-1440x900.png) | ![Drafts mobile](docs/screenshots/drafts-390x844.png) | 1440×900 / 390×844 | 2026-10-28 22:04 UTC | 2026-10-28 22:04 UTC |
+| Autofill | ![Autofill desktop](docs/screenshots/autofill-1440x900.png) | ![Autofill mobile](docs/screenshots/autofill-390x844.png) | 1440×900 / 390×844 | 2026-10-28 22:04 UTC | 2026-10-28 22:04 UTC |
+| Bundles (page heading: Filing Bundles) | ![Bundles desktop](docs/screenshots/bundles-1440x900.png) | ![Bundles mobile](docs/screenshots/bundles-390x844.png) | 1440×900 / 390×844 | 2026-10-28 22:04 UTC | 2026-10-28 22:04 UTC |
+| Strategy (page heading: AI Strategy Advisor) | ![Strategy desktop](docs/screenshots/strategy-1440x900.png) | ![Strategy mobile](docs/screenshots/strategy-390x844.png) | 1440×900 / 390×844 | 2026-10-28 22:04 UTC | 2026-10-28 22:04 UTC |
+| Community | ![Community desktop](docs/screenshots/community-1440x900.png) | ![Community mobile](docs/screenshots/community-390x844.png) | 1440×900 / 390×844 | 2026-10-28 22:04 UTC | 2026-10-28 22:04 UTC |
+| Settings | ![Settings desktop](docs/screenshots/settings-profile-1440x900.png) | ![Settings mobile](docs/screenshots/settings-profile-390x844.png) | 1440×900 / 390×844 | 2026-10-28 22:04 UTC | 2026-10-28 22:04 UTC |

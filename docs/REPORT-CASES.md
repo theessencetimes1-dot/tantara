@@ -28,14 +28,14 @@
 
 ## Screenshots
 
-- `docs/screenshots/cases-desktop.png`
-- `docs/screenshots/cases-mobile.png`
-- `docs/screenshots/case-detail-desktop.png`
-- `docs/screenshots/clients-desktop.png`
-- `docs/screenshots/tasks-desktop.png`
-- `docs/screenshots/calendar-desktop.png`
-- `docs/screenshots/calendar-mobile.png`
-- `docs/screenshots/dashboard-desktop.png`
+- `capture not retained`
+- `capture not retained`
+- `capture not retained`
+- `capture not retained`
+- `capture not retained`
+- `capture not retained`
+- `capture not retained`
+- `capture not retained`
 
 ## Gaps
 

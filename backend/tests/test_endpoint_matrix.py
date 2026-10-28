@@ -301,6 +301,24 @@ def test_dashboard_activity_humanizes_audit_rows_and_uses_the_stored_actor(clien
     assert all("_" not in item["title"] for item in items)
 
 
+@pytest.mark.parametrize(
+    ("object_type", "expected"),
+    [
+        ("drafts", "Created draft"),
+        ("notes", "Created note"),
+        ("extraction_fields", "Created document fields"),
+        ("bundle_items", "Updated filing bundle items"),
+        ("community_posts", "Created community post"),
+        ("draft_versions", "Restored draft versions"),
+    ],
+)
+def test_dashboard_activity_plural_objects_read_naturally(object_type, expected):
+    from app.routers.dashboard import _activity_title
+
+    action = "update" if object_type == "bundle_items" else "restore" if object_type == "draft_versions" else "create"
+    assert _activity_title(action, object_type) == expected
+
+
 def test_draft_detail_retains_generation_provenance_from_its_version_history(client):
     headers = _auth(client)
     created = client.post(
