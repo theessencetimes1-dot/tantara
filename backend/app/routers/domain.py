@@ -35,6 +35,11 @@ class Payload(BaseModel):
     model_config = ConfigDict(extra="allow")
 
 
+# Keep create response codes in the route contract, rather than making the
+# handler body infer status from the request path.
+CREATE_STATUS_CODES = {"cases": 201}
+
+
 def owned(session, cls, rid, user):
     item = get_owned(session, cls, rid, user["id"])
     if item is None:
@@ -259,6 +264,17 @@ def register_crud(path, cls):
                 raise HTTPException(404, "Record not found")
             out = serialize(row)
             add_derived_fields(s, cls, out, user["id"])
+            if cls is Draft:
+                provenance = s.scalars(
+                    select(DraftVersion)
+                    .where(DraftVersion.draft_id == row.id, DraftVersion.owner_id == user["id"])
+                    .order_by(DraftVersion.created_at.desc())
+                ).all()
+                notes = {version.change_note for version in provenance}
+                if "Generated model outline" in notes or "Generated outline" in notes:
+                    out["generation_kind"] = "model_generated"
+                elif "Generated review template" in notes:
+                    out["generation_kind"] = "review_template"
             if cls is CommunityPost:
                 add_community_author(s, out)
             for key in ("owner_id", "output_path", "stored_path", "text_content", "embedding_blob"):
@@ -341,7 +357,7 @@ def register_crud(path, cls):
         create,
         methods=["POST"],
         name=path + "_create",
-        status_code=201 if path == "cases" else 200,
+        status_code=CREATE_STATUS_CODES.get(path, 200),
     )
     router.add_api_route("/" + path + "/{rid}", get, methods=["GET"], name=path + "_get")
     router.add_api_route("/" + path + "/{rid}", patch, methods=["PATCH"], name=path + "_patch")

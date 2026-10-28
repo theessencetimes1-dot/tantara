@@ -221,9 +221,37 @@
   width: 14%;
 }
 .matter-wrap.compact .matter-table {
-  min-width: 720px;
+  min-width: 0;
+  width: 100%;
   table-layout: fixed;
   font-size: 12px;
+}
+.matter-wrap.compact .matter-table th {
+  padding: 7px 4px;
+  white-space: normal;
+  line-height: 1.2;
+}
+.matter-wrap.compact .matter-table th button {
+  white-space: normal;
+}
+.matter-wrap.compact .matter-table td {
+  padding: 6px 4px;
+}
+.matter-wrap.compact .matter-table .status-pill {
+  padding: 3px 5px;
+  font-size: 11px;
+}
+.matter-wrap.compact .matter-tabs {
+  flex-wrap: wrap;
+  overflow: visible;
+  gap: 4px;
+  padding: 8px;
+}
+.matter-wrap.compact .matter-tabs button {
+  flex: 1 1 78px;
+  min-width: 0;
+  padding: 7px 5px;
+  white-space: normal;
 }
 .matters-slot,
 .matter-wrap.compact,

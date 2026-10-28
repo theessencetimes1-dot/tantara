@@ -14,7 +14,7 @@ const apiUrl = `${process.env.TANTARA_API_ORIGIN ?? 'http://127.0.0.1:8010'}/api
 const apiHost = apiUrl.replace(/\/api\/v1\/?$/, '');
 const endpoint = (route: string) =>
   `${apiHost}${route.startsWith('/api/v1') ? route : `/api/v1${route.startsWith('/') ? route : `/${route}`}`}`;
-const screenshots = path.resolve(process.cwd(), 'docs/screenshots');
+const screenshots = path.resolve(process.cwd(), 'test-results');
 const credentials = {
   advocate: { email: 'advocate@tantara.local', password: 'tantara-local' },
   researcher: { email: 'researcher@tantara.local', password: 'tantara-local' },

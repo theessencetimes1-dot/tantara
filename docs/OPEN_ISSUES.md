@@ -1,28 +1,25 @@
 # Open issues and verification notes
 
-This ledger records only current product gaps or evidence gaps. The M4 fixes for duplicate module navigation, model-backed Research Desk synthesis, 405 error vocabulary, API readiness skips, mobile client visibility, nested client navigation, Strategy claim tolerance, timestamp display, and Autofill date validation have been implemented and covered by current tests. The full browser suite currently reports 109 passed and 0 skipped.
+No M5 acceptance finding remains open at the verified commit. The M5 closeout is recorded in `reports/M5-report.md`; the M4 closeout evidence is summarized at the top of that report because `reports/M4-report.md` was not present in the starting tree.
 
-## Open findings
+## Recently verified findings
 
-| Finding | Evidence | Follow-up |
-|---|---|---|
-| Screenshot evidence is split across duplicate tracked corpora. | `git ls-files docs/screenshots | wc -l` reports 109 images while `git ls-files frontend/docs/screenshots | wc -l` reports 96; `captures-fe7/` is also tracked. Several duplicate-era captures do not reflect the current 14-link rail, so they are not current product evidence. | Curate a single root `docs/screenshots/` corpus, migrate only current authenticated captures, update references, and remove obsolete duplicate copies in a dedicated evidence-cleanup pass. |
-| The timestamp suite does not compare one identical instant across Community and Dashboard. | `frontend/src/lib/datetime.ts` formats both modules with `WORKSPACE_TIME_ZONE`, and the Community browser test checks the workspace label, but no test feeds the same fixed instant to both rendered surfaces. | Add one deterministic browser assertion that renders the same offset-bearing instant in both components and compares the displayed wall-clock text. |
-| Cases cannot distinguish “no hearings” from “past hearings only.” | `frontend/src/features/cases/components/case-list.tsx` renders a dash when `next_hearing_at` is absent; the API intentionally returns upcoming hearings only and does not expose whether past hearings exist. | Keep current upcoming-only semantics. Revisit the wording if the API later supplies a past-hearing indicator; do not infer one in the UI. |
+| Finding | Verification evidence |
+|---|---|
+| R59 — timestamp display disagreed by module | `workspaceDateTimeDisplay` formats Community, Dashboard, Drafts, Bundles, and Strategy in the configured workspace zone; the `community post and its dashboard activity use the same workspace wall clock` Playwright case compares the same new post/activity instant and requires identical displayed text. |
+| R60 — creation status was inferred in handler logic | Domain create routes now receive the declared `CREATE_STATUS_CODES` value at route registration; the README API table lists the create endpoint status contract. Full backend suite: 125 passed in 214.39s. |
+| R61/R68 — screenshot corpora and empty-slug artifacts | `docs/screenshots/` contains only the 28 README captures; other historical capture directories and unused images were removed. The capture script rejects empty slugs and contaminated data, and `.gitignore` excludes capture scratch directories. |
+| R65 — dashboard activity labels and actor | The dashboard resolves each actor from `AuditEvent.actor_id` and maps known action/object names to readable titles. `test_dashboard_activity_humanizes_audit_rows_and_uses_the_stored_actor` checks a researcher actor in an advocate feed. |
+| R66 — README captures included test residue or loading state | `frontend/scripts/capture-readme-screenshots.mjs` uses the dedicated demo-seeded API, requires exactly 12 advocate cases and hydrated dashboard metrics, and rejects known test-fixture strings before saving. All 28 images were captured in one pass at the recorded UTC time. |
+| R69 — dashboard case table clipped its contents | Compact case table and status tabs wrap within their card; `dashboard case table headers remain separate at desktop width` checks table and tab widths, header bounds, and visible status chips. |
+| R70 — deep routes lacked a main-landmark sweep | `deep-linked workspace routes retain one main landmark after real content loads` covers the Research library, case Strategy, client profile, document viewer, bundle detail, and Community thread using API-derived IDs. |
+| R71 — untouched seeded draft was labelled as a failed generation | Draft detail derives generation provenance from saved version notes; the seeded scaffold and generated unstructured draft branches are both asserted in `drafts-unavailable-capture.spec.ts`. |
 
 ## Tooling and validation notes
 
 - The external style-contract helper previously reported `auth_present: false` and no login request. Its unauthenticated style output is not evidence about authenticated routes.
 - A former verifier strategy-write probe used the wrong HTTP method and returned 405; authorization is instead covered by `frontend/tests/api-domain-contracts.spec.ts`.
-- The previous authorization-test skip is removed. `frontend/tests/api-domain-contracts.spec.ts` now exercises a second seeded identity and exact ownership behavior.
-- The calendar hook dependency warning was corrected; `pnpm lint` reports no ESLint warnings or errors.
+- The former authorization-test skip was removed. The browser suite is run with no skipped tests; ownership behavior is covered by the second seeded identity.
+- The calendar hook dependency warning was corrected; the checked frontend lint command emits no warning for that file.
 
-## Recently verified closed findings
-
-- Documents and Search no longer render `WorkspaceModuleNav`; `rg -n 'documents-module-nav|WorkspaceModuleNav' frontend/src` returns no matches. The shell rail owns current-page navigation.
-- Research Desk returns numbered model synthesis only when each marker resolves to retrieved citations; invalid synthesis falls back to cited excerpts and unavailable-model responses remain honest.
-- 405 responses use `method_not_allowed`; error-envelope tests cover 401, 404, 405, 409, and 422.
-- Playwright API availability checks fail loudly rather than silently skipping. The suite ran against one seeded backend and frontend with 109 passed and no skips.
-- Client directory mobile cards match the desktop API row count; nested client profiles mark the Clients rail entry.
-- Strategy reliability probe: 10/10 model-backed generations; some runs omit invalid individual claims and disclose those omissions.
-- Autofill date application parses valid ISO dates and returns a validation envelope for malformed dates.
+The full Playwright suite at M5 verification ran 112 tests with 112 passed, 0 failed, and 0 skipped. The backend suite passed twice consecutively (125 tests on each run). The full test transcripts and other validation outputs are in `reports/M5-report.md`.

@@ -39,6 +39,10 @@ chunk_ids.json
 test-results/
 playwright-report/
 .playwright-mcp/
+captures-*/
+target-crops/
+docs/ui-contract-shots/
+/reports/
 tmp_ingest_test.txt
 npm-debug.log*
 yarn-error.log*

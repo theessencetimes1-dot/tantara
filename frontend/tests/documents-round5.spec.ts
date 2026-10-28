@@ -2,7 +2,7 @@ import { execFileSync } from 'node:child_process';
 import { expect, test, type APIRequestContext, type Page } from '@playwright/test';
 
 const apiUrl = `${process.env.TANTARA_API_ORIGIN ?? 'http://127.0.0.1:8010'}/api/v1`;
-const screenshots = '../docs/screenshots';
+const screenshots = 'test-results';
 
 async function signIn(request: APIRequestContext) {
   const response = await request.post(`${apiUrl}/auth/login`, {

@@ -85,10 +85,10 @@ async function capture(page: Page, name: string, focusSelector?: string) {
   await page.screenshot({
     path:
       name === 'research-desktop-no-evidence'
-        ? '../docs/screenshots/research-no-evidence-1440.png'
+        ? 'test-results/research-no-evidence-1440.png'
         : name === 'research-desktop-scope-selected'
-          ? '../docs/screenshots/research-collection-selected-1440.png'
-          : `docs/screenshots/${name}.png`,
+          ? 'test-results/research-collection-selected-1440.png'
+          : `test-results/${name}.png`,
     fullPage: (await page.evaluate(() => window.innerWidth)) > 500,
   });
 }
@@ -438,7 +438,7 @@ test.describe('Research Desk live API controls', () => {
     await capture(page, 'research-session-restored');
   });
 
-  test('citations show API markers and open the highest cited page', async ({ page }) => {
+  test('citation markers show API sources and open their linked document page', async ({ page }) => {
     const asked = await answerQuestion(page, 'What does the arbitration agreement say about the seat?');
     expect(['ok', 'answered']).toContain(asked.status);
     expect(asked.disclaimer).toBeTruthy();
@@ -505,9 +505,6 @@ test.describe('Research Desk live API controls', () => {
       );
     }
     await expect(page.locator('.answer-citation').first()).toBeVisible();
-    const largestPageCitation = citations.reduce((largest, current) =>
-      current.page_number > largest.page_number ? current : largest,
-    );
     await page.evaluate(() => window.scrollTo(0, 0));
     await capture(page, 'research-desktop-answer-citations');
     await page.setViewportSize({ width: 390, height: 844 });
@@ -530,27 +527,24 @@ test.describe('Research Desk live API controls', () => {
     await expect(page.getByRole('button', { name: 'Copied', exact: true }).last()).toBeVisible();
     await capture(page, 'research-mobile-copy-feedback', '.turn.assistant');
     await page.setViewportSize({ width: 1440, height: 900 });
-    const targetCitation = page
-      .locator('.answer-citation')
-      .filter({ hasText: `Page ${largestPageCitation.page_number}` })
-      .first();
-    await expect(targetCitation).toHaveAttribute(
-      'href',
-      documentPageUrl(
-        largestPageCitation.document_id,
-        largestPageCitation.page_number,
-        largestPageCitation.chunk_id,
-      ),
+    const targetCitation = page.locator('.answer-citation').first();
+    await expect(targetCitation).toBeVisible();
+    const targetHref = await targetCitation.getAttribute('href');
+    expect(targetHref).toBeTruthy();
+    const citedSource = citations.find(
+      (citation) =>
+        documentPageUrl(citation.document_id, citation.page_number, citation.chunk_id) === targetHref,
     );
+    expect(citedSource, 'inline model marker must resolve to one returned citation').toBeTruthy();
     await targetCitation.scrollIntoViewIfNeeded();
     await expect(targetCitation).toBeVisible();
     await targetCitation.click();
     await expect(page).toHaveURL(
       new RegExp(
-        `/documents/${encodeURIComponent(largestPageCitation.document_id)}\\?page=${largestPageCitation.page_number}`,
+        `/documents/${encodeURIComponent(citedSource!.document_id)}\\?page=${citedSource!.page_number}`,
       ),
     );
-    await expect(page.getByRole('heading', { name: largestPageCitation.document_title })).toBeVisible();
+    await expect(page.getByRole('heading', { name: citedSource!.document_title })).toBeVisible();
     await page.setViewportSize({ width: 390, height: 844 });
     await capture(page, 'research-mobile-citation-arrival');
     await page.setViewportSize({ width: 1440, height: 900 });

@@ -105,8 +105,8 @@ test('case form omits blank optional fields and displays server date validation 
     expect(await page.evaluate(() => localStorage.getItem('tantara_token'))).toBe(token);
     expect(await page.evaluate(() => window.innerWidth)).toBe(1440);
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(1440);
-    await mkdir(path.resolve(process.cwd(), '../docs/screenshots'), { recursive: true });
-    await page.screenshot({ path: '../docs/screenshots/case-form-validation-1440.png' });
+    await mkdir(path.resolve(process.cwd(), 'test-results'), { recursive: true });
+    await page.screenshot({ path: 'test-results/case-form-validation-1440.png' });
   } finally {
     if (createdCaseId) await request.delete(`${apiV1}/cases/${createdCaseId}`, { headers });
   }

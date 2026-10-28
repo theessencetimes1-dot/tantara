@@ -291,7 +291,7 @@ export default function Dashboard() {
               <p className="muted">Activity is unavailable.</p>
             ) : activity.data?.length ? (
               activity.data.slice(0, 5).map((x: Activity) => (
-                <div className="activity-row" key={x.id}>
+                <div className="activity-row" key={x.id} data-activity-id={x.id} data-object-id={x.object_id}>
                   <span className="small-icon">
                     <Scale size={16} />
                   </span>

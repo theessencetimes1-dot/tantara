@@ -336,7 +336,8 @@
   margin: -8px 0 14px !important;
   color: #748096;
 }
-.draft-unrecognized {
+.draft-unrecognized,
+.draft-template-scaffold {
   border: 1px solid #e9bd76;
   background: #fff8e9;
   color: #78500a;
@@ -344,13 +345,21 @@
   padding: 16px;
   margin: 12px 0;
 }
-.draft-unrecognized h3 {
+.draft-unrecognized h3,
+.draft-template-scaffold h3 {
   font-size: 15px;
   margin: 0 0 8px;
 }
-.draft-unrecognized p {
+.draft-unrecognized p,
+.draft-template-scaffold p {
   color: #78500a;
   margin-bottom: 12px;
+}
+.draft-structure-note {
+  border-left: 3px solid #94a3b8;
+  padding: 8px 12px;
+  color: #475569;
+  background: #f8fafc;
 }
 .draft-unrecognized pre {
   white-space: pre-wrap;

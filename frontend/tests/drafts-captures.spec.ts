@@ -2,7 +2,7 @@ import { expect, request, test, type APIRequestContext, type Page } from '@playw
 
 const apiOrigin = (process.env.TANTARA_API_ORIGIN ?? 'http://127.0.0.1:8010').replace(/\/$/, '');
 const apiV1 = `${apiOrigin}/api/v1`;
-const shots = 'docs/screenshots';
+const shots = 'test-results';
 const desktop = { width: 1440, height: 900 };
 const mobile = { width: 390, height: 844 };
 const UUID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;

@@ -283,7 +283,7 @@ def generate(payload: Generate, user=Depends(current_user)):
                 draft_id=did,
                 version_number=1,
                 content_markdown=content,
-                change_note="Generated outline",
+                change_note="Generated model outline" if generated else "Generated review template",
             )
         )
         record(s, user["id"], "generate", "draft", did)
