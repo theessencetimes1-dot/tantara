@@ -65,3 +65,17 @@ export function calendarDayOffset(date: Date, days: number): Date {
 export function calendarDateParts(date: Date) {
   return { year: date.getUTCFullYear(), month: date.getUTCMonth(), day: date.getUTCDate() };
 }
+
+export function workspaceDateTimeDisplay(
+  value: string | Date,
+  options: Intl.DateTimeFormatOptions = { dateStyle: 'medium', timeStyle: 'short' },
+): string {
+  const raw = value instanceof Date ? value.toISOString() : value;
+  const zonedValue =
+    typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2})?$/.test(value)
+      ? (workspaceDateTimeIso(value.slice(0, 16)) ?? value)
+      : raw;
+  const instant = new Date(zonedValue);
+  if (Number.isNaN(instant.valueOf())) return raw;
+  return `${new Intl.DateTimeFormat('en', { ...options, timeZone: WORKSPACE_TIME_ZONE }).format(instant)} · ${WORKSPACE_TIME_ZONE}`;
+}

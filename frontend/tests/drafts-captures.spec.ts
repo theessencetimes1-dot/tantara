@@ -141,13 +141,19 @@ test('captures live seeded drafts and autofill states at desktop and mobile size
     .toBeGreaterThanOrEqual(0);
   const draftsNavLink = page
     .getByRole('navigation', { name: 'Main navigation' })
-    .getByRole('link', { name: 'AI Drafts' });
+    .getByRole('link', { name: 'Drafts & Documents' });
   const navBox = await draftsNavLink.boundingBox();
   expect(navBox && navBox.x).toBeGreaterThanOrEqual(0);
   expect(navBox && navBox.x + navBox.width).toBeLessThanOrEqual(390);
   expect(navBox && navBox.y + navBox.height).toBeLessThanOrEqual(844);
   await draftsNavLink.click();
   await expect(page.locator('.sidebar')).not.toHaveClass(/open/);
+  await expect
+    .poll(async () => {
+      const box = await page.locator('.sidebar').boundingBox();
+      return box ? box.x + box.width : 0;
+    })
+    .toBeLessThanOrEqual(0);
   const headingBox = await page.getByRole('heading', { name: 'AI Case Drafts' }).boundingBox();
   const sidebarBox = await page.locator('.sidebar').boundingBox();
   if (headingBox && sidebarBox)

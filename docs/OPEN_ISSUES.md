@@ -1,21 +1,28 @@
-# Open issues and validation limits
+# Open issues and verification notes
 
-- The external style-contract helper does not establish an authenticated session. Its latest transcript says:
+This ledger records only current product gaps or evidence gaps. The M4 fixes for duplicate module navigation, model-backed Research Desk synthesis, 405 error vocabulary, API readiness skips, mobile client visibility, nested client navigation, Strategy claim tolerance, timestamp display, and Autofill date validation have been implemented and covered by current tests. The full browser suite currently reports 109 passed and 0 skipped.
 
-  ```text
-  form_without_method: null
-  auth_present: false | login_call: no-login-request-seen | url: http://127.0.0.1:3034/
-  INVALID: no authenticated session — unauthenticated route diagnostics are not UI findings and must not be reported as defects.
-  ```
+## Open findings
 
-  The helper's following no-heading/font-none output is invalid evidence. Authenticated route captures and Playwright assertions passed separately.
+| Finding | Evidence | Follow-up |
+|---|---|---|
+| Screenshot evidence is split across duplicate tracked corpora. | `git ls-files docs/screenshots | wc -l` reports 109 images while `git ls-files frontend/docs/screenshots | wc -l` reports 96; `captures-fe7/` is also tracked. Several duplicate-era captures do not reflect the current 14-link rail, so they are not current product evidence. | Curate a single root `docs/screenshots/` corpus, migrate only current authenticated captures, update references, and remove obsolete duplicate copies in a dedicated evidence-cleanup pass. |
+| The timestamp suite does not compare one identical instant across Community and Dashboard. | `frontend/src/lib/datetime.ts` formats both modules with `WORKSPACE_TIME_ZONE`, and the Community browser test checks the workspace label, but no test feeds the same fixed instant to both rendered surfaces. | Add one deterministic browser assertion that renders the same offset-bearing instant in both components and compares the displayed wall-clock text. |
+| Cases cannot distinguish “no hearings” from “past hearings only.” | `frontend/src/features/cases/components/case-list.tsx` renders a dash when `next_hearing_at` is absent; the API intentionally returns upcoming hearings only and does not expose whether past hearings exist. | Keep current upcoming-only semantics. Revisit the wording if the API later supplies a past-hearing indicator; do not infer one in the UI. |
 
-- The verifier's `researcher strategy write -> 403` probe returned `405`. That request does not prove authorization behavior for the intended route. The full API/Playwright suite passed its covered authorization cases, but this particular script check remains unproven.
+## Tooling and validation notes
 
-- The full Playwright run has one intentional existing skip: cross-user client/task/calendar reads require a second seeded identity. Exact result: `1 skipped, 102 passed (9.7m)`; exit 0.
+- The external style-contract helper previously reported `auth_present: false` and no login request. Its unauthenticated style output is not evidence about authenticated routes.
+- A former verifier strategy-write probe used the wrong HTTP method and returned 405; authorization is instead covered by `frontend/tests/api-domain-contracts.spec.ts`.
+- The previous authorization-test skip is removed. `frontend/tests/api-domain-contracts.spec.ts` now exercises a second seeded identity and exact ownership behavior.
+- The calendar hook dependency warning was corrected; `pnpm lint` reports no ESLint warnings or errors.
 
-- `pnpm lint` and `pnpm build` pass with the existing React hook dependency warning at `frontend/src/features/calendar/index.tsx:137` for `cursorParts.month` and `.year`.
+## Recently verified closed findings
 
-- The current exact `verify_integration.sh` run passes with exit 0. Its standalone `Terminated` line is emitted while stopping the background uvicorn child in relocation cleanup; the transcript then continues through frontend gates and Playwright. The fixture count label prints `<no value>` before a separate `count 0`; this is a display-only script defect. An earlier exact invocation, before `res()` gained a default, ended with `/home/kahitoz/projects/tantara-run/review-tools/verify_integration.sh: line 19: $2: unbound variable` (exit 1).
-
-- A supplemental temporary verifier copy was first run with its Playwright API origin set to port 8193. `drafts-captures.spec.ts` correctly rejected that topology (`Expected: "8010" Received: "8193"`). The wrapper only retained the final two lines and returned 0 despite that failed test. This attempt is not acceptance evidence; the later exact script run uses the required 8010/3010 Playwright topology and passed.
+- Documents and Search no longer render `WorkspaceModuleNav`; `rg -n 'documents-module-nav|WorkspaceModuleNav' frontend/src` returns no matches. The shell rail owns current-page navigation.
+- Research Desk returns numbered model synthesis only when each marker resolves to retrieved citations; invalid synthesis falls back to cited excerpts and unavailable-model responses remain honest.
+- 405 responses use `method_not_allowed`; error-envelope tests cover 401, 404, 405, 409, and 422.
+- Playwright API availability checks fail loudly rather than silently skipping. The suite ran against one seeded backend and frontend with 109 passed and no skips.
+- Client directory mobile cards match the desktop API row count; nested client profiles mark the Clients rail entry.
+- Strategy reliability probe: 10/10 model-backed generations; some runs omit invalid individual claims and disclose those omissions.
+- Autofill date application parses valid ISO dates and returns a validation envelope for malformed dates.

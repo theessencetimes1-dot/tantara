@@ -8,7 +8,6 @@ import { RefreshCw, FileText, Download, Sparkles, Pencil, Check } from 'lucide-r
 import { documentsApi } from '@/features/documents/api';
 import { aiFailureMessage, classifyAiFailure, type AiFailure } from '@/features/documents/ai-read-errors';
 import { DocumentStatus } from '@/features/documents/DocumentStatus';
-import { WorkspaceModuleNav } from '@/features/documents/WorkspaceModuleNav';
 import { PdfDocumentViewer } from '@/features/viewer/PdfDocumentViewer';
 import { toast } from 'sonner';
 import '@/features/documents/documents.css';
@@ -30,7 +29,13 @@ type Doc = {
   source_label?: string;
   processed_at?: string;
 };
-type Page = { page_number: number; text?: string; ocr_confidence?: number; warnings?: string[] };
+type ExtractionWarning = string | { page?: number; warning: string };
+type Page = { page_number: number; text?: string; ocr_confidence?: number; warnings?: ExtractionWarning[] };
+
+function formatExtractionWarning(warning: ExtractionWarning) {
+  if (typeof warning === 'string') return warning;
+  return warning.page != null ? `Page ${warning.page}: ${warning.warning}` : warning.warning;
+}
 type Extraction = {
   review_required?: boolean;
   fields?: Record<
@@ -43,8 +48,6 @@ type ChunkHit = {
   page_number: number;
   snippet?: string;
   retrieval_score?: number;
-  retreival_score?: number;
-  score?: number;
 };
 
 function renderExtractionValue(value: unknown): ReactNode {
@@ -240,7 +243,6 @@ export default function DocumentDetailPage() {
     aiOutcome === 'ready' || (aiOutcome === 'idle' && Boolean(extraction.data?.fields));
   return (
     <div className="document-detail-page">
-      <WorkspaceModuleNav />
       <div
         style={{
           display: 'flex',
@@ -547,7 +549,7 @@ export default function DocumentDetailPage() {
           {chunkHits.data?.items
             .filter((hit) => hit.document_id === id)
             .map((hit, index) => {
-              const relevance = hit.retrieval_score ?? hit.retreival_score ?? hit.score;
+              const relevance = hit.retrieval_score;
               return (
                 <article className="citation-chunk" key={`${hit.page_number}-${index}`}>
                   <p>{hit.snippet || 'Matching document passage'}</p>
@@ -604,7 +606,7 @@ export default function DocumentDetailPage() {
           {pageItems
             .flatMap((page) => page.warnings || [])
             .map((warning, index) => (
-              <p key={`${warning}-${index}`}>{warning}</p>
+              <p key={`${formatExtractionWarning(warning)}-${index}`}>{formatExtractionWarning(warning)}</p>
             ))}
         </div>
       )}

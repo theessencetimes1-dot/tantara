@@ -10,14 +10,9 @@ import {
   workspaceDateTimeIso,
 } from '../src/lib/datetime';
 import { test as browserTest, expect as browserExpect } from '@playwright/test';
+import { requirePlaywrightApi } from './api-readiness';
 const base = `${process.env.TANTARA_API_ORIGIN || 'http://127.0.0.1:8010'}/api/v1`;
-async function apiReady() {
-  try {
-    return (await fetch(`${base}/health`)).ok;
-  } catch {
-    return false;
-  }
-}
+test.beforeAll(async () => requirePlaywrightApi());
 
 test('tasks partition into exclusive workspace-timezone groups including undated open work', () => {
   const now = new Date('2026-10-27T09:00:00Z'); // 14:30 in Asia/Kolkata
@@ -135,29 +130,57 @@ browserTest(
       headers,
       data: {
         title: 'UTC calendar all-day proof',
-        filed_at: `${day}T00:00:00+05:30`,
-        notice_date: `${day}T00:00:00+05:30`,
+        // Case creation correctly rejects future filing dates. Keep the event
+        // under test in the future while the actual filing date is historical.
+        filed_at: '2020-01-01T00:00:00+05:30',
       },
     });
     browserExpect(created.ok()).toBeTruthy();
     const caseId = (await created.json()).id as string;
+    let eventId: string | undefined;
+    let deadlineId: string | undefined;
     try {
+      const createdDeadline = await request.post(`${base}/tasks`, {
+        headers,
+        data: {
+          title: 'All-day deadline proof',
+          case_id: caseId,
+          due_at: `${day}T00:00:00+05:30`,
+        },
+      });
+      browserExpect(createdDeadline.ok()).toBeTruthy();
+      deadlineId = (await createdDeadline.json()).id as string;
+      const createdEvent = await request.post(`${base}/cases/${caseId}/events`, {
+        headers,
+        data: { type: 'event', occurred_at: `${day}T00:00:00+05:30`, detail: 'All-day event proof' },
+      });
+      browserExpect(createdEvent.ok()).toBeTruthy();
+      eventId = (await createdEvent.json()).id as string;
       await page.addInitScript((value) => {
         localStorage.setItem('tantara_token', value);
         document.cookie = `tantara_token=${value}; Path=/; SameSite=Lax`;
       }, token);
       await page.goto('/calendar');
-      const event = page.getByRole('button', { name: 'View All day', exact: true }).first();
-      const deadline = page.getByRole('button', { name: 'View Deadline', exact: true }).first();
+      const event = page.getByRole('button', { name: /View All day.*UTC calendar all-day proof/ }).first();
+      const deadline = page.getByRole('button', {
+        name: /View Deadline.*All-day deadline proof.*UTC calendar all-day proof/,
+      });
       await browserExpect(event).toBeVisible();
       await browserExpect(deadline).toBeVisible();
       await browserExpect(event.locator('time')).toHaveCount(0);
       await browserExpect(deadline.locator('time')).toHaveCount(0);
+      await event.click();
+      const details = page.getByRole('dialog', { name: 'Event details' });
+      await browserExpect(details).toContainText('UTC calendar all-day proof');
+      await browserExpect(details).toContainText('All day');
+      await browserExpect(details).toContainText('All-day event proof');
       browserExpect(await page.evaluate(() => Intl.DateTimeFormat().resolvedOptions().timeZone)).toBe('UTC');
       browserExpect(await page.evaluate(() => localStorage.getItem('tantara_token'))).toBeTruthy();
       browserExpect(await page.evaluate(() => document.documentElement.scrollWidth <= 1440)).toBeTruthy();
       await page.screenshot({ path: 'test-results/calendar-all-day-proof.png', fullPage: false });
     } finally {
+      if (deadlineId) await request.delete(`${base}/tasks/${deadlineId}`, { headers });
+      if (eventId) await request.delete(`${base}/cases/${caseId}/events/${eventId}`, { headers });
       await request.delete(`${base}/cases/${caseId}`, { headers });
     }
   },
@@ -296,10 +319,37 @@ browserTest('client case count zero is displayed as a real zero', async ({ page,
   await browserExpect(row.locator('td').nth(2)).toHaveText('0');
 });
 
+browserTest('client directory keeps every API row visible in mobile cards', async ({ page, request }) => {
+  const login = await request.post(`${base}/auth/login`, {
+    data: {
+      email: process.env.TANTARA_E2E_EMAIL || 'advocate@tantara.local',
+      password: process.env.TANTARA_E2E_PASSWORD || 'tantara-local',
+    },
+  });
+  browserExpect(login.ok()).toBeTruthy();
+  const token = (await login.json()).access_token;
+  await page.addInitScript((value) => {
+    localStorage.setItem('tantara_token', value as string);
+    document.cookie = `tantara_token=${value}; Path=/; SameSite=Lax`;
+  }, token);
+
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/clients');
+  const desktopRows = page.locator('.matter-table tbody tr');
+  await browserExpect(desktopRows).toHaveCount(7);
+  const rowCount = await desktopRows.count();
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  const cards = page.locator('.matter-mobile-cards[aria-label="Clients"] .matter-mobile-case');
+  await browserExpect(cards).toHaveCount(rowCount);
+  await browserExpect(cards.first()).toBeVisible();
+  for (let index = 0; index < rowCount; index += 1) await browserExpect(cards.nth(index)).toBeVisible();
+  await browserExpect.poll(() => page.evaluate(() => document.documentElement.scrollWidth)).toBe(390);
+});
+
 browserTest(
   'calendar labels real event records as all day without a time or raw event enums',
   async ({ page, request }) => {
-    browserTest.skip(!(await apiReady()), 'TANTARA API is not running');
     const login = await request.post(`${base}/auth/login`, {
       data: {
         email: process.env.TANTARA_E2E_EMAIL || 'advocate@tantara.local',
@@ -347,15 +397,25 @@ browserTest(
         calendarItems.some((item: { id: string }) => item.id === eventId),
         `calendar API should contain created event ${eventId} for ${parts}`,
       ).toBeTruthy();
-      const allDayEvent = page.getByRole('button', { name: 'View All day', exact: true }).first();
+      const allDayEvent = page.getByRole('button', {
+        name: /View All day.*All-day event check/,
+      });
       await browserExpect(allDayEvent).toBeVisible({ timeout: 15_000 });
       await browserExpect(allDayEvent.locator('time')).toHaveCount(0);
+      await browserExpect(allDayEvent).toContainText('All-day event test record');
+      await browserExpect(allDayEvent).toContainText(`All-day event check`);
+      const eventLabels = await page
+        .locator('.calendar-event')
+        .evaluateAll((buttons) => buttons.map((button) => button.getAttribute('aria-label') || ''));
+      browserExpect(new Set(eventLabels).size).toBe(eventLabels.length);
       await allDayEvent.click();
       const details = page.getByRole('dialog', { name: 'Event details' });
       await browserExpect(details).toContainText('All day');
+      await browserExpect(details).toContainText('All-day event test record');
+      await browserExpect(details).toContainText(`All-day event check`);
       await browserExpect(details).not.toContainText(/\b\d{1,2}:\d{2}\b|\b(am|pm)\b/i);
       await browserExpect(page.locator('body')).not.toContainText(
-        /all_day_event|first_hearing|hearing_completed/i,
+        /all_day_event|first_hearing|hearing_completed|document_uploaded|deadline_set/i,
       );
     } finally {
       if (eventId) await request.delete(`${base}/cases/${caseId}/events/${eventId}`, { headers });

@@ -3,14 +3,13 @@ import { collectionsApi } from '@/features/documents/api';
 
 export type ResearchSource = {
   citation_ref?: string;
+  citation_number?: number;
   document_id: string;
   document_title: string;
   chunk_id: string;
   page_number: number;
   excerpt: string;
   retrieval_score?: number;
-  retreival_score?: number;
-  score?: number;
 };
 
 export type ResearchAnswer = {
@@ -127,7 +126,7 @@ export const researchApi = {
         chunk_id: string;
         page_number: number;
         snippet: string;
-        score: number;
+        retrieval_score: number;
       }>;
     }>(`/search/documents?query=${encodeURIComponent(question)}&page_size=8`, signal),
   save: (id: string) => api.post('/ai/saved', { item_type: 'message', item_id: id }),

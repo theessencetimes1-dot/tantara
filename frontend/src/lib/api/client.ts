@@ -3,6 +3,7 @@ export class ApiError extends Error {
     public status: number,
     public code: string,
     message: string,
+    public details?: unknown,
   ) {
     super(message);
     this.name = 'ApiError';
@@ -30,7 +31,7 @@ async function request<T>(path: string, init: RequestInit = {}, signal?: AbortSi
       window.location.assign('/');
     }
     if (!response.ok) {
-      let payload: { error?: { code?: string; message?: string } } = {};
+      let payload: { error?: { code?: string; message?: string; details?: unknown } } = {};
       try {
         payload = await response.json();
       } catch {
@@ -40,6 +41,7 @@ async function request<T>(path: string, init: RequestInit = {}, signal?: AbortSi
         response.status,
         payload.error?.code ?? 'request_failed',
         payload.error?.message ?? response.statusText,
+        payload.error?.details,
       );
     }
     if (response.status === 204) return undefined as T;

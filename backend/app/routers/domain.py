@@ -336,7 +336,13 @@ def register_crud(path, cls):
         create.__annotations__["payload"] = CREATE_SCHEMAS[path]
         patch.__annotations__["payload"] = PATCH_SCHEMAS[path]
     router.add_api_route("/" + path, listing, methods=["GET"], name=path + "_list")
-    router.add_api_route("/" + path, create, methods=["POST"], name=path + "_create")
+    router.add_api_route(
+        "/" + path,
+        create,
+        methods=["POST"],
+        name=path + "_create",
+        status_code=201 if path == "cases" else 200,
+    )
     router.add_api_route("/" + path + "/{rid}", get, methods=["GET"], name=path + "_get")
     router.add_api_route("/" + path + "/{rid}", patch, methods=["PATCH"], name=path + "_patch")
     router.add_api_route("/" + path + "/{rid}", delete, methods=["DELETE"], name=path + "_delete")

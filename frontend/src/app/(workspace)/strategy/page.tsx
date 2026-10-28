@@ -5,9 +5,9 @@ export default function StrategyPage() {
   return (
     <Suspense
       fallback={
-        <main className="strategy-page">
+        <div className="strategy-page">
           <div role="status">Opening Strategy Advisor…</div>
-        </main>
+        </div>
       }
     >
       <StrategyPanel />

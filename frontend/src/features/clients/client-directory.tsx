@@ -59,37 +59,54 @@ export function ClientDirectory() {
             </button>
           </div>
         ) : list.data?.items.length ? (
-          <div
-            className="matter-table-scroll"
-            role="region"
-            aria-label="Clients table; scroll horizontally to view all columns"
-            tabIndex={0}
-          >
-            <table className="matter-table">
-              <thead>
-                <tr>
-                  <th>Client</th>
-                  <th>Email</th>
-                  <th>Cases</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {list.data.items.map((c) => (
-                  <tr key={c.id}>
-                    <td>
-                      <Link href={`/clients/${c.id}`}>{c.name}</Link>
-                    </td>
-                    <td>{c.email || '—'}</td>
-                    <td>{String(c.case_count ?? '—')}</td>
-                    <td>
-                      {c.status || <span title="Status unavailable">{displayClientStatus(c.status)}</span>}
-                    </td>
+          <>
+            <div
+              className="matter-table-scroll"
+              role="region"
+              aria-label="Clients table; scroll horizontally to view all columns"
+              tabIndex={0}
+            >
+              <table className="matter-table">
+                <thead>
+                  <tr>
+                    <th>Client</th>
+                    <th>Email</th>
+                    <th>Cases</th>
+                    <th>Status</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {list.data.items.map((c) => (
+                    <tr key={c.id}>
+                      <td>
+                        <Link href={`/clients/${c.id}`}>{c.name}</Link>
+                      </td>
+                      <td>{c.email || '—'}</td>
+                      <td>{String(c.case_count ?? '—')}</td>
+                      <td>
+                        {c.status || <span title="Status unavailable">{displayClientStatus(c.status)}</span>}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="matter-mobile-cards" aria-label="Clients">
+              {list.data.items.map((client) => {
+                const status = (client.status ?? '').toLowerCase();
+                const statusClass =
+                  status === 'active' ? 'active' : status === 'archived' ? 'archived' : 'unknown';
+                return (
+                  <article className="matter-mobile-case" data-client-id={client.id} key={client.id}>
+                    <Link href={`/clients/${client.id}`}>{client.name}</Link>
+                    <span>{client.email || 'Email unavailable'}</span>
+                    <span>Cases: {String(client.case_count ?? '—')}</span>
+                    <span className={`status-pill ${statusClass}`}>{displayClientStatus(client.status)}</span>
+                  </article>
+                );
+              })}
+            </div>
+          </>
         ) : (
           <div className="matter-empty">{q ? 'No matching clients' : 'No clients yet'}</div>
         )}
@@ -106,7 +123,10 @@ export function ClientDirectory() {
               onSubmit={async (e) => {
                 e.preventDefault();
                 try {
-                  await clientsApi.create({ name, email });
+                  await clientsApi.create({
+                    name: name.trim(),
+                    ...(email.trim() ? { email: email.trim() } : {}),
+                  });
                   M(false);
                   N('');
                   E('');

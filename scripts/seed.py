@@ -21,6 +21,7 @@ from app.models import (
     BundleSection,
     Case,
     CaseEvent,
+    CaseEventType,
     CaseParticipant,
     Citation,
     Client,
@@ -34,9 +35,9 @@ from app.models import (
     DraftVersion,
     ExtractionField,
     FilingBundle,
-    KnowledgeCollection,
     Hearing,
     IngestionJob,
+    KnowledgeCollection,
     Note,
     ResearchMessage,
     ResearchSession,
@@ -47,6 +48,7 @@ from app.models import (
 )
 from app.routers.documents import process_job
 from app.security import hash_password
+from app.storage_paths import stored_path
 from sqlalchemy import delete, func, select, text
 
 
@@ -121,6 +123,144 @@ DEMO_COLLECTIONS = (
     ("Awards & Authorities", "Awards, authorities, and procedural decisions."),
     ("Pleadings & Evidence", "Pleadings, motions, and supporting evidence."),
 )
+
+OWNER_CENSUS_MODELS = (Client, Case, Document, Task, FilingBundle, Hearing)
+WORKSPACE_MODELS = (
+    Client,
+    Case,
+    CaseParticipant,
+    CaseEvent,
+    Hearing,
+    Task,
+    KnowledgeCollection,
+    Document,
+    DocumentPage,
+    DocumentChunk,
+    Draft,
+    DraftVersion,
+    Note,
+    ResearchSession,
+    ResearchMessage,
+    Citation,
+    FilingBundle,
+    BundleSection,
+    BundleItem,
+    CommunityPost,
+    CommunityReply,
+    SavedItem,
+    AppPreference,
+    IngestionJob,
+    AuditEvent,
+    ExtractionField,
+    AIConversation,
+)
+DEMO_OWNED_MODELS = tuple(model for model in WORKSPACE_MODELS if hasattr(model, "is_demo"))
+
+
+def workspace_table_counts(db):
+    return {
+        model.__tablename__: int(db.scalar(select(func.count()).select_from(model)) or 0)
+        for model in WORKSPACE_MODELS
+    }
+
+
+def print_owner_census(db):
+    owners = {
+        user.email: user.id
+        for user in db.scalars(
+            select(User).where(User.email.in_(("advocate@tantara.local", "researcher@tantara.local")))
+        )
+    }
+    totals = {}
+    for model in OWNER_CENSUS_MODELS:
+        by_owner = dict(db.execute(select(model.owner_id, func.count()).group_by(model.owner_id)).all())
+        advocate = int(by_owner.get(owners.get("advocate@tantara.local"), 0))
+        researcher = int(by_owner.get(owners.get("researcher@tantara.local"), 0))
+        total = sum(int(count) for count in by_owner.values())
+        totals[model.__tablename__] = {
+            "advocate": advocate,
+            "researcher": researcher,
+            "other": total - advocate - researcher,
+            "total": total,
+        }
+    print("SQL workspace census (owner counts):")
+    for table, counts in totals.items():
+        print(
+            f"  {table}: advocate@tantara.local={counts['advocate']} "
+            f"researcher@tantara.local={counts['researcher']} "
+            f"other={counts['other']} total={counts['total']}"
+        )
+    return totals
+
+
+def remove_demo_data():
+    """Remove demo-owned rows/files and rebuild the index while preserving user data."""
+    from app.services.index_maintenance import rebuild_index
+
+    settings = get_settings()
+    paths_to_remove = set()
+    with session_scope() as db:
+        demo_document_ids = set(db.scalars(select(Document.id).where(Document.is_demo.is_(True))).all())
+        for value in db.scalars(select(Document.stored_path).where(Document.id.in_(demo_document_ids))):
+            paths_to_remove.add(stored_path("uploads", value))
+        for value in db.scalars(
+            select(FilingBundle.output_path).where(
+                FilingBundle.is_demo.is_(True), FilingBundle.output_path.is_not(None)
+            )
+        ):
+            paths_to_remove.add(stored_path("bundles", value))
+
+        # Child rows go first so cleanup does not depend on database cascade settings.
+        for model in (
+            Citation,
+            ResearchMessage,
+            DraftVersion,
+            BundleItem,
+            BundleSection,
+            CommunityReply,
+            IngestionJob,
+            ExtractionField,
+            DocumentPage,
+            DocumentChunk,
+            CaseParticipant,
+            CaseEvent,
+            Hearing,
+            Task,
+            Note,
+            SavedItem,
+            AppPreference,
+            AuditEvent,
+            AIConversation,
+            ResearchSession,
+            FilingBundle,
+            Draft,
+            CommunityPost,
+            KnowledgeCollection,
+            Document,
+            Case,
+            Client,
+        ):
+            if model is DocumentChunk and demo_document_ids:
+                db.execute(delete(model).where(model.is_demo.is_(True)))
+                db.execute(delete(model).where(model.document_id.in_(demo_document_ids)))
+            elif model is DocumentChunk or model in DEMO_OWNED_MODELS:
+                db.execute(delete(model).where(model.is_demo.is_(True)))
+
+    for path in paths_to_remove:
+        still_referenced = False
+        with session_scope() as db:
+            if path.parent == (settings.data_dir / "uploads").resolve():
+                stored = db.scalars(select(Document.stored_path)).all()
+                still_referenced = any(stored_path("uploads", value) == path for value in stored)
+            elif path.parent == (settings.data_dir / "bundles").resolve():
+                stored = db.scalars(
+                    select(FilingBundle.output_path).where(FilingBundle.output_path.is_not(None))
+                ).all()
+                still_referenced = any(stored_path("bundles", value) == path for value in stored)
+        if not still_referenced:
+            path.unlink(missing_ok=True)
+    shutil.rmtree(settings.data_dir / "demo-fixtures", ignore_errors=True)
+    return rebuild_index()
 
 
 def ensure_demo_collections(db, owner_id):
@@ -412,9 +552,29 @@ def main():
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("--demo", action="store_true")
     group.add_argument("--empty", action="store_true")
+    parser.add_argument(
+        "--force-reset",
+        action="store_true",
+        help="remove existing demo-owned rows, files, and index entries before reseeding",
+    )
     args = parser.parse_args()
+    if args.force_reset and not args.demo:
+        parser.error("--force-reset requires --demo")
     init_db()
     s = get_settings()
+    if args.demo and args.force_reset:
+        index_state = remove_demo_data()
+        print(f"Removed existing demo-owned data; vector index: {index_state}")
+    elif args.demo:
+        with session_scope() as db:
+            existing_counts = workspace_table_counts(db)
+        if any(existing_counts.values()):
+            print(f"Refusing to seed nonempty workspace at {s.data_dir}.")
+            print("Existing table counts:")
+            for table, count in existing_counts.items():
+                print(f"  {table}={count}")
+            print("Use --demo --force-reset to replace demo-owned rows, files, and index entries.")
+            raise SystemExit(2)
     with session_scope() as db:
         root = db.scalar(select(User).where(User.email == "advocate@tantara.local"))
         if root is None:
@@ -488,25 +648,6 @@ def main():
                 rebuild_index(),
             )
             return
-        if db.scalar(select(func.count(Case.id)).where(Case.owner_id == owner, Case.is_demo.is_(True))):
-            db.rollback()
-            seed_junior_workspace()
-            seed_community_workspace()
-            with session_scope() as db:
-                collections = ensure_demo_collections(db, owner)
-                agreement_names = {"agreement.pdf", "contract.pdf", "near-duplicate-agreement-a.pdf", "near-duplicate-agreement-b.pdf"}
-                authority_names = {"award.pdf"}
-                for document in db.scalars(
-                    select(Document).where(Document.owner_id == owner, Document.is_demo.is_(True))
-                ):
-                    if document.filename in agreement_names:
-                        document.collection_id = collections["Agreements & Contracts"]
-                    elif document.filename in authority_names:
-                        document.collection_id = collections["Awards & Authorities"]
-                    else:
-                        document.collection_id = collections["Pleadings & Evidence"]
-            print("Demo workspace already seeded; researcher workspace reconciled.")
-            return
         users = []
         for email, name, role in (
             ("researcher@tantara.local", "Mira Shah", "researcher"),
@@ -575,6 +716,25 @@ def main():
             ("Pioneer Mining vs. Terra Materials", "ICC"),
             ("Crown Hotels vs. Summit Hospitality", "Ad hoc"),
         ]
+        task_titles = (
+            "Review arbitration agreement and Section 7 clause",
+            "Prepare procedural hearing brief",
+            "Verify claimant supporting invoices",
+            "Compile witness and expert evidence",
+            "Review respondent statement of defence",
+            "Prepare rejoinder submissions",
+            "Confirm tribunal appointment documents",
+            "Check limitation and notice chronology",
+            "Draft document production requests",
+            "Review damages calculations",
+            "Prepare hearing bundle index",
+            "Confirm filing deadlines and service",
+        )
+        unscheduled_task_titles = {
+            0: "Collect missing evidence exhibits",
+            4: "Confirm expert witness availability",
+            8: "Reconcile witness statements",
+        }
         cases = []
         for i, (title, forum) in enumerate(pairs):
             claimant, respondent = title.split(" vs. ", 1)
@@ -627,8 +787,8 @@ def main():
                     id=str(uuid.uuid4()),
                     owner_id=owner,
                     case_id=cid,
-                    title="Review pleadings and evidence",
-                    notes="Demo task.",
+                    title=task_titles[i],
+                    notes=f"Complete this review for {title}.",
                     due_at=due,
                     priority=("high" if i % 3 == 0 else "medium"),
                     status="todo",
@@ -684,11 +844,11 @@ def main():
                         )
                     )
             for event_type, offset, detail in (
-                ("filed", -30 + i % 15, "Statement of claim filed"),
-                ("first_hearing", -5 + i % 10, "Procedural hearing"),
-                ("document_uploaded", -2 + i % 7, "Evidence bundle uploaded"),
-                ("deadline_set", 12 + i % 20, "Reply submissions deadline"),
-                ("all_day_event", i % 10, "All-day case preparation block"),
+                (CaseEventType.FILED, -30 + i % 15, "Statement of claim filed"),
+                (CaseEventType.FIRST_HEARING, -5 + i % 10, "Procedural hearing"),
+                (CaseEventType.DOCUMENT_UPLOADED, -2 + i % 7, "Evidence bundle uploaded"),
+                (CaseEventType.DEADLINE_SET, 12 + i % 20, "Reply submissions deadline"),
+                (CaseEventType.ALL_DAY, i % 10, "All-day case preparation block"),
             ):
                 db.add(
                     CaseEvent(
@@ -709,8 +869,8 @@ def main():
                         id=str(uuid.uuid4()),
                         owner_id=owner,
                         case_id=cid,
-                        title="Unscheduled evidence review",
-                        notes="Open task without a due date.",
+                        title=unscheduled_task_titles[i],
+                        notes=f"Open task without a due date for {title}.",
                         due_at=None,
                         priority="medium",
                         status="todo",
@@ -888,7 +1048,12 @@ def main():
         db.flush()
         case_id = cases[0].id
         collections = ensure_demo_collections(db, owner)
-        agreement_names = {"agreement.pdf", "contract.pdf", "near-duplicate-agreement-a.pdf", "near-duplicate-agreement-b.pdf"}
+        agreement_names = {
+            "agreement.pdf",
+            "contract.pdf",
+            "near-duplicate-agreement-a.pdf",
+            "near-duplicate-agreement-b.pdf",
+        }
         authority_names = {"award.pdf"}
         bundle_id = bundle.id
         docs = []
@@ -990,9 +1155,9 @@ def main():
                 is_demo=True,
             )
         )
-    print(
-        f"Seeded {len(clients)} clients, {len(cases)} cases, {len(docs)} generated/indexed PDFs; bundle has {generated.get('pages')} pages."
-    )
+    print(f"Generated indexed PDFs and a {generated.get('pages')}-page demo bundle.")
+    with session_scope() as db:
+        print_owner_census(db)
 
 
 if __name__ == "__main__":

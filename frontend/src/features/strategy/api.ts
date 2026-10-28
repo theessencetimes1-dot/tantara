@@ -23,6 +23,7 @@ export type StrategyData = {
   model: { provider: string; model: string } | null;
   citations: StrategyCitation[];
   assertion_citations: AssertionCitation[];
+  validation_warnings?: Array<{ field: string; index: number | null; reason: string }>;
   manually_edited: boolean;
   generation_note: string;
   generation_kind?: 'model_strategy' | 'source_excerpt_review';

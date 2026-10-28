@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { ApiError } from '@/lib/api/client';
+import { workspaceDateTimeDisplay } from '@/lib/datetime';
 import {
   CaseItem,
   CommunityPost,
@@ -30,11 +31,7 @@ function authorName(value: { author?: { name?: string; display_name?: string }; 
 
 function timestamp(value?: string) {
   if (!value) return 'Timestamp not provided by the API';
-  const hasZone = /(?:Z|[+-]\d{2}:?\d{2})$/i.test(value);
-  const date = new Date(hasZone ? value : `${value}Z`);
-  return Number.isNaN(date.getTime())
-    ? value
-    : `${new Intl.DateTimeFormat('en', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'UTC' }).format(date)} UTC`;
+  return workspaceDateTimeDisplay(value);
 }
 
 function DemoBadge() {
@@ -265,7 +262,7 @@ export function CommunityFeed() {
   }
 
   return (
-    <main
+    <div
       className="community-page"
       style={{ maxWidth: 980, margin: '0 auto', padding: '28px 20px', display: 'grid', gap: 18 }}
     >
@@ -439,7 +436,7 @@ export function CommunityFeed() {
           </div>
         )}
       </section>
-    </main>
+    </div>
   );
 }
 
@@ -512,13 +509,13 @@ export function CommunityThread({ id }: { id: string }) {
 
   if (!post && !error)
     return (
-      <main className="community-page" style={{ maxWidth: 850, margin: '0 auto', padding: '28px 20px' }}>
+      <div className="community-page" style={{ maxWidth: 850, margin: '0 auto', padding: '28px 20px' }}>
         <p role="status">Loading discussion…</p>
-      </main>
+      </div>
     );
 
   return (
-    <main
+    <div
       className="community-thread"
       style={{ maxWidth: 850, margin: '0 auto', padding: '28px 20px', display: 'grid', gap: 16 }}
     >
@@ -649,6 +646,6 @@ export function CommunityThread({ id }: { id: string }) {
           {busy ? 'Sending…' : 'Reply'}
         </button>
       </form>
-    </main>
+    </div>
   );
 }

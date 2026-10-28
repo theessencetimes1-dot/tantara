@@ -13,7 +13,7 @@ export type AskResponse = {
     chunk_id: string;
     page_number: number;
     excerpt: string;
-    retreival_score?: number;
+    retrieval_score: number;
   }>;
   follow_ups: string[];
   disclaimer?: string;

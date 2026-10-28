@@ -65,7 +65,7 @@ export function groupSources(sources: ResearchSource[]): CitationGroup[] {
       }
       excerptGroup.sources.push(source);
     }
-    const score = source.retrieval_score ?? source.retreival_score ?? source.score;
+    const score = source.retrieval_score;
     if (score != null && Number.isFinite(score)) {
       page.bestScore = page.bestScore == null ? score : Math.max(page.bestScore, score);
     }
@@ -80,6 +80,7 @@ export function answerStatusLabel(status: string, answerKind?: string, generatio
   switch (status) {
     case 'ok':
     case 'answered':
+      if (answerKind === 'model_synthesis') return 'Model synthesis · review sources';
       if (answerKind === 'model_generated' || generationKind === 'model_generated')
         return 'Model response · review sources';
       if (answerKind === 'case_record' || generationKind === 'case_record') return 'From the case record';

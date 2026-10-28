@@ -112,7 +112,9 @@ test('mobile library drawer, cards, viewer geometry, metadata, AI Read and page 
   await expect
     .poll(() => sidebar.evaluate((element) => element.getBoundingClientRect().x))
     .toBeGreaterThanOrEqual(0);
-  const drawerDocumentLink = page.getByRole('link', { name: 'Documents', exact: true });
+  const drawerDocumentLink = page
+    .getByRole('navigation', { name: 'Main navigation' })
+    .getByRole('link', { name: 'Documents', exact: true });
   await expect(drawerDocumentLink).toBeVisible();
   const drawerBounds = await sidebar.boundingBox();
   expect(drawerBounds).not.toBeNull();
@@ -127,7 +129,10 @@ test('mobile library drawer, cards, viewer geometry, metadata, AI Read and page 
   await expect(heading).toBeVisible();
   await captureMobile(page, 'documents-round6-drawer-dismissed-mobile-390-real');
   await page.getByRole('button', { name: 'Open navigation' }).click();
-  await page.getByRole('link', { name: 'Documents', exact: true }).click();
+  await page
+    .getByRole('navigation', { name: 'Main navigation' })
+    .getByRole('link', { name: 'Documents', exact: true })
+    .click();
   await expect(page).toHaveURL(/\/documents$/);
   await expect(page.locator('.sidebar-backdrop')).toHaveCount(0);
   await expect(heading).toBeVisible();

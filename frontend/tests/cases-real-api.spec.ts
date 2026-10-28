@@ -1,14 +1,8 @@
 import { test, expect } from '@playwright/test';
+import { requirePlaywrightApi } from './api-readiness';
 const base = `${process.env.TANTARA_API_ORIGIN || 'http://127.0.0.1:8010'}/api/v1`;
-async function apiReady() {
-  try {
-    return (await fetch(`${base}/health`)).ok;
-  } catch {
-    return false;
-  }
-}
+test.beforeAll(async () => requirePlaywrightApi());
 test('real API workflow persists client, case, party, hearing and task', async ({ page, request }) => {
-  test.skip(!(await apiReady()), 'TANTARA API is not running');
   test.setTimeout(90000);
   const email = process.env.TANTARA_E2E_EMAIL || 'advocate@tantara.local',
     password = process.env.TANTARA_E2E_PASSWORD || 'tantara-local';
@@ -94,6 +88,57 @@ test('real API workflow persists client, case, party, hearing and task', async (
       headers,
     });
     expect(participants.ok()).toBeTruthy();
+
+    await page.goto(`/cases/${caseId}`);
+    const caseTabs = page.getByRole('tablist', { name: 'Case sections' });
+    const overviewTab = caseTabs.getByRole('tab', { name: 'Overview' });
+    const casePanel = page.getByRole('tabpanel');
+    const casePanelId = (await casePanel.getAttribute('id'))!;
+    const overviewTabId = (await overviewTab.getAttribute('id'))!;
+    await expect(overviewTab).toHaveAttribute('aria-controls', casePanelId);
+    await expect(casePanel).toHaveAttribute('aria-labelledby', overviewTabId);
+    await expect(caseTabs.getByRole('tab', { name: 'Timeline' })).toHaveAttribute('tabindex', '-1');
+    await overviewTab.focus();
+    await overviewTab.press('ArrowRight');
+    const timelineTab = caseTabs.getByRole('tab', { name: 'Timeline' });
+    await expect(timelineTab).toHaveAttribute('aria-selected', 'true');
+    await expect(timelineTab).toHaveAttribute('tabindex', '0');
+    await expect(timelineTab).toBeFocused();
+    await expect(casePanel).toHaveAttribute('aria-labelledby', (await timelineTab.getAttribute('id'))!);
+
+    const strategyTab = caseTabs.getByRole('tab', { name: 'Strategy' });
+    await strategyTab.click();
+    const embeddedTabs = page.getByRole('tablist', { name: 'Case strategy sections' });
+    const embeddedTheory = embeddedTabs.getByRole('tab', { name: 'Case Theory' });
+    const embeddedPanelId = (await embeddedTheory.getAttribute('aria-controls'))!;
+    const embeddedPanel = page.locator(`[id="${embeddedPanelId}"]`);
+    await expect(embeddedPanel).toHaveAttribute(
+      'aria-labelledby',
+      (await embeddedTheory.getAttribute('id'))!,
+    );
+    await embeddedTheory.focus();
+    await embeddedTheory.press('ArrowRight');
+    const embeddedIssues = embeddedTabs.getByRole('tab', { name: 'Key Issues' });
+    await expect(embeddedIssues).toHaveAttribute('aria-selected', 'true');
+    await expect(embeddedIssues).toBeFocused();
+    await expect(embeddedPanel).toHaveAttribute(
+      'aria-labelledby',
+      (await embeddedIssues.getAttribute('id'))!,
+    );
+
+    await page.goto(`/strategy?case_id=${caseId}&tab=Case%20Theory`);
+    const strategyTabs = page.getByRole('tablist', { name: 'Strategy sections' });
+    const theoryTab = strategyTabs.getByRole('tab', { name: 'Case Theory' });
+    const strategyPanel = page.getByRole('tabpanel');
+    await expect(theoryTab).toHaveAttribute('aria-controls', (await strategyPanel.getAttribute('id'))!);
+    await expect(strategyPanel).toHaveAttribute('aria-labelledby', (await theoryTab.getAttribute('id'))!);
+    await theoryTab.focus();
+    await theoryTab.press('ArrowRight');
+    const issuesTab = strategyTabs.getByRole('tab', { name: 'Key Issues' });
+    await expect(issuesTab).toHaveAttribute('aria-selected', 'true');
+    await expect(issuesTab).toBeFocused();
+    await expect(page).toHaveURL(/tab=Key\+Issues|tab=Key%20Issues/);
+    await expect(strategyPanel).toHaveAttribute('aria-labelledby', (await issuesTab.getAttribute('id'))!);
   } finally {
     await del(taskId ? `/tasks/${taskId}` : '');
     await del(hearingId ? `/hearings/${hearingId}` : '');
@@ -105,7 +150,6 @@ test('new case routes remain usable without horizontal overflow at target widths
   page,
   request,
 }) => {
-  test.skip(!(await apiReady()), 'TANTARA API is not running');
   const login = await request.post(`${base}/auth/login`, {
     data: {
       email: process.env.TANTARA_E2E_EMAIL || 'advocate@tantara.local',
@@ -136,7 +180,6 @@ test('new case routes remain usable without horizontal overflow at target widths
 });
 
 test('case detail reports an unreadable id with a retryable not-found state', async ({ page, request }) => {
-  test.skip(!(await apiReady()), 'TANTARA API is not running');
   const login = await request.post(`${base}/auth/login`, {
     data: {
       email: process.env.TANTARA_E2E_EMAIL || 'advocate@tantara.local',
@@ -157,7 +200,6 @@ test('closed status restores from URL and table sorting toggles direction access
   page,
   request,
 }) => {
-  test.skip(!(await apiReady()), 'TANTARA API is not running');
   const login = await request.post(`${base}/auth/login`, {
     data: {
       email: process.env.TANTARA_E2E_EMAIL || 'advocate@tantara.local',
@@ -180,7 +222,6 @@ test('closed status restores from URL and table sorting toggles direction access
 });
 
 test('calendar week view renders seven distinct dates', async ({ page, request }) => {
-  test.skip(!(await apiReady()), 'TANTARA API is not running');
   const login = await request.post(`${base}/auth/login`, {
     data: {
       email: process.env.TANTARA_E2E_EMAIL || 'advocate@tantara.local',
@@ -203,7 +244,6 @@ test('calendar week view renders seven distinct dates', async ({ page, request }
 });
 
 test('mobile cases keep title, hearing and status inside the viewport', async ({ page, request }) => {
-  test.skip(!(await apiReady()), 'TANTARA API is not running');
   const login = await request.post(`${base}/auth/login`, {
     data: {
       email: process.env.TANTARA_E2E_EMAIL || 'advocate@tantara.local',
@@ -228,7 +268,6 @@ test('mobile cases keep title, hearing and status inside the viewport', async ({
 });
 
 test('calendar mobile defaults to readable agenda view', async ({ page, request }) => {
-  test.skip(!(await apiReady()), 'TANTARA API is not running');
   const login = await request.post(`${base}/auth/login`, {
     data: {
       email: process.env.TANTARA_E2E_EMAIL || 'advocate@tantara.local',
@@ -290,7 +329,6 @@ test('calendar mobile defaults to readable agenda view', async ({ page, request 
 });
 
 test('task Retry recovers when the API responds again', async ({ page, request }) => {
-  test.skip(!(await apiReady()), 'TANTARA API is not running');
   const login = await request.post(`${base}/auth/login`, {
     data: {
       email: process.env.TANTARA_E2E_EMAIL || 'advocate@tantara.local',
@@ -325,7 +363,6 @@ test('task Retry recovers when the API responds again', async ({ page, request }
 });
 
 test('case, calendar and client routes each expose one active navigation link', async ({ page, request }) => {
-  test.skip(!(await apiReady()), 'TANTARA API is not running');
   const login = await request.post(`${base}/auth/login`, {
     data: {
       email: process.env.TANTARA_E2E_EMAIL || 'advocate@tantara.local',
@@ -337,19 +374,34 @@ test('case, calendar and client routes each expose one active navigation link', 
     headers: { Authorization: `Bearer ${token}` },
   });
   const caseId = (await listing.json()).items[0].id as string;
+  const clients = await request.get(`${base}/clients?page_size=1`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const clientId = (await clients.json()).items[0].id as string;
   await page.addInitScript((value) => {
     localStorage.setItem('tantara_token', value as string);
     document.cookie = `tantara_token=${value}; Path=/; SameSite=Lax`;
   }, token);
-  for (const route of ['/cases', `/cases/${caseId}`, '/clients', '/tasks', '/calendar']) {
+  for (const route of [
+    '/cases',
+    `/cases/${caseId}`,
+    '/clients',
+    `/clients/${clientId}`,
+    '/tasks',
+    '/calendar',
+  ]) {
     await page.goto(route);
     await expect(page.locator('.nav a[aria-current="page"]')).toHaveCount(1);
     await expect(page.locator('.nav a')).toHaveCount(14);
+    if (route.startsWith('/clients/')) {
+      const current = page.locator('.nav a[aria-current="page"]');
+      await expect(current).toHaveAttribute('href', '/clients');
+      await expect(current).toContainText('Clients');
+    }
   }
 });
 
 test('mobile task actions remain available and open a labelled menu', async ({ page, request }) => {
-  test.skip(!(await apiReady()), 'TANTARA API is not running');
   const login = await request.post(`${base}/auth/login`, {
     data: {
       email: process.env.TANTARA_E2E_EMAIL || 'advocate@tantara.local',

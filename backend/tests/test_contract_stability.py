@@ -74,10 +74,45 @@ def test_generated_method_inventory_covers_every_openapi_operation():
     spec.loader.exec_module(module)
     inventory = Path(__file__).resolve().parents[2] / "docs" / "BACKEND_ROUTES.txt"
     assert inventory.read_text() == module.render_inventory()
-    assert sum(1 for line in inventory.read_text().splitlines() if line and not line.startswith("#")) == 123
+    assert sum(1 for line in inventory.read_text().splitlines() if line and not line.startswith("#")) == 131
     matrix = Path(__file__).resolve().parents[2] / "docs" / "TEST_MATRIX.md"
     generated_section = matrix.read_text().split("## Method-level expansion\n", 1)[1]
     assert generated_section == module.render_method_matrix().split("## Method-level expansion\n", 1)[1]
+
+
+def test_runtime_openapi_operation_ids_are_unique_without_duplicate_warning(client, caplog):
+    import logging
+
+    from app.main import app
+
+    app.openapi_schema = None
+    with caplog.at_level(logging.WARNING):
+        response = client.get("/openapi.json")
+    assert response.status_code == 200
+    operations = [
+        operation
+        for path in response.json()["paths"].values()
+        for method, operation in path.items()
+        if method.lower() in {"get", "post", "put", "patch", "delete"}
+    ]
+    operation_ids = [operation["operationId"] for operation in operations]
+    assert len(operation_ids) == len(set(operation_ids))
+    assert "Duplicate Operation ID" not in caplog.text
+
+
+def test_search_and_ask_openapi_success_responses_are_typed(client):
+    schema = client.get("/openapi.json").json()
+    expected = (
+        ("/api/v1/search/documents", "get", "SearchResponse"),
+        ("/query", "post", "AskResponse"),
+        ("/api/v1/ai/ask", "post", "AskResponse"),
+    )
+    for path, method, response_name in expected:
+        response = schema["paths"][path][method]["responses"]["200"]
+        assert response["content"]["application/json"]["schema"]["$ref"].endswith(f"/{response_name}")
+    assert "items" in schema["components"]["schemas"]["SearchResponse"]["properties"]
+    ask_properties = schema["components"]["schemas"]["AskResponse"]["properties"]
+    assert {"answer", "citations", "supports", "model"} <= set(ask_properties)
 
 
 def test_all_openapi_mutation_bodies_return_validation_envelope(client):
@@ -126,12 +161,19 @@ def test_workspace_datetimes_accept_offsets_and_serialize_with_workspace_offset(
     created = client.post(
         "/api/v1/tasks",
         headers=headers,
-        json={"title": "Offset preserving deadline", "due_at": "2026-10-27T10:00:00+05:30", "case_id": case["id"]},
+        json={
+            "title": "Offset preserving deadline",
+            "due_at": "2026-10-27T10:00:00+05:30",
+            "case_id": case["id"],
+        },
     )
     assert created.status_code == 200, created.text
     assert created.json()["due_at"] == "2026-10-27T10:00:00+05:30"
     task_list = client.get("/api/v1/tasks?page_size=100", headers=headers).json()["items"]
-    assert next(task for task in task_list if task["id"] == created.json()["id"])["due_at"] == "2026-10-27T10:00:00+05:30"
+    assert (
+        next(task for task in task_list if task["id"] == created.json()["id"])["due_at"]
+        == "2026-10-27T10:00:00+05:30"
+    )
 
     hearing = client.post(
         "/api/v1/hearings",
@@ -141,7 +183,10 @@ def test_workspace_datetimes_accept_offsets_and_serialize_with_workspace_offset(
     assert hearing.status_code == 200, hearing.text
     assert hearing.json()["at"] == "2026-10-27T10:00:00+05:30"
     hearing_list = client.get("/api/v1/hearings?page_size=100", headers=headers).json()["items"]
-    assert next(row for row in hearing_list if row["id"] == hearing.json()["id"])["at"] == "2026-10-27T10:00:00+05:30"
+    assert (
+        next(row for row in hearing_list if row["id"] == hearing.json()["id"])["at"]
+        == "2026-10-27T10:00:00+05:30"
+    )
 
     utc_created = client.post(
         "/api/v1/tasks",
@@ -342,7 +387,7 @@ def test_document_draft_bundle_ai_and_community_subresources_are_owner_scoped(cl
     related_case = client.post(
         "/api/v1/cases", headers=owner, json={"title": "Client relation", "client_id": client_record["id"]}
     )
-    assert related_case.status_code == 200
+    assert related_case.status_code == 201
     case_list = client.get(f"/api/v1/clients/{client_record['id']}/cases", headers=owner).json()
     assert set(case_list) >= {"items", "total", "page", "page_size", "pages"}
     assert any(item["id"] == related_case.json()["id"] for item in case_list["items"])

@@ -59,8 +59,8 @@ outside origin receives no `access-control-allow-origin` header.
 `PATCH /api/v1/settings/ai` values now drive the local model URL and model used
 by `/api/v1/ai/ask`. Retrieval catches query-embedding failures, continues with
 owner-scoped FTS5 results, and reports `embedding_unavailable` in search while
-retaining the hits. AI citations include both `retrieval_score` and the
-compatibility field `retreival_score`.
+retaining the hits. Earlier snapshots included a misspelled retrieval alias;
+current API citations expose only the canonical `retrieval_score` field.
 
 Passing tests:
 

@@ -37,7 +37,7 @@ import './research.css';
 type Choice = { id?: string; name?: string } | string;
 const EMPTY_SOURCES: ResearchSource[] = [];
 const ACTIVE_SESSION_KEY = 'tantara_research_active_session';
-const scoreOf = (s: ResearchSource) => s.retrieval_score ?? s.retreival_score ?? s.score;
+const scoreOf = (s: ResearchSource) => s.retrieval_score;
 const formatHistoryDate = (value?: string) => {
   if (!value || Number.isNaN(new Date(value).getTime())) return 'Date unavailable';
   return new Date(value).toLocaleDateString('en-GB', {
@@ -251,7 +251,7 @@ async function hydrateSession(session: ResearchSession): Promise<ResearchSession
         return {
           ...citation,
           document_title: document?.title ?? document?.filename ?? 'Untitled document',
-          retrieval_score: citation.retrieval_score ?? citation.retreival_score,
+          retrieval_score: citation.retrieval_score,
         };
       }),
     })),
@@ -401,7 +401,7 @@ export default function ResearchPage() {
               chunk_id: hit.chunk_id,
               page_number: hit.page_number,
               excerpt: hit.snippet,
-              retrieval_score: hit.score,
+              retrieval_score: hit.retrieval_score,
             })),
           );
         } catch {
@@ -482,7 +482,9 @@ export default function ResearchPage() {
   const otherGroups = useMemo(() => groupSources(otherRetrievedSources), [otherRetrievedSources]);
   const modelId = answer?.model?.model;
   const generationKind = answer?.generation_kind ?? answer?.answer_kind;
-  const hasModelProvenance = generationKind === 'model_generated' && typeof modelId === 'string';
+  const hasModelProvenance =
+    (generationKind === 'model_generated' || generationKind === 'model_synthesis') &&
+    typeof modelId === 'string';
   const answerIsInsufficient =
     answerHasInsufficientEvidence ||
     answerHasInsufficientEvidence ||
@@ -566,7 +568,7 @@ export default function ResearchPage() {
   };
 
   return (
-    <main className="research-page">
+    <div className="research-page">
       <div className="research-heading">
         <div>
           <div className="research-eyebrow">
@@ -1031,6 +1033,6 @@ export default function ResearchPage() {
           </section>
         </aside>
       </div>
-    </main>
+    </div>
   );
 }

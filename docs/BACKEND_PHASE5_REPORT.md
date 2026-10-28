@@ -55,7 +55,7 @@ The following are actual post-change service results from the seeded test databa
 | `ZXQORBITKEY` | Unique Term Evidence, 1, 0.032266; Unique Term Evidence, 3, 0.032266; Unique Term Evidence, 4, 0.031754; Unique Term Evidence, 2, 0.031514; Unique Term Evidence, 5, 0.031010 |
 | `violet saxophone excavation quantum` | no hits (`items: []`) |
 
-The quality checks are in `test_demo_seed_has_multpage_content_calendar_extractions_and_feed`. The general retrieval test also verifies page 999 returns an empty page with the full matching `total`, and injection-style input `' OR 1=1;--` returns no rows without changing query structure. `test_reviewable_extraction_page_refs_range_and_hybrid_search` asserts `score == retrieval_score == retreival_score` on search hits; Ask citation tests assert both spellings remain equal.
+The quality checks are in `test_demo_seed_has_multpage_content_calendar_extractions_and_feed`. The general retrieval test also verifies page 999 returns an empty page with the full matching `total`, and injection-style input `' OR 1=1;--` returns no rows without changing query structure. `test_reviewable_extraction_page_refs_range_and_hybrid_search` asserts positive canonical relevance values on search hits; Ask citation tests require the canonical field and assert the legacy misspelling is absent.
 
 For comparison with the two original probe queries, current seeded results now vary by query:
 
@@ -87,7 +87,7 @@ The live HTTP smoke used that query with `page_size=1` and returned this actual 
     "chunk_id": "e5a0e1ba-ce3f-492f-b180-5fbee1538eb6",
     "page_number": 3,
     "snippet": "Page Three Motion — Page 3\nUnique page three clause: Sapphire Pavilion shall host the special procedural conference on\nthe third calendar day.",
-    "retreival_score": 0.03278688524590164,
+    "retrieval_score": 0.03278688524590164,
     "source_type": "Page Three Motion",
     "jurisdiction": "India"
   }],

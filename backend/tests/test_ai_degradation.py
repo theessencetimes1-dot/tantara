@@ -53,7 +53,8 @@ def test_dead_user_configured_model_returns_explicit_unavailable_result(client):
     assert result["answer"] == (
         "The search could not be completed because the configured language model is unavailable."
     )
-    assert result["citations"] == result["supports"] == []
+    assert result["citations"] and result["supports"]
+    assert result["total"] == result["citation_count"] == len(result["citations"])
     assert "found" not in result["answer"]
 
 
@@ -92,7 +93,8 @@ def test_dead_model_is_honest_on_all_generation_and_assistance_surfaces(client, 
         "/api/v1/ai/ask", headers=headers, json={"question": "Which city appears in marker ZXQ-771?"}
     ).json()
     assert ask["status"] == "model_unavailable" and ask["model"] is None
-    assert ask["answer_kind"] == "model_unavailable" and ask["citations"] == ask["supports"] == []
+    assert ask["answer_kind"] == "model_unavailable" and ask["citations"] and ask["supports"]
+    assert ask["total"] == len(ask["citations"])
     assert "evidence is available" not in ask["answer"].lower()
     assert "dead-local-model" not in ask["answer"]
 
@@ -105,7 +107,8 @@ def test_dead_model_is_honest_on_all_generation_and_assistance_surfaces(client, 
     assert session_answer["status"] == "model_unavailable" and session_answer["model"] is None
     assert session_answer["answer_kind"] == "model_unavailable"
     assert "dead-local-model" not in session_answer["answer"]
-    assert session_answer["citations"] == session_answer["supports"] == []
+    assert session_answer["citations"] and session_answer["supports"]
+    assert session_answer["total"] == len(session_answer["citations"])
 
     read = client.post(f"/api/v1/documents/{document_id}/ai-read", headers=headers).json()
     assert read["status"] == "local_extraction" and read["model"] is None
@@ -187,7 +190,9 @@ def test_reachable_local_http_model_keeps_success_contract(client):
     class LocalModel(BaseHTTPRequestHandler):
         def do_POST(self):
             self.rfile.read(int(self.headers.get("content-length", "0")))
-            body = json.dumps({"choices": [{"message": {"content": "The seat is Mumbai."}}]}).encode()
+            body = json.dumps(
+                {"choices": [{"message": {"content": "The seat is Mumbai [1]."}}]}
+            ).encode()
             self.send_response(200)
             self.send_header("content-type", "application/json")
             self.send_header("content-length", str(len(body)))
@@ -216,11 +221,15 @@ def test_reachable_local_http_model_keeps_success_contract(client):
         ).json()
         assert result["status"] == "ok"
         assert result["model"] == {"provider": "local", "model": "local-fixture-model"}
+        assert result["answer"] == "The seat is Mumbai [1]."
+        assert result["answer_kind"] == "model_synthesis"
         assert "Mumbai" in result["answer"] and "[1]" in result["answer"]
         assert result["answer_basis"] == "cited_excerpts"
         citation = result["citations"][0]
+        assert citation["citation_number"] == 1
         assert citation["document_id"] == document_id
-        assert citation["score"] == citation["retrieval_score"] == citation["retreival_score"]
+        assert "retreival_score" not in citation
+        assert citation["retrieval_score"] > 0
     finally:
         server.shutdown()
         server.server_close()
@@ -246,7 +255,7 @@ def test_embedding_failure_keeps_fts_results_and_reports_degradation(client, mon
     assert "ZXQ-771" in result["items"][0]["snippet"]
 
 
-def test_ai_citation_payload_keeps_both_score_spellings(client, monkeypatch):
+def test_ai_citation_payload_uses_canonical_retrieval_score(client, monkeypatch):
     headers, document_id = _uploaded_evidence(client)
     monkeypatch.setattr(main, "llm_answer", lambda question, hits, **kwargs: "The seat is Mumbai.")
     response = client.post(
@@ -261,4 +270,5 @@ def test_ai_citation_payload_keeps_both_score_spellings(client, monkeypatch):
     assert citation["document_id"] == document_id
     assert response.json()["supports"][0]["quote"] in citation["excerpt"]
     assert response.json()["answer_basis"] == "cited_excerpts"
-    assert citation["score"] == citation["retrieval_score"] == citation["retreival_score"]
+    assert "retreival_score" not in citation
+    assert citation["retrieval_score"] > 0

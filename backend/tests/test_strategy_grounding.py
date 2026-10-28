@@ -4,8 +4,11 @@ import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from threading import Thread
 
+from sqlalchemy import select
+
+from app import main
 from app.db import SessionLocal
-from app.models import User
+from app.models import DocumentChunk, User
 from app.security import hash_password
 
 
@@ -189,3 +192,72 @@ def test_strategy_without_indexed_evidence_has_distinct_no_evidence_mode(client)
     assert (
         client.get(f"/api/v1/cases/{case['id']}/strategy", headers=headers).json()["status"] == "no_evidence"
     )
+
+
+def test_strategy_keeps_valid_claims_when_one_source_page_is_wrong(client, monkeypatch):
+    headers, case_id, document_id = _case_with_evidence(client)
+    with SessionLocal() as session:
+        chunk_id = session.scalar(select(DocumentChunk.id).where(DocumentChunk.document_id == document_id))
+    assert chunk_id
+    valid = {"text": "The agreement identifies Mumbai as the seat.", "citations": [chunk_id]}
+    payload = {
+        "case_theory": valid,
+        "key_issues": [
+            {"text": "This incorrectly cites a different page.", "citations": [f"{chunk_id} p.4"]},
+            {"text": "Confirm Mumbai as the agreed seat.", "citations": [chunk_id]},
+        ],
+        "legal_arguments": [],
+        "counterarguments": [],
+        "evidence_gaps": [],
+        "strategy_plan": [],
+    }
+    monkeypatch.setattr(main, "llm_answer", lambda *_args, **_kwargs: json.dumps(payload))
+    response = client.post(f"/api/v1/cases/{case_id}/strategy/generate", headers=headers)
+    assert response.status_code == 200, response.text
+    result = response.json()
+    assert result["status"] == "model_generated"
+    assert result["case_theory"] == valid["text"]
+    assert result["key_issues"] == ["Confirm Mumbai as the agreed seat."]
+    assert result["validation_warnings"] == [
+        {"field": "key_issues", "index": 0, "reason": "citation_not_resolved"},
+        {"field": "legal_arguments", "index": None, "reason": "source_excerpt_fallback"},
+    ]
+    assert result["assertion_citations"]
+    assert all(
+        citation["document_id"] == document_id
+        for assertion in result["assertion_citations"]
+        for citation in assertion["citations"]
+    )
+    assert "incorrectly cites" not in str(result)
+
+
+def test_strategy_with_no_resolvable_claim_citations_keeps_template_honesty(client, monkeypatch):
+    headers, case_id, document_id = _case_with_evidence(client)
+    with SessionLocal() as session:
+        chunk_id = session.scalar(select(DocumentChunk.id).where(DocumentChunk.document_id == document_id))
+    assert chunk_id
+    payload = {
+        "case_theory": {
+            "text": "Unsupported theory must not escape.",
+            "citations": [f"{chunk_id} p.99"],
+        },
+        "key_issues": [{"text": "Unsupported issue must not escape.", "citations": ["not-retrieved"]}],
+        "legal_arguments": [],
+        "counterarguments": [],
+        "evidence_gaps": [],
+        "strategy_plan": [],
+    }
+    monkeypatch.setattr(main, "llm_answer", lambda *_args, **_kwargs: json.dumps(payload))
+    response = client.post(f"/api/v1/cases/{case_id}/strategy/generate", headers=headers)
+    assert response.status_code == 200, response.text
+    result = response.json()
+    assert result["status"] == "template"
+    assert result["model"] is None
+    assert result["case_theory"] == "" and result["key_issues"] == []
+    assert result["validation_warnings"] == [
+        {"field": "case_theory", "index": 0, "reason": "citation_not_resolved"},
+        {"field": "key_issues", "index": 0, "reason": "citation_not_resolved"},
+    ]
+    assert "Unsupported theory" not in str(result)
+    assert "Unsupported issue" not in str(result)
+    assert "without a model" in result["generation_note"]

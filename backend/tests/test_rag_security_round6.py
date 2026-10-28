@@ -41,8 +41,8 @@ def test_rag_chunk_scoring_fusion_filters_semantic_padding_and_keeps_citation_co
     )
     assert [hit["chunk_id"] for hit in fused] == ["consensus", "fts", "semantic"]
     assert fused[0]["page_number"] == 1
-    assert fused[0]["score"] > fused[1]["score"] >= fused[2]["score"]
-    assert fused[0]["score"] == fused[0]["retrieval_score"] == fused[0]["retreival_score"]
+    assert fused[0]["retrieval_score"] > fused[1]["retrieval_score"] >= fused[2]["retrieval_score"]
+    assert "retreival_score" not in fused[0]
 
 
 def test_rag_answer_citation_shape_and_empty_corpus(monkeypatch):
@@ -57,9 +57,7 @@ def test_rag_answer_citation_shape_and_empty_corpus(monkeypatch):
         "page_number": 3,
         "chunk_index": 2,
         "snippet": "The exact source passage.",
-        "score": 0.83,
         "retrieval_score": 0.83,
-        "retreival_score": 0.83,
         "source_type": "Agreement",
     }
     monkeypatch.setattr(
@@ -75,9 +73,7 @@ def test_rag_answer_citation_shape_and_empty_corpus(monkeypatch):
             "document_type": "Agreement",
             "page_number": 3,
             "content": "The exact source passage.",
-            "score": 0.83,
             "retrieval_score": 0.83,
-            "retreival_score": 0.83,
         }
     ]
     monkeypatch.setattr(
@@ -97,9 +93,7 @@ def test_rag_embedding_unavailable_is_not_silently_replaced(monkeypatch):
         "source_type": "Agreement",
         "page_number": 1,
         "snippet": "Source text",
-        "score": 0.1,
         "retrieval_score": 0.1,
-        "retreival_score": 0.1,
     }
     monkeypatch.setattr(
         rag.retrieval_service,
@@ -109,7 +103,8 @@ def test_rag_embedding_unavailable_is_not_silently_replaced(monkeypatch):
     monkeypatch.setattr("app.main.llm_answer", lambda *_args, **_kwargs: "")
     result = rag.answer("question", owner_id="owner")
     assert result["status"] == "model_unavailable" and result["model"] is None
-    assert result["answer"] == "" and result["sources"] == []
+    assert "language model is unavailable" in result["answer"]
+    assert result["sources"] and result["sources"][0]["retrieval_score"] == evidence["retrieval_score"]
 
 
 def test_password_hash_round_trip_and_malformed_hash():

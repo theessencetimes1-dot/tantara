@@ -1,6 +1,6 @@
 """Database-backed dashboard and calendar endpoints."""
 
-from datetime import date, datetime, timedelta
+from datetime import datetime, time, timedelta
 from math import ceil
 
 from fastapi import APIRouter, Depends, Query
@@ -12,6 +12,32 @@ from app.security import current_user
 from app.timezone import to_utc_iso, to_workspace_iso, to_workspace_naive, workspace_now
 
 router = APIRouter(prefix="/api/v1", tags=["dashboard", "calendar"])
+
+
+def _case_event_title(event: CaseEvent) -> str:
+    detail = (event.detail or "").strip()
+    normalized_type = event.type.replace("_", " ").strip().casefold()
+    if detail and detail.casefold() not in {event.type.casefold(), normalized_type}:
+        return detail
+    return normalized_type[:1].upper() + normalized_type[1:] if normalized_type else "Case event"
+
+
+def _case_event_item(event: CaseEvent, case_titles: dict[str, str]) -> dict:
+    title = _case_event_title(event)
+    detail = (event.detail or "").strip()
+    if not detail or detail.casefold() in {event.type.casefold(), event.type.replace("_", " ").casefold()}:
+        detail = title
+    return {
+        "id": event.id,
+        "type": "event",
+        "event_type": event.type,
+        "title": title,
+        "detail": detail,
+        "case_id": event.case_id,
+        "case_title": case_titles.get(event.case_id),
+        "at": to_workspace_iso(event.occurred_at),
+        "all_day": event.occurred_at.time() == time.min,
+    }
 
 
 @router.get("/dashboard/summary")
@@ -87,6 +113,7 @@ def upcoming(days: int = Query(30, ge=1, le=365), user=Depends(current_user)):
             )
         ).all()
         cases = s.scalars(select(Case).where(Case.owner_id == user["id"])).all()
+        case_titles = {case.id: case.title for case in cases}
         out = (
             [
                 {
@@ -94,7 +121,7 @@ def upcoming(days: int = Query(30, ge=1, le=365), user=Depends(current_user)):
                     "type": "hearing",
                     "title": x.title,
                     "case_id": x.case_id,
-                    "case_title": None,
+                    "case_title": case_titles.get(x.case_id),
                     "at": to_workspace_iso(x.at),
                     "due_in_days": (x.at.date() - today).days,
                 }
@@ -106,7 +133,7 @@ def upcoming(days: int = Query(30, ge=1, le=365), user=Depends(current_user)):
                     "type": "deadline",
                     "title": x.title,
                     "case_id": x.case_id,
-                    "case_title": None,
+                    "case_title": case_titles.get(x.case_id),
                     "at": to_workspace_iso(x.due_at),
                     "due_in_days": (x.due_at.date() - today).days,
                 }
@@ -115,12 +142,7 @@ def upcoming(days: int = Query(30, ge=1, le=365), user=Depends(current_user)):
             ]
             + [
                 {
-                    "id": x.id,
-                    "type": "event",
-                    "title": x.type,
-                    "case_id": x.case_id,
-                    "case_title": None,
-                    "at": to_workspace_iso(x.occurred_at),
+                    **_case_event_item(x, case_titles),
                     "due_in_days": (x.occurred_at.date() - today).days,
                 }
                 for x in events
@@ -142,6 +164,7 @@ def upcoming(days: int = Query(30, ge=1, le=365), user=Depends(current_user)):
                             "case_id": case.id,
                             "case_title": case.title,
                             "at": to_workspace_iso(at),
+                            "all_day": at.time() == time.min,
                             "due_in_days": (at.date() - today).days,
                         }
                     )
@@ -173,9 +196,17 @@ def calendar(
             )
         ).all()
         cases = s.scalars(select(Case).where(Case.owner_id == user["id"])).all()
+        case_titles = {case.id: case.title for case in cases}
     items = (
         [
-            {"id": x.id, "type": "hearing", "title": x.title, "case_id": x.case_id, "at": to_workspace_iso(x.at)}
+            {
+                "id": x.id,
+                "type": "hearing",
+                "title": x.title,
+                "case_id": x.case_id,
+                "case_title": case_titles.get(x.case_id),
+                "at": to_workspace_iso(x.at),
+            }
             for x in hs
         ]
         + [
@@ -184,21 +215,13 @@ def calendar(
                 "type": "deadline",
                 "title": x.title,
                 "case_id": x.case_id,
+                "case_title": case_titles.get(x.case_id),
                 "at": to_workspace_iso(x.due_at),
             }
             for x in tasks
             if x.due_at
         ]
-        + [
-            {
-                "id": x.id,
-                "type": "event",
-                "title": x.type,
-                "case_id": x.case_id,
-                "at": to_workspace_iso(x.occurred_at),
-            }
-            for x in events
-        ]
+        + [_case_event_item(x, case_titles) for x in events]
     )
     for case in cases:
         for field, label in (
@@ -214,7 +237,9 @@ def calendar(
                         "type": "event" if field == "filed_at" else "deadline",
                         "title": label,
                         "case_id": case.id,
+                        "case_title": case.title,
                         "at": to_workspace_iso(at),
+                        "all_day": at.time() == time.min,
                     }
                 )
     ordered = sorted(items, key=lambda x: x["at"])

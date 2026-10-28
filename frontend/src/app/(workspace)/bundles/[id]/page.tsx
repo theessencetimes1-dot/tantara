@@ -306,20 +306,20 @@ export default function BundleDetailPage() {
 
   if (loading)
     return (
-      <main className="bundle-page">
+      <div className="bundle-page">
         <div className="bundle-load-state" role="status">
           Opening bundle…
         </div>
-      </main>
+      </div>
     );
   if (!bundle)
     return (
-      <main className="bundle-page">
+      <div className="bundle-page">
         <div className="bundle-notice" role="alert">
           {error || 'Bundle not found.'}
         </div>
         <Link href="/bundles">Back to bundles</Link>
-      </main>
+      </div>
     );
 
   const downloadable = bundle.status === 'ready' && bundle.downloadable;
@@ -353,7 +353,7 @@ export default function BundleDetailPage() {
   const savedRangeFor = (documentId: string) =>
     preview?.sections.flatMap((section) => section.items).find((mapped) => mapped.document_id === documentId);
   return (
-    <main className="bundle-page bundle-detail-page">
+    <div className="bundle-page bundle-detail-page">
       <Link className="bundle-back-link" href="/bundles">
         <ArrowLeft size={15} /> All bundles
       </Link>
@@ -810,6 +810,6 @@ export default function BundleDetailPage() {
           </p>
         </aside>
       </div>
-    </main>
+    </div>
   );
 }

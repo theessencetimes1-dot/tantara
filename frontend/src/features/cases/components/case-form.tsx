@@ -7,6 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { ApiError } from '@/lib/api/client';
 import { endpoints } from '@/lib/api/endpoints';
 import { casesApi, Matter } from '../api';
 import '../styles.css';
@@ -21,7 +22,7 @@ const schema = z.object({
   governing_law: z.string().optional(),
   arbitration_agreement_details: z.string().optional(),
   dispute_category: z.string().optional(),
-  claim_amount: z.coerce.number().optional(),
+  claim_amount: z.number().optional(),
   claim_currency: z.string().default('INR'),
   status: z.string().default('active'),
   description: z.string().optional(),
@@ -31,6 +32,47 @@ const schema = z.object({
   limitation_date: z.string().optional(),
 });
 type Values = z.infer<typeof schema>;
+
+const optionalTextFields = [
+  'reference_number',
+  'claimant',
+  'respondent',
+  'client_id',
+  'forum',
+  'seat',
+  'governing_law',
+  'arbitration_agreement_details',
+  'dispute_category',
+  'description',
+  'notice_date',
+  'next_hearing_at',
+  'filed_at',
+  'limitation_date',
+] as const satisfies readonly (keyof Values)[];
+
+function normalizeCasePayload(values: Values): Partial<Values> {
+  const payload: Partial<Values> = { ...values };
+  for (const field of optionalTextFields) {
+    const value = payload[field];
+    if (typeof value !== 'string') continue;
+    const trimmed = value.trim();
+    if (trimmed) payload[field] = trimmed;
+    else delete payload[field];
+  }
+  for (const [field, value] of Object.entries(payload))
+    if (value === undefined) delete payload[field as keyof Values];
+  return payload;
+}
+
+const caseFields = new Set<keyof Values>([
+  'title',
+  ...optionalTextFields,
+  'claim_amount',
+  'claim_currency',
+  'status',
+]);
+
+type ValidationDetail = { loc?: Array<string | number>; msg?: string };
 export function CaseForm({ caseId }: { caseId?: string }) {
   const router = useRouter();
   const clients = useQuery({
@@ -46,10 +88,13 @@ export function CaseForm({ caseId }: { caseId?: string }) {
     queryFn: () => casesApi.get(caseId!),
     enabled: !!caseId,
   });
+  const [serverError, setServerError] = useState('');
   const {
     register,
     handleSubmit,
     reset,
+    setError,
+    clearErrors,
     formState: { errors, isDirty, isSubmitting },
   } = useForm<Values>({
     resolver: zodResolver(schema),
@@ -69,19 +114,47 @@ export function CaseForm({ caseId }: { caseId?: string }) {
     return () => window.removeEventListener('beforeunload', guard);
   }, [isDirty]);
   const submit = async (v: Values) => {
+    setServerError('');
+    clearErrors();
     try {
-      const result = caseId ? await casesApi.update(caseId, v) : await casesApi.create(v);
+      const payload = normalizeCasePayload(v);
+      const result = caseId ? await casesApi.update(caseId, payload) : await casesApi.create(payload);
       toast.success(caseId ? 'Case updated' : 'Case created');
       router.push(`/cases/${result.id}`);
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Unable to save case');
+      const details =
+        e instanceof ApiError && Array.isArray(e.details) ? (e.details as ValidationDetail[]) : [];
+      let mapped = false;
+      for (const detail of details) {
+        const field = [...(detail.loc ?? [])]
+          .reverse()
+          .find(
+            (part): part is keyof Values => typeof part === 'string' && caseFields.has(part as keyof Values),
+          );
+        if (!field) continue;
+        setError(field, { type: 'server', message: detail.msg || 'Value is invalid' });
+        mapped = true;
+      }
+      if (!mapped) setServerError(e instanceof Error ? e.message : 'Unable to save case');
     }
   };
   const input = (label: keyof Values, title: string, type = 'text', wide = false) => (
     <label className={wide ? 'wide' : ''} key={label}>
       {title}
-      <input type={type} {...register(label)} />
-      {errors[label] && <small className="matter-error-text">{String(errors[label]?.message)}</small>}
+      <input
+        type={type}
+        {...register(
+          label,
+          label === 'claim_amount'
+            ? { setValueAs: (value) => (value === '' ? undefined : Number(value)) }
+            : undefined,
+        )}
+      />
+      {errors[label] && (
+        <small className="matter-error-text" role="alert">
+          {String(errors[label]?.message)}
+        </small>
+      )}
     </label>
   );
   return (
@@ -97,6 +170,11 @@ export function CaseForm({ caseId }: { caseId?: string }) {
         <p className="matter-error">Could not load case information.</p>
       ) : (
         <form className="matter-card matter-form" onSubmit={handleSubmit(submit)}>
+          {serverError && (
+            <p className="matter-error-text wide" role="alert">
+              {serverError}
+            </p>
+          )}
           {input('title', 'Case title')}
           {input('reference_number', 'Reference number')}
           {input('claimant', 'Claimant')}

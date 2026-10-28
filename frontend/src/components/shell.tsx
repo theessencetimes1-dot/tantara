@@ -199,6 +199,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
               aria-current={
                 path === href ||
                 (href === '/cases' && path.startsWith('/cases/')) ||
+                (href === '/clients' && path.startsWith('/clients/')) ||
                 (href === '/community' && path.startsWith('/community/')) ||
                 (href === '/settings/profile' && path.startsWith('/settings/'))
                   ? 'page'

@@ -6,7 +6,7 @@
 - Added a generated HTTP method inventory from `backend/openapi.json`: 80 paths and 123 method/path operations. `scripts/write_route_inventory.py` regenerates `docs/BACKEND_ROUTES.txt` and expands the method-level table in `docs/TEST_MATRIX.md`. A test checks the generated inventory and matrix against OpenAPI.
 - Moved semantic relevance filtering after RRF fusion. Lexical matches are retained; semantic-only fused hits below cosine similarity `0.35` are removed. No-match results have `items: []` and `total: 0`.
 - Replaced the obsolete `app/rag.py` global search/Anthropic path with owner-scoped hybrid retrieval and the configured local model caller. Missing evidence, unavailable embeddings, and unavailable model results stay distinct. Model unavailability has no model attribution or generated answer text.
-- Changed the Ask outage explanation so an empty citation list does not claim documents were found. Ask citations now add `score` alongside the equal `retrieval_score` and legacy `retreival_score` fields. This is additive; existing field names and response envelopes remain.
+- Changed the Ask outage explanation so an empty citation list does not claim documents were found. M3 R17 now retains retrieved citations and supports if generation is unavailable while returning a neutral outage explanation and no model attribution; M3 R18 exposes canonical `retrieval_score` only.
 
 ## Verification
 

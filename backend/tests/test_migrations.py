@@ -46,6 +46,44 @@ def test_fresh_upgrade_is_idempotent(tmp_path, monkeypatch):
     engine.dispose()
 
 
+def test_legacy_collection_revision_stamp_bridges_without_losing_rows(tmp_path, monkeypatch):
+    path = tmp_path / "legacy-collection-stamp.db"
+    engine = _upgrade(path, tmp_path, monkeypatch, "0010_knowledge_collections")
+    with engine.begin() as connection:
+        connection.execute(
+            text(
+                "INSERT INTO users(id,name,email,password_hash,role,created_at) "
+                "VALUES('legacy-owner','Legacy Owner','legacy@example.local','hash','advocate',CURRENT_TIMESTAMP)"
+            )
+        )
+        connection.execute(
+            text(
+                "INSERT INTO knowledge_collections "
+                "(id,owner_id,name,description,is_demo,created_at,updated_at) "
+                "VALUES('legacy-collection','legacy-owner','Preserved collection','Kept across rename',1,"
+                "CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)"
+            )
+        )
+        connection.execute(text("UPDATE alembic_version SET version_num='0010_knowledge_collections'"))
+    engine.dispose()
+
+    cfg = Config(str(ROOT / "alembic.ini"))
+    cfg.set_main_option("script_location", str(ROOT / "alembic"))
+    command.upgrade(cfg, "head")
+    engine = create_engine(f"sqlite:///{path}")
+    with engine.connect() as connection:
+        assert connection.execute(
+            text("SELECT name,description FROM knowledge_collections WHERE id='legacy-collection'")
+        ).one() == (
+            "Preserved collection",
+            "Kept across rename",
+        )
+        assert (
+            connection.execute(text("SELECT version_num FROM alembic_version")).scalar() == "0010_collections"
+        )
+    engine.dispose()
+
+
 def test_0008_migrates_existing_community_posts_to_private(tmp_path, monkeypatch):
     path = tmp_path / "existing-community.db"
     engine = _upgrade(path, tmp_path, monkeypatch, "0007_demo_chunk_flag")

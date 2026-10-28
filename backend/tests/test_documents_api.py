@@ -55,7 +55,8 @@ def test_reviewable_extraction_page_refs_range_and_hybrid_search(client):
     assert set(results.json()) >= {"items", "total", "page", "page_size", "pages"}
     assert results.json()["items"][0]["document_id"] == did and results.json()["items"][0]["page_number"] == 1
     hit = results.json()["items"][0]
-    assert hit["retrieval_score"] == hit["retreival_score"] == hit["score"]
+    assert "retreival_score" not in hit
+    assert hit["retrieval_score"] > 0
     documents = client.get("/api/v1/documents", headers=h).json()
     assert set(documents) >= {"items", "total", "page", "page_size", "pages"}
 

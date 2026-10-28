@@ -50,6 +50,11 @@ GET /api/v1/clients/{cid}/cases
 DELETE /api/v1/clients/{rid}
 GET /api/v1/clients/{rid}
 PATCH /api/v1/clients/{rid}
+GET /api/v1/collections
+POST /api/v1/collections
+DELETE /api/v1/collections/{collection_id}
+GET /api/v1/collections/{collection_id}
+PATCH /api/v1/collections/{collection_id}
 GET /api/v1/community/posts
 POST /api/v1/community/posts
 GET /api/v1/community/posts/{pid}/replies
@@ -86,6 +91,8 @@ GET /api/v1/drafts/{rid}/export
 POST /api/v1/drafts/{rid}/regenerate-section
 GET /api/v1/drafts/{rid}/versions
 POST /api/v1/drafts/{rid}/versions
+GET /api/v1/drafts/{rid}/versions/{vid}
+POST /api/v1/drafts/{rid}/versions/{vid}/restore
 GET /api/v1/health
 GET /api/v1/hearings
 POST /api/v1/hearings
@@ -98,6 +105,7 @@ POST /api/v1/notes
 DELETE /api/v1/notes/{rid}
 GET /api/v1/notes/{rid}
 PATCH /api/v1/notes/{rid}
+GET /api/v1/search
 GET /api/v1/search/documents
 GET /api/v1/settings/ai
 PATCH /api/v1/settings/ai

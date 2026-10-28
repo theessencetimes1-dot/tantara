@@ -18,10 +18,11 @@ import {
 } from 'lucide-react';
 import { api } from '@/lib/api/client';
 import { endpoints } from '@/lib/api/endpoints';
-import { WORKSPACE_TIME_ZONE } from '@/lib/datetime';
+import { WORKSPACE_TIME_ZONE, workspaceDateTimeDisplay } from '@/lib/datetime';
 import { keys } from '@/lib/api/keys';
 import type { Summary, Activity, Upcoming, Case } from '@/lib/api/types';
 import { MattersCard } from '@/features/dashboard/matters';
+import { calendarEventLabel } from '@/features/calendar/event-label';
 import { collectionsApi } from '@/features/documents/api';
 function Offline({ retry }: { retry: () => void }) {
   return (
@@ -297,8 +298,7 @@ export default function Dashboard() {
                   <span>
                     {x.title}
                     <small style={{ display: 'block', color: '#64748b', marginTop: 3 }}>
-                      {x.actor || 'Workspace'} ·{' '}
-                      {new Date(x.at).toLocaleString('en-IN', { timeStyle: 'short', dateStyle: 'medium' })}
+                      {x.actor || 'Workspace'} · {workspaceDateTimeDisplay(x.at)}
                     </small>
                   </span>
                 </div>
@@ -310,7 +310,6 @@ export default function Dashboard() {
               </div>
             )}
           </section>
-          <p className="muted workspace-tools-note">Additional workspace tools are not available yet.</p>
         </div>
         <aside className="dashboard-aside">
           <section className="matters-slot" data-slot="dashboard-matters">
@@ -334,7 +333,8 @@ export default function Dashboard() {
                     <div>
                       <strong>{x.title}</strong>
                       <small style={{ display: 'block', color: '#64748b', marginTop: 3 }}>
-                        {x.case_title || x.type}
+                        {calendarEventLabel(x)}
+                        {x.case_title ? ` · ${x.case_title}` : ''}
                       </small>
                     </div>
                     <span className="right muted">
