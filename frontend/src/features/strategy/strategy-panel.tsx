@@ -332,12 +332,13 @@ export function StrategyPanel({ caseId: routeCaseId }: { caseId?: string }) {
         )}
       </div>
 
-      <nav className="strategy-tabs" aria-label="Strategy sections">
+      <nav className="strategy-tabs" aria-label="Strategy sections" role="tablist">
         {strategyTabs.map((label) => (
           <button
             key={label}
+            role="tab"
             className={tab === label ? 'active' : ''}
-            aria-current={tab === label ? 'page' : undefined}
+            aria-selected={tab === label}
             onClick={() => selectTab(label)}
           >
             {label}

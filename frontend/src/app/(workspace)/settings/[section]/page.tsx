@@ -269,7 +269,7 @@ export default function SettingsSection() {
               key={key}
               href={`/settings/${key}`}
               ref={section === key ? activeNavLink : undefined}
-              aria-current={section === key ? 'page' : undefined}
+              aria-current={section === key ? 'location' : undefined}
             >
               <Icon size={16} />
               {label}

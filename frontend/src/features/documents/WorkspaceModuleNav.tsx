@@ -44,7 +44,7 @@ export function WorkspaceModuleNav() {
           href={href}
           aria-current={
             pathname === href || (href === '/documents' && pathname.startsWith('/documents/'))
-              ? 'page'
+              ? 'true'
               : undefined
           }
           onClick={() => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))}
