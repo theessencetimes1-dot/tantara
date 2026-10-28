@@ -1,0 +1,55 @@
+# Local secrets and credentials — must never enter Git
+sensitive/
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Dependencies and build output
+node_modules/
+.next/
+out/
+dist/
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+coverage/
+htmlcov/
+
+# Local runtime data: SQLite (+ WAL/SHM), uploads, FAISS indexes, caches
+data/
+backend/data/
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+*.faiss
+chunk_ids.json
+
+# Test / tooling output
+test-results/
+playwright-report/
+.playwright-mcp/
+tmp_ingest_test.txt
+npm-debug.log*
+yarn-error.log*
+pids/
+*.pid
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+
+AGENTS.md
+INSTRUCTION.md
+
+AGENTS.md
+INSTRUCTION.md

@@ -1,0 +1,3138 @@
+{
+  "base": "http://127.0.0.1:3010",
+  "captured_at": "2026-10-28T05:07:05.778Z",
+  "routes": {
+    "/dashboard": {
+      "authed": true,
+      "bodyBg": "rgb(253, 253, 253)",
+      "sidebar": {
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "backgroundImage": "linear-gradient(160deg, rgb(3, 16, 35), rgb(6, 16, 31))",
+        "width": "218px",
+        "position": "fixed",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "w": 218,
+          "h": 900
+        }
+      },
+      "header": {
+        "backgroundColor": "rgb(255, 255, 255)",
+        "height": "70px",
+        "position": "fixed",
+        "box": {
+          "x": 218,
+          "y": 0,
+          "w": 1222,
+          "h": 70
+        }
+      },
+      "main": {
+        "position": "static",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "box": {
+          "x": 218,
+          "y": 0,
+          "w": 1222,
+          "h": 1280
+        }
+      },
+      "mainTop": 0,
+      "navCount": 26,
+      "navItems": [
+        {
+          "href": "/dashboard",
+          "text": "Dashboard",
+          "current": "page",
+          "color": "rgb(255, 255, 255)",
+          "box": {
+            "x": 14,
+            "y": 88,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/cases",
+          "text": "My Cases",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 126,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/clients",
+          "text": "Clients",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 164,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/tasks",
+          "text": "Tasks",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 202,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/calendar",
+          "text": "Calendar",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 240,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/documents",
+          "text": "Documents",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 278,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/search",
+          "text": "Search",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 316,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/research",
+          "text": "Research Desk",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 354,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/drafts",
+          "text": "Drafts & Documents",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 392,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/autofill",
+          "text": "Smart Autofill",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 430,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/bundles",
+          "text": "Filing Bundles",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 468,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/strategy",
+          "text": "Strategy Advisor",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 506,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/community",
+          "text": "Community (Arbitration)",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 544,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/settings/profile",
+          "text": "Settings",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 590,
+            "w": 190,
+            "h": 47
+          }
+        },
+        {
+          "href": "/cases/new",
+          "text": "New Case",
+          "current": false,
+          "color": "rgb(255, 255, 255)",
+          "box": {
+            "x": 1316,
+            "y": 225,
+            "w": 117,
+            "h": 40
+          }
+        },
+        {
+          "href": "/cases/0533ea71-b172-4931-a34f-f8a4b1822ea5",
+          "text": "Crown Hotels vs. Summit Hosp",
+          "current": false,
+          "color": "rgb(31, 43, 68)",
+          "box": {
+            "x": 947,
+            "y": 386,
+            "w": 85,
+            "h": 52
+          }
+        },
+        {
+          "href": "/cases/4149897b-7e09-4fd7-8d86-f38313248c7d",
+          "text": "Pioneer Mining vs. Terra Mat",
+          "current": false,
+          "color": "rgb(31, 43, 68)",
+          "box": {
+            "x": 947,
+            "y": 455,
+            "w": 62,
+            "h": 70
+          }
+        },
+        {
+          "href": "/cases/18631f28-132f-4dce-b9d5-b37b990d6806",
+          "text": "Vantage Retail vs. Northstar",
+          "current": false,
+          "color": "rgb(31, 43, 68)",
+          "box": {
+            "x": 947,
+            "y": 542,
+            "w": 58,
+            "h": 52
+          }
+        },
+        {
+          "href": "/cases/e52a9311-163d-43ab-b7d3-1797601ead3e",
+          "text": "BluePeak Energy vs. Gridline",
+          "current": false,
+          "color": "rgb(31, 43, 68)",
+          "box": {
+            "x": 947,
+            "y": 611,
+            "w": 64,
+            "h": 52
+          }
+        },
+        {
+          "href": "/cases/2a173dee-a3d8-4e3c-9753-bde17625711a",
+          "text": "Cedar Infrastructure vs. Riv",
+          "current": false,
+          "color": "rgb(31, 43, 68)",
+          "box": {
+            "x": 947,
+            "y": 680,
+            "w": 86,
+            "h": 70
+          }
+        },
+        {
+          "href": "/cases/0533ea71-b172-4931-a34f-f8a4b1822ea5",
+          "text": "Crown Hotels vs. Summit Hosp",
+          "current": false,
+          "color": "rgb(13, 27, 70)",
+          "box": {
+            "x": 0,
+            "y": 0,
+            "w": 0,
+            "h": 0
+          }
+        },
+        {
+          "href": "/cases/4149897b-7e09-4fd7-8d86-f38313248c7d",
+          "text": "Pioneer Mining vs. Terra Mat",
+          "current": false,
+          "color": "rgb(13, 27, 70)",
+          "box": {
+            "x": 0,
+            "y": 0,
+            "w": 0,
+            "h": 0
+          }
+        },
+        {
+          "href": "/cases/18631f28-132f-4dce-b9d5-b37b990d6806",
+          "text": "Vantage Retail vs. Northstar",
+          "current": false,
+          "color": "rgb(13, 27, 70)",
+          "box": {
+            "x": 0,
+            "y": 0,
+            "w": 0,
+            "h": 0
+          }
+        },
+        {
+          "href": "/cases/e52a9311-163d-43ab-b7d3-1797601ead3e",
+          "text": "BluePeak Energy vs. Gridline",
+          "current": false,
+          "color": "rgb(13, 27, 70)",
+          "box": {
+            "x": 0,
+            "y": 0,
+            "w": 0,
+            "h": 0
+          }
+        },
+        {
+          "href": "/cases/2a173dee-a3d8-4e3c-9753-bde17625711a",
+          "text": "Cedar Infrastructure vs. Riv",
+          "current": false,
+          "color": "rgb(13, 27, 70)",
+          "box": {
+            "x": 0,
+            "y": 0,
+            "w": 0,
+            "h": 0
+          }
+        },
+        {
+          "href": "/cases",
+          "text": "View all cases",
+          "current": false,
+          "color": "rgb(67, 56, 202)",
+          "box": {
+            "x": 1313,
+            "y": 770,
+            "w": 104,
+            "h": 18
+          }
+        }
+      ],
+      "activeNav": [
+        "/dashboard"
+      ],
+      "heading": {
+        "fontFamily": "\"Playfair Display\", Georgia, serif",
+        "fontSize": "22px",
+        "fontWeight": "700",
+        "color": "rgb(15, 23, 42)",
+        "box": {
+          "x": 240,
+          "y": 94,
+          "w": 208,
+          "h": 33
+        }
+      },
+      "primaryBtn": {
+        "backgroundColor": "rgb(79, 70, 229)",
+        "borderRadius": "8px",
+        "height": "36px",
+        "box": {
+          "x": 861,
+          "y": 430,
+          "w": 36,
+          "h": 36
+        }
+      },
+      "card": {
+        "backgroundColor": "rgb(255, 255, 255)",
+        "borderRadius": "15px",
+        "borderColor": "rgb(231, 234, 240)",
+        "boxShadow": "rgba(16, 24, 40, 0.04) 0px 1px 2px 0px",
+        "box": {
+          "x": 240,
+          "y": 210,
+          "w": 159,
+          "h": 130
+        }
+      },
+      "scrollWidth": 1440,
+      "fonts": {
+        "loaded": 9,
+        "status": "loaded"
+      },
+      "mobile": {
+        "scrollWidth": 390
+      }
+    },
+    "/cases": {
+      "authed": true,
+      "bodyBg": "rgb(253, 253, 253)",
+      "sidebar": {
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "backgroundImage": "linear-gradient(160deg, rgb(3, 16, 35), rgb(6, 16, 31))",
+        "width": "218px",
+        "position": "fixed",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "w": 218,
+          "h": 900
+        }
+      },
+      "header": {
+        "backgroundColor": "rgb(255, 255, 255)",
+        "height": "70px",
+        "position": "fixed",
+        "box": {
+          "x": 218,
+          "y": 0,
+          "w": 1222,
+          "h": 70
+        }
+      },
+      "main": {
+        "position": "static",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "box": {
+          "x": 218,
+          "y": 0,
+          "w": 1222,
+          "h": 900
+        }
+      },
+      "mainTop": 0,
+      "navCount": 14,
+      "navItems": [
+        {
+          "href": "/dashboard",
+          "text": "Dashboard",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 88,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/cases",
+          "text": "My Cases",
+          "current": "page",
+          "color": "rgb(255, 255, 255)",
+          "box": {
+            "x": 14,
+            "y": 126,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/clients",
+          "text": "Clients",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 164,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/tasks",
+          "text": "Tasks",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 202,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/calendar",
+          "text": "Calendar",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 240,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/documents",
+          "text": "Documents",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 278,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/search",
+          "text": "Search",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 316,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/research",
+          "text": "Research Desk",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 354,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/drafts",
+          "text": "Drafts & Documents",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 392,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/autofill",
+          "text": "Smart Autofill",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 430,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/bundles",
+          "text": "Filing Bundles",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 468,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/strategy",
+          "text": "Strategy Advisor",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 506,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/community",
+          "text": "Community (Arbitration)",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 544,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/settings/profile",
+          "text": "Settings",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 590,
+            "w": 190,
+            "h": 47
+          }
+        }
+      ],
+      "activeNav": [
+        "/cases"
+      ],
+      "heading": {
+        "fontFamily": "\"Playfair Display\", Georgia, serif",
+        "fontSize": "25px",
+        "fontWeight": "700",
+        "color": "rgb(13, 27, 70)",
+        "box": {
+          "x": 240,
+          "y": 94,
+          "w": 202,
+          "h": 38
+        }
+      },
+      "primaryBtn": null,
+      "card": {
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "borderRadius": "0px",
+        "borderColor": "rgb(229, 231, 235)",
+        "boxShadow": "none",
+        "box": {
+          "x": 240,
+          "y": 94,
+          "w": 1178,
+          "h": 64
+        }
+      },
+      "scrollWidth": 1440,
+      "fonts": {
+        "loaded": 9,
+        "status": "loaded"
+      },
+      "mobile": {
+        "scrollWidth": 390
+      }
+    },
+    "/documents": {
+      "authed": true,
+      "bodyBg": "rgb(253, 253, 253)",
+      "sidebar": {
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "backgroundImage": "linear-gradient(160deg, rgb(3, 16, 35), rgb(6, 16, 31))",
+        "width": "218px",
+        "position": "fixed",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "w": 218,
+          "h": 900
+        }
+      },
+      "header": {
+        "backgroundColor": "rgb(255, 255, 255)",
+        "height": "70px",
+        "position": "fixed",
+        "box": {
+          "x": 218,
+          "y": 0,
+          "w": 1222,
+          "h": 70
+        }
+      },
+      "main": {
+        "position": "static",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "box": {
+          "x": 218,
+          "y": 0,
+          "w": 1222,
+          "h": 1125
+        }
+      },
+      "mainTop": 0,
+      "navCount": 24,
+      "navItems": [
+        {
+          "href": "/dashboard",
+          "text": "Dashboard",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 0,
+            "y": 0,
+            "w": 0,
+            "h": 0
+          }
+        },
+        {
+          "href": "/cases",
+          "text": "My Cases",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 0,
+            "y": 0,
+            "w": 0,
+            "h": 0
+          }
+        },
+        {
+          "href": "/clients",
+          "text": "Clients",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 0,
+            "y": 0,
+            "w": 0,
+            "h": 0
+          }
+        },
+        {
+          "href": "/tasks",
+          "text": "Tasks",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 0,
+            "y": 0,
+            "w": 0,
+            "h": 0
+          }
+        },
+        {
+          "href": "/calendar",
+          "text": "Calendar",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 0,
+            "y": 0,
+            "w": 0,
+            "h": 0
+          }
+        },
+        {
+          "href": "/documents",
+          "text": "Documents",
+          "current": "page",
+          "color": "rgb(255, 255, 255)",
+          "box": {
+            "x": 0,
+            "y": 0,
+            "w": 0,
+            "h": 0
+          }
+        },
+        {
+          "href": "/search",
+          "text": "Search",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 0,
+            "y": 0,
+            "w": 0,
+            "h": 0
+          }
+        },
+        {
+          "href": "/research",
+          "text": "Research Desk",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 0,
+            "y": 0,
+            "w": 0,
+            "h": 0
+          }
+        },
+        {
+          "href": "/drafts",
+          "text": "Drafts & Documents",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 0,
+            "y": 0,
+            "w": 0,
+            "h": 0
+          }
+        },
+        {
+          "href": "/autofill",
+          "text": "Smart Autofill",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 0,
+            "y": 0,
+            "w": 0,
+            "h": 0
+          }
+        },
+        {
+          "href": "/bundles",
+          "text": "Filing Bundles",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 0,
+            "y": 0,
+            "w": 0,
+            "h": 0
+          }
+        },
+        {
+          "href": "/strategy",
+          "text": "Strategy Advisor",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 0,
+            "y": 0,
+            "w": 0,
+            "h": 0
+          }
+        },
+        {
+          "href": "/community",
+          "text": "Community (Arbitration)",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 0,
+            "y": 0,
+            "w": 0,
+            "h": 0
+          }
+        },
+        {
+          "href": "/settings/profile",
+          "text": "Settings",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 0,
+            "y": 0,
+            "w": 0,
+            "h": 0
+          }
+        },
+        {
+          "href": "/dashboard",
+          "text": "Dashboard",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 88,
+            "w": 190,
+            "h": 42
+          }
+        },
+        {
+          "href": "/cases",
+          "text": "My Cases",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 137,
+            "w": 190,
+            "h": 42
+          }
+        },
+        {
+          "href": "/search",
+          "text": "Research Desk",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 186,
+            "w": 190,
+            "h": 42
+          }
+        },
+        {
+          "href": "/documents",
+          "text": "Documents",
+          "current": "page",
+          "color": "rgb(255, 255, 255)",
+          "box": {
+            "x": 14,
+            "y": 235,
+            "w": 190,
+            "h": 42
+          }
+        },
+        {
+          "href": "/calendar",
+          "text": "Calendar",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 284,
+            "w": 190,
+            "h": 42
+          }
+        },
+        {
+          "href": "/tasks",
+          "text": "Tasks",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 333,
+            "w": 190,
+            "h": 42
+          }
+        },
+        {
+          "href": "/clients",
+          "text": "Clients",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 382,
+            "w": 190,
+            "h": 42
+          }
+        },
+        {
+          "href": "/community",
+          "text": "Community (Arbitration)",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 431,
+            "w": 190,
+            "h": 42
+          }
+        },
+        {
+          "href": "/settings/profile",
+          "text": "Settings",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 494,
+            "w": 190,
+            "h": 57
+          }
+        },
+        {
+          "href": "/documents/74bfb327-9d65-4083-a97a-0ffc451ef4fa",
+          "text": "",
+          "current": false,
+          "color": "rgb(67, 56, 202)",
+          "box": {
+            "x": 1351,
+            "y": 504,
+            "w": 30,
+            "h": 30
+          }
+        }
+      ],
+      "activeNav": [
+        "/documents",
+        "/documents"
+      ],
+      "heading": {
+        "fontFamily": "\"Playfair Display\", Georgia, serif",
+        "fontSize": "29px",
+        "fontWeight": "400",
+        "color": "rgb(16, 37, 83)",
+        "box": {
+          "x": 246,
+          "y": 126,
+          "w": 291,
+          "h": 44
+        }
+      },
+      "primaryBtn": {
+        "backgroundColor": "rgb(67, 56, 202)",
+        "borderRadius": "9px",
+        "height": "38px",
+        "box": {
+          "x": 1224,
+          "y": 131,
+          "w": 188,
+          "h": 38
+        }
+      },
+      "card": {
+        "backgroundColor": "rgb(255, 255, 255)",
+        "borderRadius": "14px",
+        "borderColor": "rgb(231, 234, 240)",
+        "boxShadow": "rgba(16, 24, 40, 0.04) 0px 1px 2px 0px",
+        "box": {
+          "x": 246,
+          "y": 404,
+          "w": 1166,
+          "h": 647
+        }
+      },
+      "scrollWidth": 1440,
+      "fonts": {
+        "loaded": 10,
+        "status": "loaded"
+      },
+      "mobile": {
+        "scrollWidth": 390
+      }
+    },
+    "/research": {
+      "authed": true,
+      "bodyBg": "rgb(253, 253, 253)",
+      "sidebar": {
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "backgroundImage": "linear-gradient(160deg, rgb(3, 16, 35), rgb(6, 16, 31))",
+        "width": "218px",
+        "position": "fixed",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "w": 218,
+          "h": 900
+        }
+      },
+      "header": {
+        "backgroundColor": "rgb(255, 255, 255)",
+        "height": "70px",
+        "position": "fixed",
+        "box": {
+          "x": 218,
+          "y": 0,
+          "w": 1222,
+          "h": 70
+        }
+      },
+      "main": {
+        "position": "static",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "box": {
+          "x": 218,
+          "y": 0,
+          "w": 1222,
+          "h": 1062
+        }
+      },
+      "mainTop": 0,
+      "navCount": 15,
+      "navItems": [
+        {
+          "href": "/dashboard",
+          "text": "Dashboard",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 88,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/cases",
+          "text": "My Cases",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 126,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/clients",
+          "text": "Clients",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 164,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/tasks",
+          "text": "Tasks",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 202,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/calendar",
+          "text": "Calendar",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 240,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/documents",
+          "text": "Documents",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 278,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/search",
+          "text": "Search",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 316,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/research",
+          "text": "Research Desk",
+          "current": "page",
+          "color": "rgb(255, 255, 255)",
+          "box": {
+            "x": 14,
+            "y": 354,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/drafts",
+          "text": "Drafts & Documents",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 392,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/autofill",
+          "text": "Smart Autofill",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 430,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/bundles",
+          "text": "Filing Bundles",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 468,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/strategy",
+          "text": "Strategy Advisor",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 506,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/community",
+          "text": "Community (Arbitration)",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 544,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/settings/profile",
+          "text": "Settings",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 590,
+            "w": 190,
+            "h": 47
+          }
+        },
+        {
+          "href": "/research/documents",
+          "text": "Browse library",
+          "current": false,
+          "color": "rgb(79, 70, 229)",
+          "box": {
+            "x": 283,
+            "y": 536,
+            "w": 101,
+            "h": 17
+          }
+        }
+      ],
+      "activeNav": [
+        "/research"
+      ],
+      "heading": {
+        "fontFamily": "\"Playfair Display\", Georgia, serif",
+        "fontSize": "27px",
+        "fontWeight": "400",
+        "color": "rgb(17, 28, 58)",
+        "box": {
+          "x": 268,
+          "y": 140,
+          "w": 356,
+          "h": 41
+        }
+      },
+      "primaryBtn": {
+        "backgroundColor": "rgb(79, 70, 229)",
+        "borderRadius": "9px",
+        "height": "41px",
+        "box": {
+          "x": 1237,
+          "y": 141,
+          "w": 153,
+          "h": 41
+        }
+      },
+      "card": {
+        "backgroundColor": "rgb(255, 255, 255)",
+        "borderRadius": "14px",
+        "borderColor": "rgb(231, 234, 240)",
+        "boxShadow": "rgba(20, 36, 75, 0.024) 0px 2px 8px 0px",
+        "box": {
+          "x": 268,
+          "y": 282,
+          "w": 243,
+          "h": 128
+        }
+      },
+      "scrollWidth": 1440,
+      "fonts": {
+        "loaded": 9,
+        "status": "loaded"
+      },
+      "mobile": {
+        "scrollWidth": 390
+      }
+    },
+    "/drafts": {
+      "authed": true,
+      "bodyBg": "rgb(253, 253, 253)",
+      "sidebar": {
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "backgroundImage": "linear-gradient(160deg, rgb(3, 16, 35), rgb(6, 16, 31))",
+        "width": "218px",
+        "position": "fixed",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "w": 218,
+          "h": 900
+        }
+      },
+      "header": {
+        "backgroundColor": "rgb(255, 255, 255)",
+        "height": "70px",
+        "position": "fixed",
+        "box": {
+          "x": 218,
+          "y": 0,
+          "w": 1222,
+          "h": 70
+        }
+      },
+      "main": {
+        "position": "static",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "box": {
+          "x": 218,
+          "y": 0,
+          "w": 1222,
+          "h": 1140
+        }
+      },
+      "mainTop": 0,
+      "navCount": 15,
+      "navItems": [
+        {
+          "href": "/dashboard",
+          "text": "Dashboard",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 88,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/cases",
+          "text": "My Cases",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 126,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/clients",
+          "text": "Clients",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 164,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/tasks",
+          "text": "Tasks",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 202,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/calendar",
+          "text": "Calendar",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 240,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/documents",
+          "text": "Documents",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 278,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/search",
+          "text": "Search",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 316,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/research",
+          "text": "Research Desk",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 354,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/drafts",
+          "text": "Drafts & Documents",
+          "current": "page",
+          "color": "rgb(255, 255, 255)",
+          "box": {
+            "x": 14,
+            "y": 392,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/autofill",
+          "text": "Smart Autofill",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 430,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/bundles",
+          "text": "Filing Bundles",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 468,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/strategy",
+          "text": "Strategy Advisor",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 506,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/community",
+          "text": "Community (Arbitration)",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 544,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/settings/profile",
+          "text": "Settings",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 590,
+            "w": 190,
+            "h": 47
+          }
+        },
+        {
+          "href": "/drafts",
+          "text": "AI Drafts",
+          "current": "page",
+          "color": "rgb(255, 255, 255)",
+          "box": {
+            "x": 14,
+            "y": 639,
+            "w": 190,
+            "h": 36
+          }
+        }
+      ],
+      "activeNav": [
+        "/drafts",
+        "/drafts"
+      ],
+      "heading": {
+        "fontFamily": "\"Playfair Display\", Georgia, serif",
+        "fontSize": "27px",
+        "fontWeight": "400",
+        "color": "rgb(23, 32, 51)",
+        "box": {
+          "x": 240,
+          "y": 94,
+          "w": 451,
+          "h": 41
+        }
+      },
+      "primaryBtn": null,
+      "card": {
+        "backgroundColor": "rgb(255, 255, 255)",
+        "borderRadius": "14px",
+        "borderColor": "rgb(231, 234, 240)",
+        "boxShadow": "rgba(23, 32, 51, 0.03) 0px 2px 8px 0px",
+        "box": {
+          "x": 240,
+          "y": 237,
+          "w": 765,
+          "h": 711
+        }
+      },
+      "scrollWidth": 1440,
+      "fonts": {
+        "loaded": 9,
+        "status": "loaded"
+      },
+      "mobile": {
+        "scrollWidth": 390
+      }
+    },
+    "/bundles": {
+      "authed": true,
+      "bodyBg": "rgb(253, 253, 253)",
+      "sidebar": {
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "backgroundImage": "linear-gradient(160deg, rgb(3, 16, 35), rgb(6, 16, 31))",
+        "width": "218px",
+        "position": "fixed",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "w": 218,
+          "h": 900
+        }
+      },
+      "header": {
+        "backgroundColor": "rgb(255, 255, 255)",
+        "height": "70px",
+        "position": "fixed",
+        "box": {
+          "x": 218,
+          "y": 0,
+          "w": 1222,
+          "h": 70
+        }
+      },
+      "main": {
+        "position": "static",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "box": {
+          "x": 218,
+          "y": 0,
+          "w": 1222,
+          "h": 900
+        }
+      },
+      "mainTop": 0,
+      "navCount": 14,
+      "navItems": [
+        {
+          "href": "/dashboard",
+          "text": "Dashboard",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 88,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/cases",
+          "text": "My Cases",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 126,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/clients",
+          "text": "Clients",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 164,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/tasks",
+          "text": "Tasks",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 202,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/calendar",
+          "text": "Calendar",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 240,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/documents",
+          "text": "Documents",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 278,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/search",
+          "text": "Search",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 316,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/research",
+          "text": "Research Desk",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 354,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/drafts",
+          "text": "Drafts & Documents",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 392,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/autofill",
+          "text": "Smart Autofill",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 430,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/bundles",
+          "text": "Filing Bundles",
+          "current": "page",
+          "color": "rgb(255, 255, 255)",
+          "box": {
+            "x": 14,
+            "y": 468,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/strategy",
+          "text": "Strategy Advisor",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 506,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/community",
+          "text": "Community (Arbitration)",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 544,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/settings/profile",
+          "text": "Settings",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 590,
+            "w": 190,
+            "h": 47
+          }
+        }
+      ],
+      "activeNav": [
+        "/bundles"
+      ],
+      "heading": {
+        "fontFamily": "\"Playfair Display\", Georgia, serif",
+        "fontSize": "30px",
+        "fontWeight": "600",
+        "color": "rgb(16, 26, 49)",
+        "box": {
+          "x": 254,
+          "y": 118,
+          "w": 312,
+          "h": 45
+        }
+      },
+      "primaryBtn": null,
+      "card": {
+        "backgroundColor": "rgb(255, 255, 255)",
+        "borderRadius": "13px",
+        "borderColor": "rgb(231, 229, 224)",
+        "boxShadow": "rgba(23, 32, 51, 0.03) 0px 4px 15px 0px",
+        "box": {
+          "x": 254,
+          "y": 211,
+          "w": 1150,
+          "h": 150
+        }
+      },
+      "scrollWidth": 1440,
+      "fonts": {
+        "loaded": 9,
+        "status": "loaded"
+      },
+      "mobile": {
+        "scrollWidth": 390
+      }
+    },
+    "/calendar": {
+      "authed": true,
+      "bodyBg": "rgb(253, 253, 253)",
+      "sidebar": {
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "backgroundImage": "linear-gradient(160deg, rgb(3, 16, 35), rgb(6, 16, 31))",
+        "width": "218px",
+        "position": "fixed",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "w": 218,
+          "h": 900
+        }
+      },
+      "header": {
+        "backgroundColor": "rgb(255, 255, 255)",
+        "height": "70px",
+        "position": "fixed",
+        "box": {
+          "x": 218,
+          "y": 0,
+          "w": 1222,
+          "h": 70
+        }
+      },
+      "main": {
+        "position": "static",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "box": {
+          "x": 218,
+          "y": 0,
+          "w": 1222,
+          "h": 1089
+        }
+      },
+      "mainTop": 0,
+      "navCount": 14,
+      "navItems": [
+        {
+          "href": "/dashboard",
+          "text": "Dashboard",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 88,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/cases",
+          "text": "My Cases",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 126,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/clients",
+          "text": "Clients",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 164,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/tasks",
+          "text": "Tasks",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 202,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/calendar",
+          "text": "Calendar",
+          "current": "page",
+          "color": "rgb(255, 255, 255)",
+          "box": {
+            "x": 14,
+            "y": 240,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/documents",
+          "text": "Documents",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 278,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/search",
+          "text": "Search",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 316,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/research",
+          "text": "Research Desk",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 354,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/drafts",
+          "text": "Drafts & Documents",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 392,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/autofill",
+          "text": "Smart Autofill",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 430,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/bundles",
+          "text": "Filing Bundles",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 468,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/strategy",
+          "text": "Strategy Advisor",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 506,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/community",
+          "text": "Community (Arbitration)",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 544,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/settings/profile",
+          "text": "Settings",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 590,
+            "w": 190,
+            "h": 47
+          }
+        }
+      ],
+      "activeNav": [
+        "/calendar"
+      ],
+      "heading": {
+        "fontFamily": "\"Playfair Display\", Georgia, serif",
+        "fontSize": "25px",
+        "fontWeight": "700",
+        "color": "rgb(13, 27, 70)",
+        "box": {
+          "x": 240,
+          "y": 94,
+          "w": 322,
+          "h": 38
+        }
+      },
+      "primaryBtn": null,
+      "card": {
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "borderRadius": "0px",
+        "borderColor": "rgb(229, 231, 235)",
+        "boxShadow": "none",
+        "box": {
+          "x": 240,
+          "y": 94,
+          "w": 1178,
+          "h": 64
+        }
+      },
+      "scrollWidth": 1440,
+      "fonts": {
+        "loaded": 9,
+        "status": "loaded"
+      },
+      "mobile": {
+        "scrollWidth": 390
+      }
+    },
+    "/tasks": {
+      "authed": true,
+      "bodyBg": "rgb(253, 253, 253)",
+      "sidebar": {
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "backgroundImage": "linear-gradient(160deg, rgb(3, 16, 35), rgb(6, 16, 31))",
+        "width": "218px",
+        "position": "fixed",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "w": 218,
+          "h": 900
+        }
+      },
+      "header": {
+        "backgroundColor": "rgb(255, 255, 255)",
+        "height": "70px",
+        "position": "fixed",
+        "box": {
+          "x": 218,
+          "y": 0,
+          "w": 1222,
+          "h": 70
+        }
+      },
+      "main": {
+        "position": "static",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "box": {
+          "x": 218,
+          "y": 0,
+          "w": 1222,
+          "h": 1329
+        }
+      },
+      "mainTop": 0,
+      "navCount": 14,
+      "navItems": [
+        {
+          "href": "/dashboard",
+          "text": "Dashboard",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 88,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/cases",
+          "text": "My Cases",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 126,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/clients",
+          "text": "Clients",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 164,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/tasks",
+          "text": "Tasks",
+          "current": "page",
+          "color": "rgb(255, 255, 255)",
+          "box": {
+            "x": 14,
+            "y": 202,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/calendar",
+          "text": "Calendar",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 240,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/documents",
+          "text": "Documents",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 278,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/search",
+          "text": "Search",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 316,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/research",
+          "text": "Research Desk",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 354,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/drafts",
+          "text": "Drafts & Documents",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 392,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/autofill",
+          "text": "Smart Autofill",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 430,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/bundles",
+          "text": "Filing Bundles",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 468,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/strategy",
+          "text": "Strategy Advisor",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 506,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/community",
+          "text": "Community (Arbitration)",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 544,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/settings/profile",
+          "text": "Settings",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 590,
+            "w": 190,
+            "h": 47
+          }
+        }
+      ],
+      "activeNav": [
+        "/tasks"
+      ],
+      "heading": {
+        "fontFamily": "\"Playfair Display\", Georgia, serif",
+        "fontSize": "25px",
+        "fontWeight": "700",
+        "color": "rgb(13, 27, 70)",
+        "box": {
+          "x": 240,
+          "y": 94,
+          "w": 166,
+          "h": 38
+        }
+      },
+      "primaryBtn": null,
+      "card": {
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "borderRadius": "0px",
+        "borderColor": "rgb(229, 231, 235)",
+        "boxShadow": "none",
+        "box": {
+          "x": 240,
+          "y": 94,
+          "w": 1178,
+          "h": 64
+        }
+      },
+      "scrollWidth": 1440,
+      "fonts": {
+        "loaded": 9,
+        "status": "loaded"
+      },
+      "mobile": {
+        "scrollWidth": 390
+      }
+    },
+    "/clients": {
+      "authed": true,
+      "bodyBg": "rgb(253, 253, 253)",
+      "sidebar": {
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "backgroundImage": "linear-gradient(160deg, rgb(3, 16, 35), rgb(6, 16, 31))",
+        "width": "218px",
+        "position": "fixed",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "w": 218,
+          "h": 900
+        }
+      },
+      "header": {
+        "backgroundColor": "rgb(255, 255, 255)",
+        "height": "70px",
+        "position": "fixed",
+        "box": {
+          "x": 218,
+          "y": 0,
+          "w": 1222,
+          "h": 70
+        }
+      },
+      "main": {
+        "position": "static",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "box": {
+          "x": 218,
+          "y": 0,
+          "w": 1222,
+          "h": 900
+        }
+      },
+      "mainTop": 0,
+      "navCount": 14,
+      "navItems": [
+        {
+          "href": "/dashboard",
+          "text": "Dashboard",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 88,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/cases",
+          "text": "My Cases",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 126,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/clients",
+          "text": "Clients",
+          "current": "page",
+          "color": "rgb(255, 255, 255)",
+          "box": {
+            "x": 14,
+            "y": 164,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/tasks",
+          "text": "Tasks",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 202,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/calendar",
+          "text": "Calendar",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 240,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/documents",
+          "text": "Documents",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 278,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/search",
+          "text": "Search",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 316,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/research",
+          "text": "Research Desk",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 354,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/drafts",
+          "text": "Drafts & Documents",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 392,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/autofill",
+          "text": "Smart Autofill",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 430,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/bundles",
+          "text": "Filing Bundles",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 468,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/strategy",
+          "text": "Strategy Advisor",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 506,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/community",
+          "text": "Community (Arbitration)",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 544,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/settings/profile",
+          "text": "Settings",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 590,
+            "w": 190,
+            "h": 47
+          }
+        }
+      ],
+      "activeNav": [
+        "/clients"
+      ],
+      "heading": {
+        "fontFamily": "\"Playfair Display\", Georgia, serif",
+        "fontSize": "25px",
+        "fontWeight": "700",
+        "color": "rgb(13, 27, 70)",
+        "box": {
+          "x": 240,
+          "y": 94,
+          "w": 96,
+          "h": 38
+        }
+      },
+      "primaryBtn": null,
+      "card": {
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "borderRadius": "0px",
+        "borderColor": "rgb(229, 231, 235)",
+        "boxShadow": "none",
+        "box": {
+          "x": 240,
+          "y": 94,
+          "w": 1178,
+          "h": 64
+        }
+      },
+      "scrollWidth": 1440,
+      "fonts": {
+        "loaded": 9,
+        "status": "loaded"
+      },
+      "mobile": {
+        "scrollWidth": 390
+      }
+    },
+    "/community": {
+      "authed": true,
+      "bodyBg": "rgb(253, 253, 253)",
+      "sidebar": {
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "backgroundImage": "linear-gradient(160deg, rgb(3, 16, 35), rgb(6, 16, 31))",
+        "width": "218px",
+        "position": "fixed",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "w": 218,
+          "h": 900
+        }
+      },
+      "header": {
+        "backgroundColor": "rgb(255, 255, 255)",
+        "height": "70px",
+        "position": "fixed",
+        "box": {
+          "x": 218,
+          "y": 0,
+          "w": 1222,
+          "h": 70
+        }
+      },
+      "main": {
+        "position": "static",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "box": {
+          "x": 218,
+          "y": 0,
+          "w": 1222,
+          "h": 1133
+        }
+      },
+      "mainTop": 0,
+      "navCount": 14,
+      "navItems": [
+        {
+          "href": "/dashboard",
+          "text": "Dashboard",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 88,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/cases",
+          "text": "My Cases",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 126,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/clients",
+          "text": "Clients",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 164,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/tasks",
+          "text": "Tasks",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 202,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/calendar",
+          "text": "Calendar",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 240,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/documents",
+          "text": "Documents",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 278,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/search",
+          "text": "Search",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 316,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/research",
+          "text": "Research Desk",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 354,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/drafts",
+          "text": "Drafts & Documents",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 392,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/autofill",
+          "text": "Smart Autofill",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 430,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/bundles",
+          "text": "Filing Bundles",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 468,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/strategy",
+          "text": "Strategy Advisor",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 506,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/community",
+          "text": "Community (Arbitration)",
+          "current": "page",
+          "color": "rgb(255, 255, 255)",
+          "box": {
+            "x": 14,
+            "y": 544,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/settings/profile",
+          "text": "Settings",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 590,
+            "w": 190,
+            "h": 47
+          }
+        }
+      ],
+      "activeNav": [
+        "/community"
+      ],
+      "heading": {
+        "fontFamily": "\"Playfair Display\", Georgia, serif",
+        "fontSize": "22px",
+        "fontWeight": "700",
+        "color": "rgb(15, 23, 42)",
+        "box": {
+          "x": 359,
+          "y": 143,
+          "w": 940,
+          "h": 33
+        }
+      },
+      "primaryBtn": {
+        "backgroundColor": "rgb(79, 70, 229)",
+        "borderRadius": "8px",
+        "height": "41px",
+        "box": {
+          "x": 380,
+          "y": 885,
+          "w": 142,
+          "h": 41
+        }
+      },
+      "card": {
+        "backgroundColor": "rgb(255, 255, 255)",
+        "borderRadius": "15px",
+        "borderColor": "rgb(231, 234, 240)",
+        "boxShadow": "rgba(16, 24, 40, 0.04) 0px 1px 2px 0px",
+        "box": {
+          "x": 359,
+          "y": 220,
+          "w": 940,
+          "h": 727
+        }
+      },
+      "scrollWidth": 1440,
+      "fonts": {
+        "loaded": 9,
+        "status": "loaded"
+      },
+      "mobile": {
+        "scrollWidth": 390
+      }
+    },
+    "/settings/profile": {
+      "authed": true,
+      "bodyBg": "rgb(253, 253, 253)",
+      "sidebar": {
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "backgroundImage": "linear-gradient(160deg, rgb(3, 16, 35), rgb(6, 16, 31))",
+        "width": "218px",
+        "position": "fixed",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "w": 218,
+          "h": 900
+        }
+      },
+      "header": {
+        "backgroundColor": "rgb(255, 255, 255)",
+        "height": "70px",
+        "position": "fixed",
+        "box": {
+          "x": 218,
+          "y": 0,
+          "w": 1222,
+          "h": 70
+        }
+      },
+      "main": {
+        "position": "static",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "box": {
+          "x": 218,
+          "y": 0,
+          "w": 1222,
+          "h": 900
+        }
+      },
+      "mainTop": 0,
+      "navCount": 22,
+      "navItems": [
+        {
+          "href": "/dashboard",
+          "text": "Dashboard",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 88,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/cases",
+          "text": "My Cases",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 126,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/clients",
+          "text": "Clients",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 164,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/tasks",
+          "text": "Tasks",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 202,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/calendar",
+          "text": "Calendar",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 240,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/documents",
+          "text": "Documents",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 278,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/search",
+          "text": "Search",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 316,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/research",
+          "text": "Research Desk",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 354,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/drafts",
+          "text": "Drafts & Documents",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 392,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/autofill",
+          "text": "Smart Autofill",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 430,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/bundles",
+          "text": "Filing Bundles",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 468,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/strategy",
+          "text": "Strategy Advisor",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 506,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/community",
+          "text": "Community (Arbitration)",
+          "current": false,
+          "color": "rgb(198, 210, 230)",
+          "box": {
+            "x": 14,
+            "y": 544,
+            "w": 190,
+            "h": 36
+          }
+        },
+        {
+          "href": "/settings/profile",
+          "text": "Settings",
+          "current": "page",
+          "color": "rgb(255, 255, 255)",
+          "box": {
+            "x": 14,
+            "y": 590,
+            "w": 190,
+            "h": 47
+          }
+        },
+        {
+          "href": "/settings/profile",
+          "text": "Profile",
+          "current": "page",
+          "color": "rgb(55, 48, 163)",
+          "box": {
+            "x": 251,
+            "y": 183,
+            "w": 198,
+            "h": 40
+          }
+        },
+        {
+          "href": "/settings/workspace",
+          "text": "Workspace",
+          "current": false,
+          "color": "rgb(71, 85, 105)",
+          "box": {
+            "x": 251,
+            "y": 222,
+            "w": 198,
+            "h": 40
+          }
+        },
+        {
+          "href": "/settings/local-ai",
+          "text": "Local AI",
+          "current": false,
+          "color": "rgb(71, 85, 105)",
+          "box": {
+            "x": 251,
+            "y": 262,
+            "w": 198,
+            "h": 40
+          }
+        },
+        {
+          "href": "/settings/embeddings",
+          "text": "Embeddings",
+          "current": false,
+          "color": "rgb(71, 85, 105)",
+          "box": {
+            "x": 251,
+            "y": 301,
+            "w": 198,
+            "h": 40
+          }
+        },
+        {
+          "href": "/settings/database",
+          "text": "Database",
+          "current": false,
+          "color": "rgb(71, 85, 105)",
+          "box": {
+            "x": 251,
+            "y": 341,
+            "w": 198,
+            "h": 40
+          }
+        },
+        {
+          "href": "/settings/data-import",
+          "text": "Data Import",
+          "current": false,
+          "color": "rgb(71, 85, 105)",
+          "box": {
+            "x": 251,
+            "y": 380,
+            "w": 198,
+            "h": 40
+          }
+        },
+        {
+          "href": "/settings/appearance",
+          "text": "Appearance",
+          "current": false,
+          "color": "rgb(71, 85, 105)",
+          "box": {
+            "x": 251,
+            "y": 420,
+            "w": 198,
+            "h": 40
+          }
+        },
+        {
+          "href": "/settings/security",
+          "text": "Security",
+          "current": false,
+          "color": "rgb(71, 85, 105)",
+          "box": {
+            "x": 251,
+            "y": 459,
+            "w": 198,
+            "h": 40
+          }
+        }
+      ],
+      "activeNav": [
+        "/settings/profile",
+        "/settings/profile"
+      ],
+      "heading": {
+        "fontFamily": "\"Playfair Display\", Georgia, serif",
+        "fontSize": "22px",
+        "fontWeight": "700",
+        "color": "rgb(15, 23, 42)",
+        "box": {
+          "x": 240,
+          "y": 94,
+          "w": 1178,
+          "h": 33
+        }
+      },
+      "primaryBtn": {
+        "backgroundColor": "rgb(79, 70, 229)",
+        "borderRadius": "8px",
+        "height": "41px",
+        "box": {
+          "x": 1089,
+          "y": 521,
+          "w": 132,
+          "h": 41
+        }
+      },
+      "card": {
+        "backgroundColor": "rgb(255, 255, 255)",
+        "borderRadius": "15px",
+        "borderColor": "rgb(231, 234, 240)",
+        "boxShadow": "rgba(16, 24, 40, 0.04) 0px 1px 2px 0px",
+        "box": {
+          "x": 240,
+          "y": 172,
+          "w": 220,
+          "h": 338
+        }
+      },
+      "scrollWidth": 1440,
+      "fonts": {
+        "loaded": 9,
+        "status": "loaded"
+      },
+      "mobile": {
+        "scrollWidth": 390
+      }
+    }
+  }
+}

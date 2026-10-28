@@ -1,8 +1,0 @@
-﻿This is a test legal document for TANTARA ingestion.
-It contains sample clauses and summaries for validation.
-
-Section 1: Scope
-The agreement applies to all work performed by the vendor.
-
-Section 2: Compliance
-The vendor shall comply with applicable laws and regulations.

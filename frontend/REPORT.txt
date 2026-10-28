@@ -1,0 +1,91 @@
+TANTARA FRONTEND PHASE 2 — IMPLEMENTATION REPORT
+
+1. Routes and components built
+- /: advocate login with react-hook-form/Zod validation, password visibility toggle, seeded local account hint, guest preview entry, legal hero and four disabled later-phase destination tiles.
+- /dashboard: API-backed summary metrics, recent work chips, Ask TANTARA with case/jurisdiction/collection controls and citation links, recent sessions, upcoming hearings/deadlines, activity, and honest disabled later-phase actions.
+- /settings/profile, /settings/workspace, /settings/local-ai, /settings/embeddings, /settings/database, /settings/data-import, /settings/appearance, /settings/security.
+- /cases/[id] and /documents/[id]: read-only overviews so dashboard case chips, global search and document citations resolve to real API-backed views.
+- Shared responsive shell with router-aware nav, mobile drawer, keyboard navigation, skip link, account menu, activity notifications, focus-trapped command palette, protected-route hydration, query/toast providers, error boundary, offline states, SVG legal assets, and design tokens.
+
+2. Files created or updated
+- .gitignore
+- docs/screenshots/dashboard-desktop.png
+- docs/screenshots/dashboard-mobile.png
+- docs/screenshots/home-desktop.png
+- docs/screenshots/home-mobile.png
+- docs/screenshots/settings-local-ai-desktop.png
+- docs/screenshots/settings-local-ai-mobile.png
+- frontend/.eslintrc.json
+- frontend/README.md
+- frontend/next-env.d.ts
+- frontend/next.config.ts
+- frontend/package.json
+- frontend/playwright.config.ts
+- frontend/pnpm-lock.yaml
+- frontend/pnpm-workspace.yaml
+- frontend/postcss.config.mjs
+- frontend/public/brand/empty-state.svg
+- frontend/public/brand/gavel-books.svg
+- frontend/public/brand/hero-arbitration.svg
+- frontend/public/brand/paper-texture.svg
+- frontend/public/brand/scales-of-justice.svg
+- frontend/scripts/gen-api.mjs
+- frontend/scripts/shoot.mjs
+- frontend/src/app/(auth)/page.tsx
+- frontend/src/app/(workspace)/cases/[id]/page.tsx
+- frontend/src/app/(workspace)/dashboard/page.tsx
+- frontend/src/app/(workspace)/documents/[id]/page.tsx
+- frontend/src/app/(workspace)/layout.tsx
+- frontend/src/app/(workspace)/settings/[section]/page.tsx
+- frontend/src/app/(workspace)/settings/page.tsx
+- frontend/src/app/error.tsx
+- frontend/src/app/globals.css
+- frontend/src/app/layout.tsx
+- frontend/src/components/providers.tsx
+- frontend/src/components/shell.tsx
+- frontend/src/lib/api/client.ts
+- frontend/src/lib/api/endpoints.ts
+- frontend/src/lib/api/keys.ts
+- frontend/src/lib/api/schema.ts
+- frontend/src/lib/api/types.ts
+- frontend/tailwind.config.ts
+- frontend/tests/smoke.spec.ts
+- frontend/tsconfig.json
+- frontend/REPORT.txt
+
+3. Commands and results
+- `pnpm lint` — passed; no ESLint warnings/errors. Next 15 reports that `next lint` is deprecated for Next 16.
+- `pnpm typecheck` — passed (`tsc --noEmit`, strict TypeScript).
+- `pnpm build` — passed; production build generated `/`, `/dashboard`, `/cases/[id]`, `/documents/[id]`, `/settings`, and `/settings/[section]`.
+- `pnpm test:e2e` — 7 passed. Harness covers all 12 current routes, login validation/submission, settings form, console/hydration issues, and dashboard overflow at 360/768/1024/1440 widths.
+- `pnpm screenshots` — passed; six desktop/mobile screenshots generated and committed.
+- `pnpm gen:api` — used the checked-in schema fallback because `127.0.0.1:8010` was unavailable.
+- `pnpm exec playwright install chromium` — completed successfully. Initial dependency installation reported pnpm ignored optional build scripts; lint, typecheck, tests, and the production build all completed afterward.
+
+4. Screenshot paths
+- `docs/screenshots/home-desktop.png`
+- `docs/screenshots/home-mobile.png`
+- `docs/screenshots/dashboard-desktop.png`
+- `docs/screenshots/dashboard-mobile.png`
+- `docs/screenshots/settings-local-ai-desktop.png`
+- `docs/screenshots/settings-local-ai-mobile.png`
+
+This historical report describes a previous fixture-based capture run; those captures are not integration evidence.
+
+5. Commits
+- First commit: `154b9f1 chore: ignore local frontend build artifacts`.
+- Then one-file commits for each changed file. There are 44 commits through `494ceda frontend: configure strict TypeScript`; this report is committed separately as a single-file commit.
+- No push or merge was performed.
+
+6. Deviations and unfinished work
+- Full Cases, Research Desk, Drafts, Calendar, Tasks, Clients, Community, filing bundles, and strategy authoring are later-phase pages. This phase provides real case/document read views needed by search and citations, but not the broader CRUD flows. Their home tiles and dashboard quick actions are disabled and labeled for a later phase.
+- The backend contract exposes institution choices but no institution write operation, so Settings lists choices read-only. The contract also has no embeddings rebuild route, so that control is disabled and explains why.
+- The collection selector currently offers only “All collections”; the contract provides `collection_id` for asking but no collection-list endpoint.
+- Screenshots used the isolated test fixture because the backend was unavailable. No live API smoke test was possible in this worktree.
+- The checked-in OpenAPI fallback is compact. `pnpm gen:api` refreshes it from the live backend OpenAPI endpoint when available.
+- Google fonts are configured with system font-family fallbacks. Offline production build without access to Google Fonts was not verified.
+
+7. Dashboard visual fidelity assessment against `frontend.png`
+Matches: fixed midnight sidebar, gold scales illustration and serif wordmark, white search topbar and account controls, indigo active navigation, pale workspace background, four requested metric cards plus the two secondary metrics, violet Ask TANTARA panel, suggestions and scoping controls, upcoming schedule, activity feed, and quick-action area. Spacing, radii, borders, muted text, and status accents follow the supplied premium legal-workspace language.
+
+Differs: this phase’s dashboard is a focused workspace page rather than the reference board’s multi-module canvas. It does not include the case-management table, document AI Read, draft generator, autofill, filing bundle/paperbook, or strategy advisor panels. The Ask panel and calendar share a row, followed by activity and quick actions. The reference’s photographic legal imagery is represented by original vector illustration assets. These differences reflect the Phase 2 route scope and the no-hotlinked-assets requirement.

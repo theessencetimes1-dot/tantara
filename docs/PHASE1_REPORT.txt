@@ -1,0 +1,62 @@
+TANTARA PHASE 1 BACKEND REPORT
+Date: 2026-10-27
+Branch: luna/backend-core
+
+1. ENDPOINTS IMPLEMENTED
+
+- Health, login, current user, metadata, dashboard summary/activity/upcoming.
+- Owner-scoped JSON-backed CRUD routes for clients, cases, hearings, tasks, drafts, filing bundles, notes, and community posts. Case overview, participants and timeline events; client cases; calendar.
+- Document upload, async ingestion job polling/retry, metadata, delete, preview file, pages/text, AI Read candidate extraction and review, document search.
+- Local FTS5 plus FastEmbed vector retrieval, AI ask/status, research sessions/messages, saved items.
+- Draft templates/generation/version/export/autofill; strategy endpoints; bundle item/section/preview endpoints.
+- Profile/workspace/AI/embedding/database/appearance/security/password settings and corpus import trigger/status.
+- Legacy /health, /ingest/file and /query kept available.
+
+2. FILES CHANGED OR CREATED
+
+- Root: .gitignore.
+- backend/app: config.py, db.py, embeddings.py, ingestion.py, main.py, security.py, models.py.
+- backend/alembic.ini and backend/alembic/{env.py, versions/0001_local_workspace.py}.
+- backend: .env.example, env_example, requirements.txt, requirements-dev.txt, README.md, openapi.json.
+- backend/tests: conftest.py, test_foundation.py, e2e_flows.py.
+- docs: BACKEND_API.md, PHASE1_REPORT.txt.
+- scripts: seed.py, import_corpus.py.
+
+3. TESTS AND MIGRATION CHECK
+
+Command: cd backend && .venv/bin/pytest -q
+Result: 6 passed, 0 failed (2 framework deprecation warnings).
+
+A fresh temporary SQLite database passed `alembic upgrade head` twice; the second upgrade was idempotent. `backend/tests/e2e_flows.py` passed Workflow B (client, case, participant, task, hearing, reopen persistence). Integration coverage also exercised async text upload, duplicate rejection, local embedding/indexing, pages, deletion and FTS cleanup.
+
+4. LIVE SMOKE EVIDENCE
+
+Server: `cd backend && .venv/bin/python -m uvicorn app.main:app --host 127.0.0.1 --port 8010`
+
+GET /health:
+{"status":"ok","service":"TANTARA Local Workspace API","version":"1.0.0"}
+
+POST /api/v1/auth/login (token redacted):
+{"access_token":"<redacted>","token_type":"bearer","user":{"id":"b7323afa-6d82-4436-8c29-34df90654882","name":"Workspace Advocate","email":"advocate@tantara.local","role":"advocate","avatar_initials":"AM","title":"Advocate"}}
+
+GET /api/v1/dashboard/summary:
+{"greeting":"Good morning","first_name":"Aarav","today":"2026-10-27","active_cases":11,"pending_arbitrations":1,"hearings_this_week":4,"documents_processed":0,"drafts_in_progress":0,"tasks_due":11,"tasks_overdue":3}
+
+POST /api/v1/ai/ask (empty local knowledge store):
+{"status":"no_evidence","answer":"There is insufficient evidence in the indexed documents to answer this question.","citations":[],"follow_ups":[],"model":{"provider":"local","model":"MiniCPM5-2B"},"disclaimer":"AI-generated research assistance only. Verify against current authoritative law and original sources; professional legal review is required."}
+
+Direct local LLM smoke against http://192.168.0.101:8080/v1/chat/completions returned model `MiniCPM5-2B`, content `local model ready.`, and a present reasoning_content field. FastEmbed returned a real 384-dimensional vector.
+
+5. COMMITS
+
+First required .gitignore-only commit: bc568d5.
+Subsequent single-file commits (in order): e034141, 31c98ec, e37a251, 4697d81, 6a5446a, b9e4945, b2611d5, f259ca1, 8aabf35, ea39daf, 76e580c, 77e6570, 7be8a13, d46e70b, 495a6bd, af64ec1, 22af151, 13fbdf1, 463e65f, eb85710, 78a15f0, c8df8b0, ff742b3, c36946e, 8ae8b4b, 8db9e2a, 0406789, c628b75, dd55e50, 698eef6.
+
+6. LIMITATIONS / UNFINISHED
+
+- This is a local-first foundation, not completion of every Phase 1 acceptance item. Domain entities mostly use JSON payload storage; SQLAlchemy table metadata and migration coverage are incomplete compared with the full requested normalized schema and constraints.
+- Hybrid retrieval uses SQLite FTS5 and in-process cosine ranking; a persisted FAISS index is not connected. Cloud/Supabase adapters are not fully wired into ingestion/retrieval.
+- Bundle PDF generation/download, generated cover/index pages, complete route-specific request/response schemas, full role authorization, per-route rate limits, true case strategy generation, robust Range streaming, and exhaustive endpoint ownership/validation tests are unfinished.
+- Demo seeding creates six clients and twelve cases plus sample participants/tasks/hearings/notes, but not the requested extra users, generated sample legal/scanned PDFs, completed ingestion records, research/draft/community/bundle artifacts, or generated bundle PDF.
+- Workflow A (upload→extract→index→ask→cite→page reference) was not run end-to-end against an authoritative document. The import attempt for the India Code Act PDF timed out; its failure was recorded in the corpus manifest. The live AI ask therefore correctly returned no_evidence with empty citations.
+- Test suite has six tests, not the requested full endpoint matrix, scanned-PDF OCR/docx/corrupt/retry suite, or live-server workflow A.

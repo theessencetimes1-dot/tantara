@@ -1,11 +1,17 @@
-SUPABASE_URL=
-SUPABASE_SERVICE_ROLE_KEY=
-ANTHROPIC_API_KEY=
-VOYAGE_API_KEY=
-CLAUDE_MODEL=
-VOYAGE_EMBEDDING_MODEL=
-EMBEDDING_DIMENSIONS=1024
+# Compatibility name for the local-first backend/.env.example
+DATA_DIR=data
+AI_PROVIDER=local
+LOCAL_LLM_BASE_URL=http://192.168.0.101:8080/v1
+LOCAL_LLM_MODEL=MiniCPM5-2B
+EMBEDDING_PROVIDER=fastembed
+FASTEMBED_MODEL=sentence-transformers/all-MiniLM-L6-v2
+EMBEDDING_DIMENSIONS=384
+VECTOR_BACKEND=faiss
+ANALYTICS_BACKEND=none
+ENABLE_CLOUD_PROVIDERS=false
 MAX_UPLOAD_MB=25
 CHUNK_SIZE_CHARS=1800
 CHUNK_OVERLAP_CHARS=250
 DEFAULT_TOP_K=5
+TANTARA_ADMIN_PASSWORD=tantara-local
+CORS_ORIGINS=http://localhost:3000,http://localhost:3001,http://localhost:3002,http://localhost:3003,http://localhost:3004,http://localhost:3005,http://localhost:3006,http://localhost:3007,http://localhost:3008,http://localhost:3009,http://localhost:3010,http://localhost:3011,http://localhost:3012,http://localhost:3013,http://localhost:3014,http://localhost:3015,http://localhost:3016,http://localhost:3017,http://localhost:3018,http://localhost:3019,http://localhost:3020,http://127.0.0.1:3000,http://127.0.0.1:3001,http://127.0.0.1:3002,http://127.0.0.1:3003,http://127.0.0.1:3004,http://127.0.0.1:3005,http://127.0.0.1:3006,http://127.0.0.1:3007,http://127.0.0.1:3008,http://127.0.0.1:3009,http://127.0.0.1:3010,http://127.0.0.1:3011,http://127.0.0.1:3012,http://127.0.0.1:3013,http://127.0.0.1:3014,http://127.0.0.1:3015,http://127.0.0.1:3016,http://127.0.0.1:3017,http://127.0.0.1:3018,http://127.0.0.1:3019,http://127.0.0.1:3020

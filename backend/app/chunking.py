@@ -8,9 +8,11 @@ def chunk_text(text: str, chunk_size: int = 1800, overlap: int = 250):
     while start < len(text):
         end = min(start + chunk_size, len(text))
         if end < len(text):
-            boundary = max(text.rfind("\n", start + chunk_size // 2, end),
-                           text.rfind(". ", start + chunk_size // 2, end),
-                           text.rfind(" ", start + chunk_size // 2, end))
+            boundary = max(
+                text.rfind("\n", start + chunk_size // 2, end),
+                text.rfind(". ", start + chunk_size // 2, end),
+                text.rfind(" ", start + chunk_size // 2, end),
+            )
             if boundary > start:
                 end = boundary + (1 if text[boundary] == "\n" else 0)
         piece = text[start:end].strip()

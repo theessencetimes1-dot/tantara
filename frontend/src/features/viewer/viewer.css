@@ -1,0 +1,148 @@
+.pdf-viewer {
+  overflow: hidden;
+  border: 1px solid #e2e7f0;
+  border-radius: 13px;
+  background: #e8ecf3;
+}
+.pdf-toolbar {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  color: #394967;
+  background: #fff;
+  border-bottom: 1px solid #e4e8f0;
+}
+.pdf-page-controls,
+.pdf-zoom-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.pdf-page-controls button,
+.pdf-zoom-controls button {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  color: #405273;
+  background: #fff;
+  border: 1px solid #e0e5ee;
+  border-radius: 7px;
+  cursor: pointer;
+}
+.pdf-page-controls button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.pdf-page-controls label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+}
+.pdf-page-controls input {
+  width: 48px;
+  height: 29px;
+  padding: 0 5px;
+  border: 1px solid #dfe4ed;
+  border-radius: 6px;
+}
+.pdf-zoom-controls span {
+  min-width: 38px;
+  text-align: center;
+  font-size: 11px;
+}
+.pdf-pages-scroll {
+  box-sizing: border-box;
+  width: 100%;
+  max-height: 720px;
+  overflow: auto;
+  padding: 18px;
+}
+.pdf-page-card {
+  box-sizing: border-box;
+  width: max-content;
+  max-width: 100%;
+  margin: 0 auto 18px;
+  padding: 9px;
+  background: #fff;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  box-shadow: 0 2px 12px #1928471c;
+  scroll-margin-top: 16px;
+}
+.pdf-page-deep-link {
+  border-color: #5247df;
+  box-shadow:
+    0 0 0 3px #5146e533,
+    0 2px 12px #1928471c;
+}
+.pdf-page-label {
+  padding: 0 0 7px;
+  color: #748099;
+  font-size: 10px;
+}
+.pdf-page-surface {
+  box-sizing: border-box;
+  width: fit-content;
+  position: relative;
+  max-width: 100%;
+  overflow: hidden;
+  background: white;
+}
+.pdf-page-surface canvas {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+.pdf-text-layer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  line-height: 1;
+  transform-origin: 0 0;
+  color: transparent;
+  user-select: text;
+}
+.pdf-text-layer span {
+  position: absolute;
+  white-space: pre;
+  color: transparent;
+  transform-origin: 0 0;
+}
+.pdf-text-layer ::selection {
+  background: #5250df66;
+}
+.pdf-loading,
+.pdf-error {
+  padding: 18px;
+  color: #687791;
+  background: #fff;
+  border: 1px solid #e4e8f0;
+  border-radius: 10px;
+}
+.pdf-error {
+  color: #a52b3a;
+}
+@media (max-width: 600px) {
+  .pdf-pages-scroll {
+    max-height: 64vh;
+    padding: 9px;
+  }
+  .pdf-toolbar {
+    flex-wrap: wrap;
+  }
+  .pdf-page-controls,
+  .pdf-zoom-controls {
+    gap: 5px;
+  }
+  .pdf-page-controls button,
+  .pdf-zoom-controls button {
+    width: 28px;
+    height: 28px;
+  }
+}
