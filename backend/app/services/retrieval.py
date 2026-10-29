@@ -8,6 +8,7 @@ from app.db import SessionLocal
 from app.embeddings import embed_query
 from app.models import Document, DocumentChunk
 from app.services.index_maintenance import reconcile_index
+from app.services.passage_normalization import normalize_passage
 from app.services.vector_store import INDEX_LOCK, store
 
 MIN_SEMANTIC_SIMILARITY = 0.35
@@ -196,19 +197,29 @@ def fuse_rankings(
         for score, row in ranked
         if row.id in lrank or semantic_scores is None or semantic_scores.get(row.id, 0) >= min_similarity
     ]
-    return [
-        {
-            "document_id": r.document_id,
-            "document_title": r.title,
-            "chunk_id": r.id,
-            "page_number": r.page_number,
-            "snippet": r.content[:900],
-            "retrieval_score": score,
-            "source_type": r.document_type,
-            "jurisdiction": r.jurisdiction,
-        }
-        for score, r in fused[:top_k]
-    ]
+    unique = []
+    seen_passages = set()
+    for score, row in fused:
+        passage = normalize_passage(row.content[:900])
+        if passage and passage in seen_passages:
+            continue
+        if passage:
+            seen_passages.add(passage)
+        unique.append(
+            {
+                "document_id": row.document_id,
+                "document_title": row.title,
+                "chunk_id": row.id,
+                "page_number": row.page_number,
+                "snippet": row.content[:900],
+                "retrieval_score": score,
+                "source_type": row.document_type,
+                "jurisdiction": row.jurisdiction,
+            }
+        )
+        if len(unique) == top_k:
+            break
+    return unique
 
 
 retrieval_service = RetrievalService()

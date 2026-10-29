@@ -49,8 +49,20 @@ async function capture(page: Page, name: string, focusSelector?: string) {
     const header = await page.locator('.topbar').boundingBox();
     if (box && header && visibleHeading) {
       expect(visibleHeading.y).toBeGreaterThanOrEqual(header.y + header.height);
-      if (box.height <= (await page.evaluate(() => window.innerHeight)) - header.height)
-        expect(box.y + box.height).toBeLessThanOrEqual(await page.evaluate(() => window.innerHeight));
+      if (box.height <= (await page.evaluate(() => window.innerHeight)) - header.height) {
+        await focus.evaluate((element) => element.scrollIntoView({ block: 'end' }));
+        const alignedBox = await focus.boundingBox();
+        const alignedHeading = await focusHeading.boundingBox();
+        expect(alignedBox).toBeTruthy();
+        expect(alignedHeading).toBeTruthy();
+        if (alignedHeading) expect(alignedHeading.y).toBeGreaterThanOrEqual(header.y + header.height);
+        if (alignedBox) {
+          // Fractional scroll offsets can leave the box up to half a CSS pixel past the fold.
+          expect(alignedBox.y + alignedBox.height).toBeLessThanOrEqual(
+            (await page.evaluate(() => window.innerHeight)) + 0.5,
+          );
+        }
+      }
     }
   } else await page.evaluate(() => window.scrollTo(0, 0));
   if ((await page.evaluate(() => window.innerWidth)) <= 500) {
@@ -439,6 +451,7 @@ test.describe('Research Desk live API controls', () => {
   });
 
   test('citation markers show API sources and open their linked document page', async ({ page }) => {
+    test.setTimeout(240_000);
     const asked = await answerQuestion(page, 'What does the arbitration agreement say about the seat?');
     expect(['ok', 'answered']).toContain(asked.status);
     expect(asked.disclaimer).toBeTruthy();

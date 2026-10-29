@@ -236,6 +236,82 @@ def test_reachable_local_http_model_keeps_success_contract(client):
         thread.join(timeout=2)
 
 
+def test_slow_local_model_times_out_to_honest_answer_without_persisting_model_text(client, monkeypatch):
+    import json
+    from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+    from threading import Thread
+
+    from app import config
+
+    monkeypatch.setenv("TANTARA_LOCAL_LLM_TIMEOUT", "0.2")
+    config.get_settings.cache_clear()
+
+    class SlowLocalModel(BaseHTTPRequestHandler):
+        def do_POST(self):
+            self.rfile.read(int(self.headers.get("content-length", "0")))
+            time.sleep(0.8)
+            body = json.dumps(
+                {"choices": [{"message": {"content": "The seat is Mumbai [1]."}}]}
+            ).encode()
+            self.send_response(200)
+            self.send_header("content-type", "application/json")
+            self.send_header("content-length", str(len(body)))
+            self.end_headers()
+            try:
+                self.wfile.write(body)
+            except (BrokenPipeError, ConnectionResetError):
+                pass
+
+        def log_message(self, *_args):
+            return
+
+    server = ThreadingHTTPServer(("127.0.0.1", 0), SlowLocalModel)
+    thread = Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        headers, _document_id = _uploaded_evidence(client)
+        host, port = server.server_address
+        configured = client.patch(
+            "/api/v1/settings/ai",
+            headers=headers,
+            json={"base_url": f"http://{host}:{port}/v1", "model": "slow-fixture-model"},
+        )
+        assert configured.status_code == 200
+
+        started = time.monotonic()
+        response = client.post(
+            "/api/v1/ai/ask",
+            headers=headers,
+            json={"question": "Which city appears in marker ZXQ-771?"},
+        )
+        elapsed = time.monotonic() - started
+
+        assert response.status_code == 200
+        result = response.json()
+        assert elapsed < 0.9, f"configured model deadline was not applied ({elapsed:.3f}s)"
+        assert result["status"] == "model_unavailable"
+        assert result["answer_kind"] == "model_unavailable"
+        assert result["model"] is None
+        assert result["answer"] == (
+            "The search could not be completed because the configured language model is unavailable."
+        )
+        assert "Mumbai" not in result["answer"]
+        persisted = client.get(
+            f"/api/v1/ai/sessions/{result['research_session_id']}", headers=headers
+        )
+        assert persisted.status_code == 200
+        assistant_messages = [
+            message for message in persisted.json()["messages"] if message["role"] == "assistant"
+        ]
+        assert assistant_messages[-1]["content"] == result["answer"]
+        assert "Mumbai" not in assistant_messages[-1]["content"]
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=2)
+        config.get_settings.cache_clear()
+
+
 def test_embedding_failure_keeps_fts_results_and_reports_degradation(client, monkeypatch):
     headers, _document_id = _uploaded_evidence(client)
 

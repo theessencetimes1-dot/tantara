@@ -44,7 +44,10 @@ export default function Dashboard() {
   const summary = useQuery({ queryKey: keys.summary, queryFn: endpoints.summary }),
     activity = useQuery({ queryKey: keys.activity, queryFn: endpoints.activity }),
     upcoming = useQuery({ queryKey: keys.upcoming, queryFn: endpoints.upcoming });
-  const cases = useQuery({ queryKey: keys.cases(''), queryFn: () => endpoints.cases() });
+  const cases = useQuery({
+    queryKey: keys.cases('dashboard-next-hearing'),
+    queryFn: () => endpoints.cases('sort=next_hearing_at'),
+  });
   const [question, setQuestion] = useState(''),
     [answer, setAnswer] = useState<Awaited<ReturnType<typeof endpoints.ask>> | null>(null),
     [askBusy, setAskBusy] = useState(false),

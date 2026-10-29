@@ -117,6 +117,12 @@ def register_crud(path, cls):
         saved: bool | None = None,
         user=Depends(current_user),
     ):
+        sort_key = sort.removeprefix("-")
+        allowed_sort_keys = fields_for(cls)
+        if cls is Case:
+            allowed_sort_keys = allowed_sort_keys | {"next_hearing_at"}
+        if sort.startswith("--") or sort_key not in allowed_sort_keys:
+            raise HTTPException(422, "Unsupported sort key")
         filters = []
         if cls is Hearing:
             try:

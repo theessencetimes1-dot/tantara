@@ -109,6 +109,7 @@ The backend reads these settings from its environment (and the repository's loca
 | Data directory | `TANTARA_DATA_DIR`, `DATA_DIR` | `<repo>/backend/data` | SQLite database, uploads, generated bundles, vector index, and local secret. |
 | Workspace timezone | `TANTARA_WORKSPACE_TIME_ZONE` | `Asia/Kolkata` | Wall-clock interpretation and display for workspace dates. |
 | Local model base URL | `TANTARA_LOCAL_LLM_BASE_URL`, `LOCAL_LLM_BASE_URL` | `http://192.168.0.101:8080/v1` | OpenAI-compatible chat endpoint. Configure an endpoint reachable from the backend host. |
+| Local model request timeout | `TANTARA_LOCAL_LLM_TIMEOUT` | `20` seconds | Upper bound for each local chat completion request; constrained below the frontend proxy budget so slow calls return the documented unavailable response. |
 | Local model name | `LOCAL_LLM_MODEL` | `MiniCPM5-2B` | Model identifier sent to the configured provider. |
 | Embedding model | `FASTEMBED_MODEL` | `sentence-transformers/all-MiniLM-L6-v2` | Local 384-dimensional text embeddings. |
 | CORS origins | `CORS_ORIGINS`, `TANTARA_CORS_ORIGINS` | `http://localhost:3000`–`:3020` and `http://127.0.0.1:3000`–`:3020` | Development browser origins accepted by the API. The standard frontend on 3010 is included. |
@@ -143,9 +144,12 @@ Resource creation status codes are part of the API contract:
 | `POST /api/v1/community/posts/{id}/replies` | 200 OK |
 | `POST /api/v1/cases/{id}/participants` | 200 OK |
 | `POST /api/v1/cases/{id}/events` | 200 OK |
+
 | `POST /api/v1/documents/upload` | 202 Accepted |
 | `POST /api/v1/bundles/{id}/generate` | 202 Accepted |
 | `POST /api/v1/settings/data/import` | 202 Accepted |
+
+`GET /api/v1/cases` accepts `sort=<model-column>` for ascending order and `sort=-<model-column>` for descending order. It also accepts the computed key `next_hearing_at`: upcoming hearings sort by the nearest hearing in the requested direction, undated cases remain last, and equal dates are ordered by case title then ID. An unsupported key returns 422 with `{error: {code: "validation_error", message: "Unsupported sort key"}}` rather than silently selecting a default order.
 
 The most-used endpoints are:
 
@@ -197,6 +201,8 @@ flowchart TB
 
 ## Validation
 
+Capture-script guard tests run from `frontend/` with `pnpm test:tools`.
+
 ```bash
 cd frontend
 pnpm lint
@@ -219,17 +225,17 @@ These desktop and mobile captures come from the authenticated, demo-seeded works
 
 | Module | Desktop (1440×900) | Mobile (390×844) | Rendered | Desktop captured (UTC) | Mobile captured (UTC) |
 |---|---|---|---|---|
-| Dashboard | ![Dashboard desktop](docs/screenshots/dashboard-1440x900.png) | ![Dashboard mobile](docs/screenshots/dashboard-390x844.png) | 1440×900 / 390×844 | 2026-10-28 22:04 UTC | 2026-10-28 22:04 UTC |
-| Cases | ![Cases desktop](docs/screenshots/cases-1440x900.png) | ![Cases mobile](docs/screenshots/cases-390x844.png) | 1440×900 / 390×844 | 2026-10-28 22:04 UTC | 2026-10-28 22:04 UTC |
-| Clients | ![Clients desktop](docs/screenshots/clients-1440x900.png) | ![Clients mobile](docs/screenshots/clients-390x844.png) | 1440×900 / 390×844 | 2026-10-28 22:04 UTC | 2026-10-28 22:04 UTC |
-| Tasks | ![Tasks desktop](docs/screenshots/tasks-1440x900.png) | ![Tasks mobile](docs/screenshots/tasks-390x844.png) | 1440×900 / 390×844 | 2026-10-28 22:04 UTC | 2026-10-28 22:04 UTC |
-| Calendar | ![Calendar desktop](docs/screenshots/calendar-1440x900.png) | ![Calendar mobile](docs/screenshots/calendar-390x844.png) | 1440×900 / 390×844 | 2026-10-28 22:04 UTC | 2026-10-28 22:04 UTC |
-| Documents | ![Documents desktop](docs/screenshots/documents-1440x900.png) | ![Documents mobile](docs/screenshots/documents-390x844.png) | 1440×900 / 390×844 | 2026-10-28 22:04 UTC | 2026-10-28 22:04 UTC |
-| Search | ![Search desktop](docs/screenshots/search-1440x900.png) | ![Search mobile](docs/screenshots/search-390x844.png) | 1440×900 / 390×844 | 2026-10-28 22:04 UTC | 2026-10-28 22:04 UTC |
-| Research | ![Research desktop](docs/screenshots/research-1440x900.png) | ![Research mobile](docs/screenshots/research-390x844.png) | 1440×900 / 390×844 | 2026-10-28 22:04 UTC | 2026-10-28 22:04 UTC |
-| Drafts | ![Drafts desktop](docs/screenshots/drafts-1440x900.png) | ![Drafts mobile](docs/screenshots/drafts-390x844.png) | 1440×900 / 390×844 | 2026-10-28 22:04 UTC | 2026-10-28 22:04 UTC |
-| Autofill | ![Autofill desktop](docs/screenshots/autofill-1440x900.png) | ![Autofill mobile](docs/screenshots/autofill-390x844.png) | 1440×900 / 390×844 | 2026-10-28 22:04 UTC | 2026-10-28 22:04 UTC |
-| Bundles (page heading: Filing Bundles) | ![Bundles desktop](docs/screenshots/bundles-1440x900.png) | ![Bundles mobile](docs/screenshots/bundles-390x844.png) | 1440×900 / 390×844 | 2026-10-28 22:04 UTC | 2026-10-28 22:04 UTC |
-| Strategy (page heading: AI Strategy Advisor) | ![Strategy desktop](docs/screenshots/strategy-1440x900.png) | ![Strategy mobile](docs/screenshots/strategy-390x844.png) | 1440×900 / 390×844 | 2026-10-28 22:04 UTC | 2026-10-28 22:04 UTC |
-| Community | ![Community desktop](docs/screenshots/community-1440x900.png) | ![Community mobile](docs/screenshots/community-390x844.png) | 1440×900 / 390×844 | 2026-10-28 22:04 UTC | 2026-10-28 22:04 UTC |
-| Settings | ![Settings desktop](docs/screenshots/settings-profile-1440x900.png) | ![Settings mobile](docs/screenshots/settings-profile-390x844.png) | 1440×900 / 390×844 | 2026-10-28 22:04 UTC | 2026-10-28 22:04 UTC |
+| Dashboard | ![Dashboard desktop](docs/screenshots/dashboard-1440x900.png) | ![Dashboard mobile](docs/screenshots/dashboard-390x844.png) | 1440×900 / 390×844 | 2026-10-29 00:31 UTC | 2026-10-29 00:31 UTC |
+| Cases | ![Cases desktop](docs/screenshots/cases-1440x900.png) | ![Cases mobile](docs/screenshots/cases-390x844.png) | 1440×900 / 390×844 | 2026-10-29 00:31 UTC | 2026-10-29 00:31 UTC |
+| Clients | ![Clients desktop](docs/screenshots/clients-1440x900.png) | ![Clients mobile](docs/screenshots/clients-390x844.png) | 1440×900 / 390×844 | 2026-10-29 00:31 UTC | 2026-10-29 00:31 UTC |
+| Tasks | ![Tasks desktop](docs/screenshots/tasks-1440x900.png) | ![Tasks mobile](docs/screenshots/tasks-390x844.png) | 1440×900 / 390×844 | 2026-10-29 00:31 UTC | 2026-10-29 00:31 UTC |
+| Calendar | ![Calendar desktop](docs/screenshots/calendar-1440x900.png) | ![Calendar mobile](docs/screenshots/calendar-390x844.png) | 1440×900 / 390×844 | 2026-10-29 00:31 UTC | 2026-10-29 00:31 UTC |
+| Documents | ![Documents desktop](docs/screenshots/documents-1440x900.png) | ![Documents mobile](docs/screenshots/documents-390x844.png) | 1440×900 / 390×844 | 2026-10-29 00:31 UTC | 2026-10-29 00:31 UTC |
+| Search | ![Search desktop](docs/screenshots/search-1440x900.png) | ![Search mobile](docs/screenshots/search-390x844.png) | 1440×900 / 390×844 | 2026-10-29 00:31 UTC | 2026-10-29 00:31 UTC |
+| Research | ![Research desktop](docs/screenshots/research-1440x900.png) | ![Research mobile](docs/screenshots/research-390x844.png) | 1440×900 / 390×844 | 2026-10-29 00:31 UTC | 2026-10-29 00:31 UTC |
+| Drafts | ![Drafts desktop](docs/screenshots/drafts-1440x900.png) | ![Drafts mobile](docs/screenshots/drafts-390x844.png) | 1440×900 / 390×844 | 2026-10-29 00:31 UTC | 2026-10-29 00:31 UTC |
+| Autofill | ![Autofill desktop](docs/screenshots/autofill-1440x900.png) | ![Autofill mobile](docs/screenshots/autofill-390x844.png) | 1440×900 / 390×844 | 2026-10-29 00:31 UTC | 2026-10-29 00:31 UTC |
+| Bundles (page heading: Filing Bundles) | ![Bundles desktop](docs/screenshots/bundles-1440x900.png) | ![Bundles mobile](docs/screenshots/bundles-390x844.png) | 1440×900 / 390×844 | 2026-10-29 00:31 UTC | 2026-10-29 00:31 UTC |
+| Strategy (page heading: AI Strategy Advisor) | ![Strategy desktop](docs/screenshots/strategy-1440x900.png) | ![Strategy mobile](docs/screenshots/strategy-390x844.png) | 1440×900 / 390×844 | 2026-10-29 00:31 UTC | 2026-10-29 00:31 UTC |
+| Community | ![Community desktop](docs/screenshots/community-1440x900.png) | ![Community mobile](docs/screenshots/community-390x844.png) | 1440×900 / 390×844 | 2026-10-29 00:31 UTC | 2026-10-29 00:31 UTC |
+| Settings | ![Settings desktop](docs/screenshots/settings-profile-1440x900.png) | ![Settings mobile](docs/screenshots/settings-profile-390x844.png) | 1440×900 / 390×844 | 2026-10-29 00:31 UTC | 2026-10-29 00:31 UTC |

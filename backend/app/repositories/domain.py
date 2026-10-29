@@ -9,7 +9,7 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from app import models
-from app.timezone import to_utc_iso, to_workspace_iso, to_workspace_naive
+from app.timezone import to_utc_iso, to_workspace_iso, to_workspace_naive, workspace_now
 
 ENTITY_MODELS = {
     "clients": models.Client,
@@ -80,10 +80,22 @@ def list_owned(
         stmt = stmt.where(clause)
     valid = {c.key for c in cls.__table__.columns}
     key = sort.removeprefix("-")
-    if key not in valid:
-        key = "created_at"
-    column = getattr(cls, key)
-    stmt = stmt.order_by(column.desc() if sort.startswith("-") else column.asc())
+    if cls is models.Case and key == "next_hearing_at":
+        next_hearing = (
+            select(func.min(models.Hearing.at))
+            .where(
+                models.Hearing.owner_id == owner_id,
+                models.Hearing.case_id == models.Case.id,
+                models.Hearing.at >= workspace_now().replace(tzinfo=None),
+            )
+            .correlate(models.Case)
+            .scalar_subquery()
+        )
+        direction = next_hearing.desc() if sort.startswith("-") else next_hearing.asc()
+        stmt = stmt.order_by(next_hearing.is_(None).asc(), direction, models.Case.title.asc(), models.Case.id.asc())
+    else:
+        column = getattr(cls, key)
+        stmt = stmt.order_by(column.desc() if sort.startswith("-") else column.asc())
     total = session.scalar(select(func.count()).select_from(stmt.order_by(None).subquery())) or 0
     rows = session.scalars(stmt.offset((page - 1) * page_size).limit(page_size)).all()
     return {

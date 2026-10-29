@@ -2,6 +2,8 @@
 
 import re
 
+from app.services.passage_normalization import normalize_passage
+
 _STOP_WORDS = {
     "a",
     "an",
@@ -103,11 +105,14 @@ def select_supports(question: str, hits: list[dict], limit: int = 3):
             )
     candidates.sort(key=lambda pair: pair[0], reverse=True)
     supports = []
-    seen = set()
+    seen_chunks = set()
+    seen_quotes = set()
     for _rank, support in candidates:
-        if support["chunk_id"] in seen:
+        normalized_quote = normalize_passage(support["quote"])
+        if support["chunk_id"] in seen_chunks or normalized_quote in seen_quotes:
             continue
-        seen.add(support["chunk_id"])
+        seen_chunks.add(support["chunk_id"])
+        seen_quotes.add(normalized_quote)
         supports.append(support)
         if len(supports) == limit:
             break

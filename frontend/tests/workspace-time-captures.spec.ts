@@ -58,8 +58,13 @@ test('dashboard case table headers remain separate at desktop width', async ({ p
   await expect(page.getByRole('heading', { name: 'Case Management' })).toBeVisible();
   const table = page.locator('.matter-wrap.compact .matter-table');
   await expect(table).toBeVisible();
+  await expect(table.locator('tbody tr')).toHaveCount(5);
   await expect(table.getByRole('columnheader', { name: /Tribunal \/ Institution/ })).toBeVisible();
   await expect(table.getByRole('columnheader', { name: /Next Hearing/ })).toBeVisible();
+  const hearingValues = await table.locator('tbody tr td:nth-child(3)').allTextContents();
+  expect(hearingValues.filter((value) => !['—', '-'].includes(value.trim())).length).toBeGreaterThanOrEqual(
+    4,
+  );
   const tribunal = await table.locator('thead th').nth(1).boundingBox();
   const hearing = await table.locator('thead th').nth(2).boundingBox();
   const tableScroll = page.locator('.matter-wrap.compact .matter-table-scroll');

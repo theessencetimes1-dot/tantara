@@ -25,8 +25,8 @@ export function CaseList({
   const [status, setStatus] = useState(initialStatus),
     [q, setQ] = useState(''),
     [page, setPage] = useState(1),
-    [sort, setSort] = useState('updated_at'),
-    [direction, setDirection] = useState<'asc' | 'desc'>('desc'),
+    [sort, setSort] = useState(compact ? 'next_hearing_at' : 'updated_at'),
+    [direction, setDirection] = useState<'asc' | 'desc'>(compact ? 'asc' : 'desc'),
     [menu, setMenu] = useState<string | null>(null);
   useEffect(() => {
     const value = new URLSearchParams(window.location.search).get('status');

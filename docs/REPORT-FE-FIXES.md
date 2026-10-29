@@ -39,12 +39,12 @@ Executed from `frontend/`:
 
 ## Screenshot artifacts
 
-- `capture not retained`
-- `capture not retained`
-- `capture not retained`
-- `capture not retained`
-- `capture not retained`
-- `capture not retained`
+- `home-desktop.png` (historical capture, not in the current corpus)
+- ``home-desktop.png` (historical capture, not in the current corpus)`
+- `home-mobile.png` (historical capture, not in the current corpus)
+- ``home-mobile.png` (historical capture, not in the current corpus)`
+- `dashboard-desktop.png` (historical capture, not in the current corpus)
+- ``dashboard-desktop.png` (historical capture, not in the current corpus)`
 
 ## Remaining phase work
 

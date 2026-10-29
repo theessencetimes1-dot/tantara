@@ -22,6 +22,85 @@ def test_reciprocal_rank_fusion_prefers_consensus_and_real_rows():
     assert hits[0]["page_number"] == 1
 
 
+def test_fusion_and_ask_deduplicate_near_identical_passages(client, monkeypatch):
+    from app import main
+    from app.services.retrieval import fuse_rankings
+
+    content_a = "Arbitration Agreement\nThe seat of arbitration is Mumbai."
+    content_b = "  Arbitration Agreement  \n Arbitration Agreement\nThe   seat of arbitration is Mumbai.  "
+    duplicate_rows = {
+        "first": SimpleNamespace(
+            id="first", document_id="doc-a", content=content_a, page_number=1,
+            title="Evidence A", document_type="Award", jurisdiction="India",
+        ),
+        "second": SimpleNamespace(
+            id="second", document_id="doc-b", content=content_b, page_number=2,
+            title="Evidence B", document_type="Award", jurisdiction="India",
+        ),
+    }
+    fused = fuse_rankings(duplicate_rows, ["first", "second"], ["second", "first"], top_k=5)
+    assert len(fused) == 1
+    assert fused[0]["chunk_id"] in {"first", "second"}
+
+    login = client.post(
+        "/api/v1/auth/login", json={"email": "advocate@tantara.local", "password": "tantara-local"}
+    ).json()
+    headers = {"Authorization": f"Bearer {login['access_token']}"}
+    document_ids = []
+    for name, body in (("evidence-a.txt", content_a), ("evidence-b.txt", content_b)):
+        upload = client.post(
+            "/api/v1/documents/upload",
+            headers=headers,
+            files={"file": (name, body.encode(), "text/plain")},
+        )
+        assert upload.status_code == 202
+        document_ids.append(upload.json()["document_id"])
+    import time
+
+    for document_id in document_ids:
+        for _ in range(100):
+            status = client.get(f"/api/v1/documents/{document_id}/job", headers=headers).json()["status"]
+            if status in {"ready", "failed"}:
+                break
+            time.sleep(0.05)
+        assert status == "ready"
+    doc_a, doc_b = document_ids
+    from app.db import session_scope
+    from app.models import DocumentChunk
+
+    with session_scope() as session:
+        chunk_ids = {
+            document_id: session.query(DocumentChunk.id)
+            .filter(DocumentChunk.document_id == document_id)
+            .scalar()
+            for document_id in document_ids
+        }
+    synthetic_hits = [
+        {
+            "chunk_id": chunk_ids[doc_a], "document_id": doc_a, "document_title": "Evidence A",
+            "page_number": 1, "snippet": content_a, "retrieval_score": 0.02,
+            "source_type": "document", "jurisdiction": "India",
+        },
+        {
+            "chunk_id": chunk_ids[doc_b], "document_id": doc_b, "document_title": "Evidence B",
+            "page_number": 2, "snippet": content_b, "retrieval_score": 0.01,
+            "source_type": "document", "jurisdiction": "India",
+        },
+    ]
+    monkeypatch.setattr(main, "retrieve", lambda *args, **kwargs: (synthetic_hits, "ok"))
+    monkeypatch.setattr(main, "llm_answer", lambda *args, **kwargs: "No supported synthesis.")
+    result = client.post(
+        "/api/v1/ai/ask",
+        headers=headers,
+        json={"question": "What is the seat of arbitration?", "top_k": 5},
+    )
+    assert result.status_code == 200, result.text
+    answer = result.json()["answer"]
+    assert answer.count("The seat of arbitration is Mumbai.") == 1
+    assert answer.count("[1]") == 1 and "[2]" not in answer
+    assert len(result.json()["citations"]) == 1
+
+
 def test_fusion_deduplicates_each_candidate_pool_at_its_earliest_rank():
     rows = {
         cid: SimpleNamespace(
