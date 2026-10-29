@@ -4,6 +4,7 @@ import uuid
 from app.db import session_scope
 from app.models import Case, Hearing, User
 from app.security import create_token, hash_password
+from app.timezone import workspace_now
 
 
 def test_case_next_hearing_sort_is_null_safe_stable_and_rejects_unknown_keys(client):
@@ -12,7 +13,7 @@ def test_case_next_hearing_sort_is_null_safe_stable_and_rejects_unknown_keys(cli
         name: str(uuid.uuid4())
         for name in ("Zulu same day", "Alpha same day", "Middle later", "No hearing")
     }
-    now = datetime.now()
+    now = workspace_now().replace(tzinfo=None)
     with session_scope() as session:
         session.add(
             User(
