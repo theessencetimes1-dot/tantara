@@ -144,7 +144,6 @@ Resource creation status codes are part of the API contract:
 | `POST /api/v1/community/posts/{id}/replies` | 200 OK |
 | `POST /api/v1/cases/{id}/participants` | 200 OK |
 | `POST /api/v1/cases/{id}/events` | 200 OK |
-
 | `POST /api/v1/documents/upload` | 202 Accepted |
 | `POST /api/v1/bundles/{id}/generate` | 202 Accepted |
 | `POST /api/v1/settings/data/import` | 202 Accepted |
