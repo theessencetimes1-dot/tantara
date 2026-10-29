@@ -45,7 +45,7 @@ export const endpoints = {
   summary: () => api.get<Summary>('/dashboard/summary'),
   activity: () => api.get<Activity[]>('/dashboard/activity'),
   upcoming: () => api.get<Upcoming[]>('/dashboard/upcoming?days=30'),
-  cases: (q = '') => api.get<List<Case>>(`/cases${q ? `?q=${encodeURIComponent(q)}` : ''}`),
+  cases: (query = '') => api.get<List<Case>>(`/cases${query ? `?${query}` : ''}`),
   case: (id: string) => api.get<Case>(`/cases/${id}`),
   createCase: (body: unknown) => api.post<Case>('/cases', body),
   updateCase: (id: string, body: unknown) => api.patch<Case>(`/cases/${id}`, body),

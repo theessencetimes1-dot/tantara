@@ -338,7 +338,7 @@ def llm_answer(question, hits, base_url=None, model=None, json_mode=False):
             r = httpx.post(
                 (base_url or s.local_llm_base_url).rstrip("/") + "/chat/completions",
                 json=payload,
-                timeout=120,
+                timeout=s.local_llm_timeout,
             )
             r.raise_for_status()
             msg = r.json()["choices"][0]["message"]

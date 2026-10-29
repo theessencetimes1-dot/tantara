@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit",
     "format:check": "prettier --check \"src/**/*.{ts,tsx,css}\" tests",
     "gen:api": "node scripts/gen-api.mjs",
+    "test:tools": "node --test \"scripts/**/*.test.mjs\"",
     "test:e2e": "playwright test",
     "format": "prettier --write \"src/**/*.{ts,tsx,css}\""
   },

@@ -26,6 +26,9 @@ class Settings(BaseSettings):
         default="http://192.168.0.101:8080/v1",
         validation_alias=AliasChoices("TANTARA_LOCAL_LLM_BASE_URL", "LOCAL_LLM_BASE_URL"),
     )
+    local_llm_timeout: float = Field(
+        default=20.0, validation_alias="TANTARA_LOCAL_LLM_TIMEOUT", gt=0, le=29.0
+    )
     local_llm_model: str = "MiniCPM5-2B"
     anthropic_api_key: str = ""
     claude_model: str = "claude-sonnet-4-20250514"

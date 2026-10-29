@@ -26,7 +26,7 @@ The repository's M5 report records the M4 closeout; `reports/M4-report.md` itsel
 - **R72:** `verify_bundles.py` now returns an honest `EMPTY WORKSPACE` verdict when the list is truly empty, and errors if an inconsistent response reports a nonzero total but no items. Existing populated-path checks remain. Both empty and populated verifier runs passed.
 - **Activity copy:** added the missing plural `drafts` mapping and parametrized regression coverage for plural audit object names. The endpoint matrix tests and full backend suite pass.
 - **R66 label consistency:** README, `docs/UI_COMPARISON.md`, and `ui-parity.spec.ts` distinguish the rail names `Bundles` and `Strategy` from the page headings `Filing Bundles` and `AI Strategy Advisor`.
-- **Report references:** the pre-existing dangling screenshot references in the lane reports were replaced with `capture not retained` text where the historical artifact is not in the curated corpus. Existing image references continue to resolve; no historical files were recreated or linked to unrelated screenshots.
+- **Report references:** the pre-existing dangling screenshot references in the lane reports now identify the historical filename without creating a broken link when the image is outside the curated corpus. Existing image references continue to resolve; no historical files were recreated or linked to unrelated screenshots.
 - **Deep-link resilience:** the Community thread publishes its core post/reply data before ancillary lookups, so a slow profile, saved-state, or case-name request cannot hold the discussion behind its loading state.
 
 ## Validation evidence

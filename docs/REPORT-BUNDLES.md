@@ -11,16 +11,16 @@
 
 | Defect | File(s) | Change | Test and assertion | Capture |
 |---|---|---|---|---|
-| Saved bundle inaccessible | `frontend/src/app/(workspace)/bundles/[id]/page.tsx` | Added real persisted detail route and PDF actions | `seeded bundle opens from its real API id...`: fetched the ID from `GET /bundles`, asserted persisted heading, page map, preview and `%PDF-` download | `capture not retained` |
-| Setup absent from bundles landing page | `frontend/src/app/(workspace)/bundles/page.tsx` | Real list/create flow and honest empty state | `staff sees the real empty bundle state...`: asserts empty state and desktop navigation | `capture not retained` |
-| No module navigation | `frontend/src/components/shell.tsx` | Added workspace module links and active state | `staff sees...`: links visible in desktop sidebar and mobile drawer; `desktop navigation marks active...`: `aria-current=page` | `capture not retained`; mobile drawer asserted in same test |
-| Strategy lacked case context | `frontend/src/app/(workspace)/strategy/page.tsx`, strategy feature files | Case picker and visible case overview; generation is sent to selected case ID | `strategy shows source excerpts honestly...`: selected test case is visible and its own document is moved into that case before generate; response citations reference it | `capture not retained` |
-| Mobile tabs clipped; layout setup hard to reach | `frontend/src/features/strategy/strategy.css`, bundle feature CSS | Responsive tab grid and stacked bundle controls | `strategy shows...`: activates each exact tab at 390px; `bundle and strategy routes remain settled...`: widths 1440/1024/768/390 and no overflow | `capture not retained`; `capture not retained` |
-| Unanalysed strategy showed false zero counters | `frontend/src/features/strategy/StrategyPanel.tsx` | Shows “Not analysed” until a generation response exists | `strategy shows...`: asserts Not analysed before Generate | `capture not retained` |
-| Template mode risked implying generated analysis | `frontend/src/features/strategy/StrategyPanel.tsx` | Explicit no-language-model label, source excerpts, real citation title/page, absent sections | `strategy shows...`: dead local model endpoint returns unavailable state and every shown excerpt has a citation page | `capture not retained` |
-| No-evidence state unclear | `frontend/src/features/strategy/StrategyPanel.tsx` | Shows backend no-evidence message and no generated strategy | `case without indexed evidence...`: asserts exact no-evidence and no-strategy text | `capture not retained` |
-| Notes/task/follow-up actions unproven | Strategy panel and `/research` bridge | Persist notes, create task, open prefilled research question | `strategy shows...`: reload preserves edited value, task is found in `GET /tasks`, research textarea contains prefilled query | `capture not retained`; `capture not retained`; `capture not retained` |
-| Invalid range left stale unsaved values visible | `frontend/src/app/(workspace)/bundles/[id]/page.tsx` | Reloads persisted values after rejected update, retains backend error | `page-range 400 is shown...`: asserts backend 400 message and duplicate document option absent | `capture not retained`; `capture not retained` |
+| Saved bundle inaccessible | `frontend/src/app/(workspace)/bundles/[id]/page.tsx` | Added real persisted detail route and PDF actions | `seeded bundle opens from its real API id...`: fetched the ID from `GET /bundles`, asserted persisted heading, page map, preview and `%PDF-` download | `bundle-1440x900-preview-real.png` (historical capture, not in the current corpus) |
+| Setup absent from bundles landing page | `frontend/src/app/(workspace)/bundles/page.tsx` | Real list/create flow and honest empty state | `staff sees the real empty bundle state...`: asserts empty state and desktop navigation | ``bundle-1440x900-preview-real.png` (historical capture, not in the current corpus)` |
+| No module navigation | `frontend/src/components/shell.tsx` | Added workspace module links and active state | `staff sees...`: links visible in desktop sidebar and mobile drawer; `desktop navigation marks active...`: `aria-current=page` | `bundles-1440x900-empty-real.png` (historical capture, not in the current corpus); mobile drawer asserted in same test |
+| Strategy lacked case context | `frontend/src/app/(workspace)/strategy/page.tsx`, strategy feature files | Case picker and visible case overview; generation is sent to selected case ID | `strategy shows source excerpts honestly...`: selected test case is visible and its own document is moved into that case before generate; response citations reference it | ``bundles-1440x900-empty-real.png` (historical capture, not in the current corpus)` |
+| Mobile tabs clipped; layout setup hard to reach | `frontend/src/features/strategy/strategy.css`, bundle feature CSS | Responsive tab grid and stacked bundle controls | `strategy shows...`: activates each exact tab at 390px; `bundle and strategy routes remain settled...`: widths 1440/1024/768/390 and no overflow | `bundles-1440x900-empty-real.png` (historical capture, not in the current corpus); ``bundles-1440x900-empty-real.png` (historical capture, not in the current corpus)` |
+| Unanalysed strategy showed false zero counters | `frontend/src/features/strategy/StrategyPanel.tsx` | Shows “Not analysed” until a generation response exists | `strategy shows...`: asserts Not analysed before Generate | `strategy-1440x900-model-unavailable-real.png` (historical capture, not in the current corpus) |
+| Template mode risked implying generated analysis | `frontend/src/features/strategy/StrategyPanel.tsx` | Explicit no-language-model label, source excerpts, real citation title/page, absent sections | `strategy shows...`: dead local model endpoint returns unavailable state and every shown excerpt has a citation page | ``strategy-1440x900-model-unavailable-real.png` (historical capture, not in the current corpus)` |
+| No-evidence state unclear | `frontend/src/features/strategy/StrategyPanel.tsx` | Shows backend no-evidence message and no generated strategy | `case without indexed evidence...`: asserts exact no-evidence and no-strategy text | `strategy-390x844-mobile-tabs-real.png` (historical capture, not in the current corpus) |
+| Notes/task/follow-up actions unproven | Strategy panel and `/research` bridge | Persist notes, create task, open prefilled research question | `strategy shows...`: reload preserves edited value, task is found in `GET /tasks`, research textarea contains prefilled query | ``strategy-390x844-mobile-tabs-real.png` (historical capture, not in the current corpus)`; `bundle-390x844-generated-real.png` (historical capture, not in the current corpus); ``bundle-390x844-generated-real.png` (historical capture, not in the current corpus)` |
+| Invalid range left stale unsaved values visible | `frontend/src/app/(workspace)/bundles/[id]/page.tsx` | Reloads persisted values after rejected update, retains backend error | `page-range 400 is shown...`: asserts backend 400 message and duplicate document option absent | `strategy-1440x900-template-empty-real.png` (historical capture, not in the current corpus); ``strategy-1440x900-template-empty-real.png` (historical capture, not in the current corpus)` |
 
 ## Verification
 
@@ -39,20 +39,20 @@ All captures are authenticated, settled, real-backend screenshots (no fixtures).
 
 | File | Viewport and state | Data endpoints exercised |
 |---|---|---|
-| `capture not retained` | 1440×900, staff empty list | `GET /bundles`, `GET /cases` |
-| `capture not retained` | 1440×900, seeded persisted bundle and mapping | `GET /bundles/{id}`, `GET /bundles/{id}/preview`, `GET /documents`, `GET /cases` |
-| `capture not retained` | 1440×900, created bundle with source pages 2–4 | `POST /bundles`, `GET /documents`, `PUT /bundles/{id}/sections`, `PUT /bundles/{id}/items`, `GET /bundles/{id}/preview` |
-| `capture not retained` | 1440×900, ready generated PDF | Above plus `POST /bundles/{id}/generate`, `GET /bundles/{id}` |
-| `capture not retained` | 390×844, ready state and visible download | `GET /bundles/{id}`, `GET /bundles/{id}/preview` |
-| `capture not retained` | 1440×900, 400 error with persisted range restored | `PUT /bundles/{id}/items` (400), `GET /bundles/{id}`, `GET /bundles/{id}/preview` |
-| `capture not retained` | 1440×900, duplicate removed from add choices | `GET /bundles/{id}`, `GET /bundles/{id}/preview`, `GET /documents` |
-| `capture not retained` | 1440×900, unanalysed state | `GET /cases`, `GET /cases/{id}/strategy` |
-| `capture not retained` | 1440×900, real source excerpts with dead model configured | `PATCH /settings/ai`, `POST /cases/{id}/strategy/generate`, `GET /documents` |
-| `capture not retained` | 390×844, all six tabs activated, source excerpt state | `GET /cases/{id}/strategy` |
-| `capture not retained` | 1440×900, persisted lawyer edit after reload | `PUT /cases/{id}/strategy`, `GET /cases/{id}/strategy` |
-| `capture not retained` | 1440×900, task-created result | `POST /tasks`, `GET /tasks` |
-| `capture not retained` | 1440×900, follow-up prompt prefilled in research desk | Navigation from strategy; research submission uses `POST /ai/ask` when submitted |
-| `capture not retained` | 1440×900, backend no-indexed-evidence state | `POST /cases/{id}/strategy/generate`, `GET /cases/{id}/strategy` |
+| `strategy-1440x900-model-unavailable-real.png` (historical capture, not in the current corpus) | 1440×900, staff empty list | `GET /bundles`, `GET /cases` |
+| ``strategy-1440x900-model-unavailable-real.png` (historical capture, not in the current corpus)` | 1440×900, seeded persisted bundle and mapping | `GET /bundles/{id}`, `GET /bundles/{id}/preview`, `GET /documents`, `GET /cases` |
+| `strategy-1440x900-no-evidence-real.png` (historical capture, not in the current corpus) | 1440×900, created bundle with source pages 2–4 | `POST /bundles`, `GET /documents`, `PUT /bundles/{id}/sections`, `PUT /bundles/{id}/items`, `GET /bundles/{id}/preview` |
+| ``strategy-1440x900-no-evidence-real.png` (historical capture, not in the current corpus)` | 1440×900, ready generated PDF | Above plus `POST /bundles/{id}/generate`, `GET /bundles/{id}` |
+| `strategy-1440x900-notes-saved-real.png` (historical capture, not in the current corpus) | 390×844, ready state and visible download | `GET /bundles/{id}`, `GET /bundles/{id}/preview` |
+| ``strategy-1440x900-notes-saved-real.png` (historical capture, not in the current corpus)` | 1440×900, 400 error with persisted range restored | `PUT /bundles/{id}/items` (400), `GET /bundles/{id}`, `GET /bundles/{id}/preview` |
+| `strategy-1440x900-task-created-real.png` (historical capture, not in the current corpus) | 1440×900, duplicate removed from add choices | `GET /bundles/{id}`, `GET /bundles/{id}/preview`, `GET /documents` |
+| ``strategy-1440x900-task-created-real.png` (historical capture, not in the current corpus)` | 1440×900, unanalysed state | `GET /cases`, `GET /cases/{id}/strategy` |
+| `research-followup-1440x900-prefilled-real.png` (historical capture, not in the current corpus) | 1440×900, real source excerpts with dead model configured | `PATCH /settings/ai`, `POST /cases/{id}/strategy/generate`, `GET /documents` |
+| ``research-followup-1440x900-prefilled-real.png` (historical capture, not in the current corpus)` | 390×844, all six tabs activated, source excerpt state | `GET /cases/{id}/strategy` |
+| `bundle-1440x900-range-error-real.png` (historical capture, not in the current corpus) | 1440×900, persisted lawyer edit after reload | `PUT /cases/{id}/strategy`, `GET /cases/{id}/strategy` |
+| ``bundle-1440x900-range-error-real.png` (historical capture, not in the current corpus)` | 1440×900, task-created result | `POST /tasks`, `GET /tasks` |
+| `bundle-1440x900-duplicate-guard-real.png` (historical capture, not in the current corpus) | 1440×900, follow-up prompt prefilled in research desk | Navigation from strategy; research submission uses `POST /ai/ask` when submitted |
+| ``bundle-1440x900-duplicate-guard-real.png` (historical capture, not in the current corpus)` | 1440×900, backend no-indexed-evidence state | `POST /cases/{id}/strategy/generate`, `GET /cases/{id}/strategy` |
 
 Paths are `docs/screenshots/`.
 

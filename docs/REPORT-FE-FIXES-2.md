@@ -18,7 +18,7 @@
 
 The screenshot harness now records keyboard focus on both the global search button and Ask TANTARA input, invalid-email/short-password validation, and the offline panel with its technical command expanded. It then restores the API fixture, retries, and confirms metrics load again.
 
-The backend was not available to the browser capture harness with the needed local CORS/auth setup, so these screenshots use the existing Playwright-only API fixtures. The shipped frontend contains no fixture data and continues to call the configured API. The offline-recovery screenshot is a paired sequence: `capture not retained` records the expanded offline state and `capture not retained` records the successful retry.
+The backend was not available to the browser capture harness with the needed local CORS/auth setup, so these screenshots use the existing Playwright-only API fixtures. The shipped frontend contains no fixture data and continues to call the configured API. The offline-recovery screenshot is a paired sequence: `states-offline-desktop.png` (historical capture, not in the current corpus) records the expanded offline state and ``states-offline-desktop.png` (historical capture, not in the current corpus)` records the successful retry.
 
 ## Intentional scope decisions
 
@@ -38,17 +38,17 @@ Command chain: `pnpm format && pnpm lint && pnpm typecheck && pnpm build && pnpm
 
 Screenshot paths:
 
-- `capture not retained`
-- `capture not retained`
-- `capture not retained`
-- `capture not retained`
-- `capture not retained`
-- `capture not retained`
-- `capture not retained`
-- `capture not retained`
-- `capture not retained`
-- `capture not retained`
-- `capture not retained`
+- `states-offline-recovered-desktop.png` (historical capture, not in the current corpus)
+- ``states-offline-recovered-desktop.png` (historical capture, not in the current corpus)`
+- `home-desktop.png` (historical capture, not in the current corpus)
+- ``home-desktop.png` (historical capture, not in the current corpus)`
+- `home-mobile.png` (historical capture, not in the current corpus)
+- ``home-mobile.png` (historical capture, not in the current corpus)`
+- `dashboard-desktop.png` (historical capture, not in the current corpus)
+- ``dashboard-desktop.png` (historical capture, not in the current corpus)`
+- `dashboard-mobile.png` (historical capture, not in the current corpus)
+- ``dashboard-mobile.png` (historical capture, not in the current corpus)`
+- `settings-local-ai-desktop.png` (historical capture, not in the current corpus)
 
 ## Visual fidelity self-assessment: Dashboard vs `docs/design/frontend.png`
 

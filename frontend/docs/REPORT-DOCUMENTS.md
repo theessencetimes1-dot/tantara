@@ -81,42 +81,42 @@ The real viewer and AI Read captures show the seeded demo document **`page-three
 
 | Viewer capture | Visible page | Document identity |
 |---|---:|---|
-| `capture not retained` | 1 of 5 | `page-three-motion.pdf`; SHA-256 `ab7f8914425ba71199556afddc6c2947a171234ff3c56ec8d4102a56da2559a6` |
-| `capture not retained` | 1 of 5 | `page-three-motion.pdf`; SHA-256 `ab7f8914425ba71199556afddc6c2947a171234ff3c56ec8d4102a56da2559a6` |
-| `capture not retained` | 2 of 5 | `page-three-motion.pdf`; SHA-256 `ab7f8914425ba71199556afddc6c2947a171234ff3c56ec8d4102a56da2559a6` |
-| `capture not retained` | 2 of 5 | `page-three-motion.pdf`; SHA-256 `ab7f8914425ba71199556afddc6c2947a171234ff3c56ec8d4102a56da2559a6` |
-| `capture not retained` | 1 of 5 | `page-three-motion.pdf`; SHA-256 `ab7f8914425ba71199556afddc6c2947a171234ff3c56ec8d4102a56da2559a6` |
-| `capture not retained` | 1 of 5 | `page-three-motion.pdf`; SHA-256 `ab7f8914425ba71199556afddc6c2947a171234ff3c56ec8d4102a56da2559a6` |
-| `capture not retained` | 1 of 5 | `page-three-motion.pdf`; SHA-256 `ab7f8914425ba71199556afddc6c2947a171234ff3c56ec8d4102a56da2559a6` |
-| `capture not retained` | 1 of 5 | `page-three-motion.pdf`; SHA-256 `ab7f8914425ba71199556afddc6c2947a171234ff3c56ec8d4102a56da2559a6` |
-| `capture not retained` | 3 of 5 | `page-three-motion.pdf`; SHA-256 `ab7f8914425ba71199556afddc6c2947a171234ff3c56ec8d4102a56da2559a6` |
-| `capture not retained` | 3 of 5 | `page-three-motion.pdf`; SHA-256 `ab7f8914425ba71199556afddc6c2947a171234ff3c56ec8d4102a56da2559a6` |
+| `documents-round5-viewer-desktop-1440-real.png` (historical capture, not in the current corpus) | 1 of 5 | `page-three-motion.pdf`; SHA-256 `ab7f8914425ba71199556afddc6c2947a171234ff3c56ec8d4102a56da2559a6` |
+| ``documents-round5-viewer-desktop-1440-real.png` (historical capture, not in the current corpus)` | 1 of 5 | `page-three-motion.pdf`; SHA-256 `ab7f8914425ba71199556afddc6c2947a171234ff3c56ec8d4102a56da2559a6` |
+| `documents-round5-viewer-mobile-390-real.png` (historical capture, not in the current corpus) | 2 of 5 | `page-three-motion.pdf`; SHA-256 `ab7f8914425ba71199556afddc6c2947a171234ff3c56ec8d4102a56da2559a6` |
+| ``documents-round5-viewer-mobile-390-real.png` (historical capture, not in the current corpus)` | 2 of 5 | `page-three-motion.pdf`; SHA-256 `ab7f8914425ba71199556afddc6c2947a171234ff3c56ec8d4102a56da2559a6` |
+| `documents-viewer-page2-desktop-1440-real.png` (historical capture, not in the current corpus) | 1 of 5 | `page-three-motion.pdf`; SHA-256 `ab7f8914425ba71199556afddc6c2947a171234ff3c56ec8d4102a56da2559a6` |
+| ``documents-viewer-page2-desktop-1440-real.png` (historical capture, not in the current corpus)` | 1 of 5 | `page-three-motion.pdf`; SHA-256 `ab7f8914425ba71199556afddc6c2947a171234ff3c56ec8d4102a56da2559a6` |
+| `documents-viewer-page2-mobile-390-real.png` (historical capture, not in the current corpus) | 1 of 5 | `page-three-motion.pdf`; SHA-256 `ab7f8914425ba71199556afddc6c2947a171234ff3c56ec8d4102a56da2559a6` |
+| ``documents-viewer-page2-mobile-390-real.png` (historical capture, not in the current corpus)` | 1 of 5 | `page-three-motion.pdf`; SHA-256 `ab7f8914425ba71199556afddc6c2947a171234ff3c56ec8d4102a56da2559a6` |
+| `documents-round5-metadata-desktop-1440-real.png` (historical capture, not in the current corpus) | 3 of 5 | `page-three-motion.pdf`; SHA-256 `ab7f8914425ba71199556afddc6c2947a171234ff3c56ec8d4102a56da2559a6` |
+| ``documents-round5-metadata-desktop-1440-real.png` (historical capture, not in the current corpus)` | 3 of 5 | `page-three-motion.pdf`; SHA-256 `ab7f8914425ba71199556afddc6c2947a171234ff3c56ec8d4102a56da2559a6` |
 
 Desktop captures (1440×900):
 
-- `capture not retained` — rendered page and toolbar.
-- `capture not retained` — metadata grid.
-- `capture not retained` — completed extraction and rendered viewer.
-- `capture not retained` — Page 3 citation result and supporting passage.
-- `capture not retained` — PDF download outcome.
+- `documents-round5-metadata-mobile-390-real.png` (historical capture, not in the current corpus) — rendered page and toolbar.
+- ``documents-round5-metadata-mobile-390-real.png` (historical capture, not in the current corpus)` — metadata grid.
+- `documents-round5-airead-desktop-1440-populated-real.png` (historical capture, not in the current corpus) — completed extraction and rendered viewer.
+- ``documents-round5-airead-desktop-1440-populated-real.png` (historical capture, not in the current corpus)` — Page 3 citation result and supporting passage.
+- `documents-round5-airead-mobile-390-populated-real.png` (historical capture, not in the current corpus) — PDF download outcome.
 
 Mobile captures (390×844):
 
-- `capture not retained` — eight seeded documents as cards.
-- `capture not retained` — rendered viewer.
-- `capture not retained` — metadata grid.
-- `capture not retained` — completed extraction with bounded summary.
-- `capture not retained` — citation result and supporting passage.
+- ``documents-round5-airead-mobile-390-populated-real.png` (historical capture, not in the current corpus)` — eight seeded documents as cards.
+- `documents-round5-citation-page3-desktop-1440-real.png` (historical capture, not in the current corpus) — rendered viewer.
+- ``documents-round5-citation-page3-desktop-1440-real.png` (historical capture, not in the current corpus)` — metadata grid.
+- `documents-round5-citation-page3-mobile-390-real.png` (historical capture, not in the current corpus) — completed extraction with bounded summary.
+- ``documents-round5-citation-page3-mobile-390-real.png` (historical capture, not in the current corpus)` — citation result and supporting passage.
 
-The generated multi-page upload capture is `capture not retained` and is explicitly fixture-labelled. Mobile empty and search states use real API data. Mobile failure, model-unavailable (empty extraction response controlled in the test), and no-evidence states are fixture-labelled; they are not presented as real seeded-corpus extraction results.
+The generated multi-page upload capture is `documents-round5-viewer-desktop-1440-real.png` (historical capture, not in the current corpus) and is explicitly fixture-labelled. Mobile empty and search states use real API data. Mobile failure, model-unavailable (empty extraction response controlled in the test), and no-evidence states are fixture-labelled; they are not presented as real seeded-corpus extraction results.
 
 Additional settled mobile state captures (390×844):
 
-- `capture not retained` — real seeded search results with resolved document titles.
-- `capture not retained` — real library query with no matching rows.
-- `capture not retained` — controlled documents API failure.
-- `capture not retained` — dead model configuration, with an empty extraction response, no candidate fields, and no endpoint text.
-- `capture not retained` — controlled no-evidence response.
+- ``documents-round5-viewer-desktop-1440-real.png` (historical capture, not in the current corpus)` — real seeded search results with resolved document titles.
+- `documents-round5-metadata-desktop-1440-real.png` (historical capture, not in the current corpus) — real library query with no matching rows.
+- ``documents-round5-metadata-desktop-1440-real.png` (historical capture, not in the current corpus)` — controlled documents API failure.
+- `documents-round5-airead-desktop-1440-populated-real.png` (historical capture, not in the current corpus) — dead model configuration, with an empty extraction response, no candidate fields, and no endpoint text.
+- ``documents-round5-airead-desktop-1440-populated-real.png` (historical capture, not in the current corpus)` — controlled no-evidence response.
 
 ## Remaining gaps
 

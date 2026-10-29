@@ -28,14 +28,14 @@
 
 ## Screenshots
 
-- `capture not retained`
-- `capture not retained`
-- `capture not retained`
-- `capture not retained`
-- `capture not retained`
-- `capture not retained`
-- `capture not retained`
-- `capture not retained`
+- `cases-desktop.png` (historical capture, not in the current corpus)
+- ``cases-desktop.png` (historical capture, not in the current corpus)`
+- `cases-mobile.png` (historical capture, not in the current corpus)
+- ``cases-mobile.png` (historical capture, not in the current corpus)`
+- `case-detail-desktop.png` (historical capture, not in the current corpus)
+- ``case-detail-desktop.png` (historical capture, not in the current corpus)`
+- `clients-desktop.png` (historical capture, not in the current corpus)
+- ``clients-desktop.png` (historical capture, not in the current corpus)`
 
 ## Gaps
 
