@@ -54,6 +54,9 @@ pids/
 .idea/
 .vscode/
 
+# Orchestrator status report — local only, never committed
+/status.md
+
 AGENTS.md
 INSTRUCTION.md
 
