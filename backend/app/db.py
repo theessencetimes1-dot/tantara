@@ -1,15 +1,45 @@
 """SQLAlchemy session factory and local database bootstrap."""
 
+import socket
+import threading
 from contextlib import contextmanager
 from pathlib import Path
 
-from sqlalchemy import create_engine, event
+from sqlalchemy import create_engine, event, make_url
 from sqlalchemy.orm import sessionmaker
 
 from app.config import get_settings
 
 _engine = None
 _SessionLocal = None
+_address_cache: dict[str, str] = {}
+_address_lock = threading.Lock()
+
+
+def postgres_connect_args(url: str) -> dict[str, str]:
+    """Pin a PostgreSQL connection to IPv4 when the host has an A record.
+
+    Supabase publishes both AAAA and A records. On an IPv4-only network — which
+    is what Cloud Run egress gives a container — libpq tries the IPv6 address
+    first and the connection dies with ``Network is unreachable`` before it ever
+    reaches the server. Resolving the host to IPv4 ourselves and passing it as
+    ``hostaddr`` keeps ``host`` for TLS Server Name Indication and certificate
+    verification, so the security posture is unchanged.
+    """
+    parsed = make_url(url)
+    host, port = parsed.host, parsed.port or 5432
+    if not host or parsed.get_backend_name() != "postgresql":
+        return {}
+    with _address_lock:
+        cached = _address_cache.get(host)
+        if cached is None:
+            try:
+                infos = socket.getaddrinfo(host, port, socket.AF_INET, socket.SOCK_STREAM)
+            except OSError:
+                infos = []
+            cached = infos[0][4][0] if infos else ""
+            _address_cache[host] = cached
+    return {"hostaddr": cached} if cached else {}
 
 
 def engine():
@@ -29,6 +59,7 @@ def engine():
                 pool_size=s.db_pool_size,
                 max_overflow=s.db_pool_max_overflow,
                 pool_recycle=s.db_pool_recycle,
+                connect_args=postgres_connect_args(url),
                 future=True,
             )
         if url.startswith("sqlite"):

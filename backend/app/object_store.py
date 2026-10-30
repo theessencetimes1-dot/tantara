@@ -282,6 +282,10 @@ def _s3_client():
 def ensure_bucket() -> str:
     """Create the configured bucket when it is missing (idempotent)."""
     s = get_settings()
+    if s.object_storage_backend == "supabase":
+        from app.supabase_storage import ensure_supabase_bucket
+
+        return ensure_supabase_bucket()
     if s.object_storage_backend != "s3":
         return ""
     client = _s3_client()
@@ -295,6 +299,10 @@ def object_store() -> ObjectStore:
     s = get_settings()
     if s.object_storage_backend == "s3":
         return S3Store(_s3_client(), s.s3_bucket, s.data_dir / "object-cache")
+    if s.object_storage_backend == "supabase":
+        from app.supabase_storage import SupabaseStore, supabase_client
+
+        return SupabaseStore(supabase_client(), s.supabase_storage_bucket, s.data_dir / "object-cache")
     return FilesystemStore()
 
 

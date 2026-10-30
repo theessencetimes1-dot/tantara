@@ -42,7 +42,7 @@ class Settings(BaseSettings):
     vector_backend: str = Field(
         default="auto", validation_alias=AliasChoices("VECTOR_BACKEND", "TANTARA_VECTOR_BACKEND")
     )
-    # filesystem | s3 (S3-compatible object storage such as MinIO)
+    # filesystem | s3 (S3-compatible object storage such as MinIO) | supabase
     object_storage: str = Field(
         default="filesystem", validation_alias=AliasChoices("OBJECT_STORAGE", "TANTARA_OBJECT_STORAGE")
     )
@@ -69,6 +69,10 @@ class Settings(BaseSettings):
     enable_cloud_providers: bool = False
     supabase_url: str = ""
     supabase_service_role_key: str = ""
+    supabase_storage_bucket: str = Field(
+        default="tantara-documents",
+        validation_alias=AliasChoices("SUPABASE_STORAGE_BUCKET", "SUPABASE_BUCKET"),
+    )
     max_upload_mb: int = 25
     chunk_size_chars: int = 1800
     chunk_overlap_chars: int = 250
@@ -94,6 +98,15 @@ class Settings(BaseSettings):
                 "OBJECT_STORAGE=s3 requires S3_ENDPOINT, S3_ACCESS_KEY and S3_SECRET_KEY "
                 "(MINIO_ENDPOINT / MINIO_ACCESS_KEY / MINIO_SECRET_KEY are accepted aliases)"
             )
+        if self.object_storage == "supabase" and not (
+            self.supabase_url and self.supabase_service_role_key and self.supabase_storage_bucket
+        ):
+            raise ValueError(
+                "OBJECT_STORAGE=supabase requires SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY "
+                "and SUPABASE_STORAGE_BUCKET"
+            )
+        if self.object_storage not in {"filesystem", "s3", "supabase"}:
+            raise ValueError("OBJECT_STORAGE must be one of: filesystem, s3, supabase")
         if self.vector_backend not in {"auto", "faiss", "postgres"}:
             raise ValueError("VECTOR_BACKEND must be one of: auto, faiss, postgres")
         return self
@@ -114,7 +127,9 @@ class Settings(BaseSettings):
 
     @property
     def object_storage_backend(self) -> str:
-        return "s3" if self.object_storage == "s3" else "filesystem"
+        if self.object_storage == "s3":
+            return "s3"
+        return "supabase" if self.object_storage == "supabase" else "filesystem"
 
 
 @lru_cache
