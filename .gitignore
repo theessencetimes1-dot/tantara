@@ -65,3 +65,5 @@ INSTRUCTION.md
 
 deploy/.last-tag
 legal_docs
+# firebase-tools local state (deploy/hosting config lives in firebase.json)
+.firebase/

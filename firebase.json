@@ -1,0 +1,71 @@
+{
+  "hosting": {
+    "site": "tantara-prod",
+    "public": "frontend/public",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "cleanUrls": false,
+    "trailingSlash": false,
+    "headers": [
+      {
+        "source": "/_next/static/**",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public,max-age=31536000,immutable"
+          }
+        ]
+      },
+      {
+        "source": "/**",
+        "headers": [
+          {
+            "key": "X-Frame-Options",
+            "value": "DENY"
+          },
+          {
+            "key": "X-Content-Type-Options",
+            "value": "nosniff"
+          },
+          {
+            "key": "Referrer-Policy",
+            "value": "strict-origin-when-cross-origin"
+          }
+        ]
+      }
+    ],
+    "rewrites": [
+      {
+        "source": "/health",
+        "run": {
+          "serviceId": "tantara-api",
+          "region": "asia-south1"
+        }
+      },
+      {
+        "source": "/api/v1/**",
+        "run": {
+          "serviceId": "tantara-api",
+          "region": "asia-south1"
+        }
+      },
+      {
+        "source": "/ingest/**",
+        "run": {
+          "serviceId": "tantara-api",
+          "region": "asia-south1"
+        }
+      },
+      {
+        "source": "/**",
+        "run": {
+          "serviceId": "tantara-web",
+          "region": "asia-south1"
+        }
+      }
+    ]
+  }
+}
