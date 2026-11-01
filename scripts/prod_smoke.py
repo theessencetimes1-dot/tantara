@@ -87,9 +87,41 @@ answer = (ai.get("answer") or "").replace("\n", " ")
 print("research:", st, "| kind:", ai.get("answer_kind"), "| citations:", len(ai.get("citations", [])))
 print("   mentions seat/arbitrator:", ("new delhi" in answer.lower(), "sole" in answer.lower() or "one" in answer.lower()))
 
-st, extraction = call("POST", f"/api/v1/documents/{doc_id}/ai", {}, token)
-fields = {item.get("field"): item.get("value") for item in (extraction.get("candidates") or extraction.get("fields") or [])}
-print("extraction:", st, "| fields:", {k: v for k, v in list(fields.items())[:6]})
+st, extraction = call("POST", f"/api/v1/documents/{doc_id}/ai-read", {}, token)
+fields = extraction.get("candidates") or extraction.get("fields") or []
+print(
+    "extraction:",
+    st,
+    "| status:",
+    extraction.get("status"),
+    "| model:",
+    (extraction.get("model") or {}).get("model") if isinstance(extraction.get("model"), dict) else extraction.get("model"),
+    "| fields:",
+    len(fields) if isinstance(fields, list) else fields,
+)
+
+st, templates = call("GET", "/api/v1/draft-templates", token=token)
+rows = templates.get("items") if isinstance(templates, dict) else templates
+print("draft templates:", st, "| count:", len(rows or []), "| first:", (rows or [{}])[0].get("name"))
+
+boundary2 = "----tantraCorrupt"
+bad = (
+    f"--{boundary2}\r\nContent-Disposition: form-data; name=\"file\"; filename=\"corrupt.pdf\"\r\n"
+    "Content-Type: application/pdf\r\n\r\n%PDF-not-a-real-pdf\r\n"
+    f"--{boundary2}--\r\n"
+).encode()
+req = urllib.request.Request(SITE + "/api/v1/documents/upload", data=bad, method="POST")
+req.add_header("content-type", f"multipart/form-data; boundary={boundary2}")
+req.add_header("authorization", f"Bearer {token}")
+try:
+    with urllib.request.urlopen(req, timeout=120) as resp:
+        print("corrupt upload:", resp.status, resp.read().decode()[:120])
+except urllib.error.HTTPError as exc:
+    body = exc.read().decode()[:160]
+    print("corrupt upload:", exc.code, body if exc.code < 500 else "SERVER ERROR (unhandled exception)")
+
+st, admin = call("GET", "/api/v1/admin/storage/status", token=token)
+print("admin storage status as advocate:", st, (admin if isinstance(admin, str) else "").strip()[:60])
 
 st, draft = call("POST", "/api/v1/drafts/generate", {
     "case_id": case_id,
