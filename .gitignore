@@ -67,3 +67,11 @@ deploy/.last-tag
 legal_docs
 # firebase-tools local state (deploy/hosting config lives in firebase.json)
 .firebase/
+
+# agent scratch output and screenshots, not project source
+.claude/
+artifacts/
+frontend/reports/
+temp.rubbbish
+image.png
+/Screenshot *.png

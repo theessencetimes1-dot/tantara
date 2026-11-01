@@ -108,6 +108,19 @@ def production_database_url(c: dict[str, str]) -> str:
     )
 
 
+def claude_model(c: dict[str, str]) -> str:
+    """The Anthropic model to run: operator override, then creds, then a known-good default.
+
+    `claude-sonnet-4-20250514` is retired upstream and answers 404, which is why the
+    model name is read from `CLAUDE_PROD.CLAUDE_MODEL` instead of hardcoded.
+    """
+    return (
+        os.environ.get("TANTARA_CLAUDE_MODEL")
+        or c.get("CLAUDE_PROD.CLAUDE_MODEL")
+        or "claude-haiku-5-5"
+    )
+
+
 def backend_env(c: dict[str, str], api_uri: str = "") -> dict[str, str]:
     """Environment for the Cloud Run backend container. Values, not names."""
     anthropic_key = c.get("CLAUDE_PROD.CLAUDE_API_KEY", "")
@@ -120,7 +133,7 @@ def backend_env(c: dict[str, str], api_uri: str = "") -> dict[str, str]:
         "VECTOR_BACKEND": "postgres",
         "AI_PROVIDER": "anthropic",
         "ANTHROPIC_API_KEY": anthropic_key,
-        "CLAUDE_MODEL": os.environ.get("TANTARA_CLAUDE_MODEL", "claude-sonnet-4-20250514"),
+        "CLAUDE_MODEL": claude_model(c),
         "ENABLE_CLOUD_PROVIDERS": "true",
         "EMBEDDING_PROVIDER": "fastembed",
         "TANTARA_WORKSPACE_TIME_ZONE": "Asia/Kolkata",
@@ -189,7 +202,7 @@ def main() -> int:
             "frontend_origin": FRONTEND_ORIGIN,
             "supabase_ref": re.sub(r"^https://([^.]+)\..*$", r"\1", c["supabase_prod.SUPABASE_URL"]),
             "storage_bucket": STORAGE_BUCKET,
-            "claude_model": os.environ.get("TANTARA_CLAUDE_MODEL", "claude-sonnet-4-20250514"),
+            "claude_model": claude_model(c),
         }, indent=1))
         return 0
 

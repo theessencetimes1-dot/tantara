@@ -45,8 +45,8 @@ RUN_API = "https://run.googleapis.com/v2/projects"
 HOSTING_API = f"https://firebasehosting.googleapis.com/v1beta1/projects/{GCP_PROJECT}"
 BACKEND_IMAGE = f"{REGION}-docker.pkg.dev/{GCP_PROJECT}/tantara/tantara-api"
 FRONTEND_IMAGE = f"{REGION}-docker.pkg.dev/{GCP_PROJECT}/tantara/tantara-web"
-LOCAL_BACKEND = os.environ.get("TANTARA_LOCAL_BACKEND_IMAGE", "localhost/tantara-backend-prod:prod-20261030-1")
-LOCAL_FRONTEND = os.environ.get("TANTARA_LOCAL_FRONTEND_IMAGE", "localhost/tantara-frontend-prod:prod-20261030-1")
+LOCAL_BACKEND = os.environ.get("TANTARA_LOCAL_BACKEND_IMAGE", "localhost/tantara-api-prod")
+LOCAL_FRONTEND = os.environ.get("TANTARA_LOCAL_FRONTEND_IMAGE", "localhost/tantara-web-prod")
 
 
 def token() -> str:
@@ -84,7 +84,9 @@ def push(tag: str, only: str = "all") -> int:
         print(login.stderr.decode()[:300])
         return 1
     print(f"logged in to {registry}")
-    pairs = [(LOCAL_BACKEND, images(tag)[0]), (LOCAL_FRONTEND, images(tag)[1])]
+    # The local images are addressed by repository + the deployment tag, so a push
+    # can never silently send an older build to the registry.
+    pairs = [(f"{LOCAL_BACKEND}:{tag}", images(tag)[0]), (f"{LOCAL_FRONTEND}:{tag}", images(tag)[1])]
     if only == "backend":
         pairs = pairs[:1]
     if only == "frontend":
@@ -95,7 +97,7 @@ def push(tag: str, only: str = "all") -> int:
             if result.returncode != 0:
                 print("FAILED:", " ".join(command), "\n", (result.stderr or result.stdout)[-500:])
                 return 1
-        print("pushed", remote)
+        print("pushed", local, "->", remote)
     return 0
 
 
@@ -115,12 +117,18 @@ def service_body(name: str, image: str, cpu: str, memory: str, port: int, env: d
             # instance maximum, and none while nobody is asking.
             "scaling": {"minInstanceCount": 0, "maxInstanceCount": int(max_scale)},
             "maxInstanceRequestConcurrency": 80,
-            "timeout": "60s",
+            # Uploads validate text and produce embeddings before durable storage,
+            # so large scanned/legal PDFs need more than the default 60 seconds.
+            "timeout": "600s",
             "containers": [
                 {
                     "image": image,
                     "name": name,
-                    # Cloud Run injects PORT=8010 and routes there; both images listen on 8010.
+                    # The backend image is pinned to 8010 by its ENTRYPOINT, so the
+                    # revision must declare that port or the health check (8080 by
+                    # default) never passes and Cloud Run silently keeps serving the
+                    # previous revision.
+                    "ports": [{"name": "http1", "containerPort": port}],
                     "env": env_pairs(env),
                     "resources": {"limits": {"cpu": cpu, "memory": memory}, "cpuIdle": True},
                 }
@@ -143,7 +151,9 @@ def cloudrun(tag: str, api_uri: str = "", only: str = "all") -> int:
                 f"{FRONTEND_IMAGE}:{tag}",
                 "1",
                 "512Mi",
-                3000,
+                # `node server.js` follows the PORT Cloud Run injects (8080); the
+                # Containerfile's PORT=3000 only applies to a plain docker run.
+                8080,
                 {"NODE_ENV": "production", "NEXT_TELEMETRY_DISABLED": "1"},
                 "3",
             ),
@@ -156,7 +166,14 @@ def cloudrun(tag: str, api_uri: str = "", only: str = "all") -> int:
     for name, body in pairs:
         create = requests.post(base, headers=h, json=body, params={"serviceId": name}, timeout=240)
         if create.status_code == 409:
-            create = requests.put(f"{base}/{name}", headers=h, json={**body, "name": f"{base}/{name}"}, timeout=240)
+            # Cloud Run Admin API v2 has no PUT on services: updates go through PATCH.
+            create = requests.patch(
+                f"{base}/{name}",
+                headers=h,
+                params={"updateMask": "template,traffic"},
+                json={"name": f"{base}/{name}", "template": body["template"], "traffic": body["traffic"]},
+                timeout=240,
+            )
         payload = create.json() if "json" in create.headers.get("content-type", "") else {"raw": create.text[:300]}
         print(name, create.status_code, payload.get("uri") or payload.get("error") or str(payload)[:300])
         if create.status_code >= 400:
