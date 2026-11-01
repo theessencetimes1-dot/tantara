@@ -57,8 +57,12 @@ function AnswerText({ text, citations }: { text: string; citations: ResearchSour
   const referenceNumbers = hasReferenceSection
     ? Array.from(
         new Set(
-          Array.from(lines.slice(referenceIndex + 1).join('\n').matchAll(/\[(\d+)\]/g), (match) =>
-            Number(match[1]),
+          Array.from(
+            lines
+              .slice(referenceIndex + 1)
+              .join('\n')
+              .matchAll(/\[(\d+)\]/g),
+            (match) => Number(match[1]),
           ),
         ),
       )
@@ -92,7 +96,9 @@ function AnswerText({ text, citations }: { text: string; citations: ResearchSour
               className="answer-citation"
               display={hasReferenceSection ? token : citationAccessibleLabel(source)}
             />
-          ) : token,
+          ) : (
+            token
+          ),
         );
       } else if (token.startsWith('**') || token.startsWith('__')) {
         result.push(<strong key={key}>{inline(token.slice(2, -2), key)}</strong>);
@@ -113,8 +119,7 @@ function AnswerText({ text, citations }: { text: string; citations: ResearchSour
       .replace(/\|$/, '')
       .split('|')
       .map((cell) => cell.trim());
-  const isTableSeparator = (line: string) =>
-    /^\s*\|?\s*:?-{3,}:?\s*(?:\|\s*:?-{3,}:?\s*)+\|?\s*$/.test(line);
+  const isTableSeparator = (line: string) => /^\s*\|?\s*:?-{3,}:?\s*(?:\|\s*:?-{3,}:?\s*)+\|?\s*$/.test(line);
   const isBlockStart = (index: number) => {
     const line = answerLines[index] ?? '';
     return (
@@ -944,7 +949,8 @@ export default function ResearchPage() {
                           <>
                             {messageStatus === 'embedding_unavailable' && (
                               <p className="research-degraded-note">
-                                Semantic search is unavailable, so this answer uses matching document text only.
+                                Semantic search is unavailable, so this answer uses matching document text
+                                only.
                               </p>
                             )}
                             <AnswerText
@@ -1034,9 +1040,8 @@ export default function ResearchPage() {
                       <CaseRecordAnswer answer={answer} />
                       <ConflictNotices conflicts={answer.conflicts ?? []} sources={sources} />
                     </>
-                  ) :
-                  answer.status === 'embedding_unavailable' &&
-                  (!answer.answer?.trim() || sources.length === 0) ? (
+                  ) : answer.status === 'embedding_unavailable' &&
+                    (!answer.answer?.trim() || sources.length === 0) ? (
                     <div className="state-callout lexical-state">
                       <strong>Embeddings unavailable</strong>
                       <p>

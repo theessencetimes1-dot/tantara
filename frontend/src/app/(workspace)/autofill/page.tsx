@@ -56,7 +56,13 @@ export default function AutofillPage() {
       .then((r) => {
         const rows = rowsFrom(r);
         setTemplates(rows);
-        setTemplateId(String(rows.find((template) => template.compatible_document_types?.includes('Statement of Claim'))?.id ?? rows[0]?.id ?? ''));
+        setTemplateId(
+          String(
+            rows.find((template) => template.compatible_document_types?.includes('Statement of Claim'))?.id ??
+              rows[0]?.id ??
+              '',
+          ),
+        );
       })
       .catch((e) => setTemplateLoadError(`Drafting precedents unavailable: ${e.message}`));
   }, []);
@@ -275,7 +281,9 @@ export default function AutofillPage() {
             onChange={(e) => {
               const type = e.target.value;
               setDocumentType(type);
-              const matching = templates.find((template) => template.compatible_document_types?.includes(type));
+              const matching = templates.find((template) =>
+                template.compatible_document_types?.includes(type),
+              );
               if (matching) setTemplateId(String(matching.id));
             }}
           >
@@ -329,7 +337,11 @@ export default function AutofillPage() {
               </option>
             ))}
           </select>
-          <button className="auto-button" disabled={!caseId || busy || !templates.length} onClick={generateDraft}>
+          <button
+            className="auto-button"
+            disabled={!caseId || busy || !templates.length}
+            onClick={generateDraft}
+          >
             {busy ? 'Generating…' : 'Generate from precedent'}
           </button>
           <p className="auto-template-note">

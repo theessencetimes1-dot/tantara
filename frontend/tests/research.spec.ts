@@ -229,8 +229,7 @@ test.describe('Research Desk live API controls', () => {
     await expect(composer).toHaveValue('What does the agreement say about interim relief?\n');
 
     const response = page.waitForResponse(
-      (candidate) =>
-        candidate.url().endsWith('/api/v1/ai/ask') && candidate.request().method() === 'POST',
+      (candidate) => candidate.url().endsWith('/api/v1/ai/ask') && candidate.request().method() === 'POST',
       { timeout: 30_000 },
     );
     await composer.press('Enter');

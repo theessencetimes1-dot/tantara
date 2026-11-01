@@ -292,9 +292,9 @@ export default function DraftsPage() {
           ? 'Insufficient evidence: review the editable template skeleton and add supporting sources.'
           : r.status === 'template_only'
             ? 'Generated from the Supabase precedent. No case documents were available, so unsupported facts are marked for confirmation.'
-          : r.status === 'model_unavailable'
-            ? 'The configured model is unavailable. No draft text was generated; retry when the model is available.'
-            : `Generation state: ${r.status}. Review all marked facts before use.`,
+            : r.status === 'model_unavailable'
+              ? 'The configured model is unavailable. No draft text was generated; retry when the model is available.'
+              : `Generation state: ${r.status}. Review all marked facts before use.`,
       );
     } catch (e: any) {
       setError(
@@ -456,9 +456,7 @@ export default function DraftsPage() {
                       className={`draft-chip ${type === t ? 'active' : ''}`}
                       onClick={() => {
                         setType(t);
-                        setTemplate(
-                          String(templates.find((x) => templateSupportsType(x, t))?.id ?? ''),
-                        );
+                        setTemplate(String(templates.find((x) => templateSupportsType(x, t))?.id ?? ''));
                       }}
                     >
                       {t}
@@ -530,8 +528,8 @@ export default function DraftsPage() {
                   ))}
                 </select>
                 <p className="draft-field-note">
-                  The selected precedent in Supabase Storage guides the document structure and style. Case facts
-                  come from this case and its selected sources.
+                  The selected precedent in Supabase Storage guides the document structure and style. Case
+                  facts come from this case and its selected sources.
                 </p>
               </div>
               <div className="draft-field">
@@ -680,9 +678,12 @@ export default function DraftsPage() {
                 · Response: {draft.status ?? draft.generation_kind ?? 'Not reported'}
                 {draft.message ? ` · ${draft.message}` : ''}
               </p>
-              {(draft.template_name || templates.find((item) => String(item.id) === String(draft.template_id))?.name) && (
+              {(draft.template_name ||
+                templates.find((item) => String(item.id) === String(draft.template_id))?.name) && (
                 <p className="draft-template-source">
-                  Format reference: {draft.template_name ?? templates.find((item) => String(item.id) === String(draft.template_id))?.name}
+                  Format reference:{' '}
+                  {draft.template_name ??
+                    templates.find((item) => String(item.id) === String(draft.template_id))?.name}
                   {draft.template_source ? ` · ${draft.template_source}` : ' · Supabase Storage'}
                 </p>
               )}
