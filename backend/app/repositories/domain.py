@@ -78,7 +78,6 @@ def list_owned(
             stmt = stmt.where(or_(*terms))
     for clause in extra_filters:
         stmt = stmt.where(clause)
-    valid = {c.key for c in cls.__table__.columns}
     key = sort.removeprefix("-")
     if cls is models.Case and key == "next_hearing_at":
         next_hearing = (

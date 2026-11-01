@@ -11,17 +11,26 @@ from sqlalchemy import func, select
 
 from app.config import get_settings
 from app.db import SessionLocal, session_scope
-from app.models import AppPreference, Case, CaseParticipant, Document, DocumentChunk, Draft, DraftVersion, ExtractionField
+from app.models import (
+    AppPreference,
+    Case,
+    CaseParticipant,
+    Document,
+    DocumentChunk,
+    Draft,
+    DraftVersion,
+    ExtractionField,
+)
 from app.repositories.domain import get_owned, serialize
 from app.security import current_user
 from app.services.audit import record
+from app.services.draft_versions import snapshot_draft
 from app.services.drafting_templates import (
     DraftingTemplateUnavailable,
     list_drafting_templates,
     load_drafting_template_text,
     select_drafting_template,
 )
-from app.services.draft_versions import snapshot_draft
 
 router = APIRouter(prefix="/api/v1", tags=["drafts"])
 
@@ -445,9 +454,9 @@ def export(rid: str, format: str = Query("docx", pattern="^(docx|pdf)$"), user=D
     else:
         from xml.sax.saxutils import escape
 
+        from reportlab.lib import colors
         from reportlab.lib.enums import TA_LEFT
         from reportlab.lib.pagesizes import letter
-        from reportlab.lib import colors
         from reportlab.lib.styles import ParagraphStyle
         from reportlab.platypus import HRFlowable, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 

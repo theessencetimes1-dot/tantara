@@ -50,6 +50,10 @@ class NoExtractableTextError(ValueError):
     """An uploaded file has no text that can be added to search."""
 
 
+class DocumentReadError(ValueError):
+    """An uploaded file could not be parsed as a supported document."""
+
+
 class EmbeddingCreationError(ValueError):
     """Readable document text could not be converted into search embeddings."""
 
@@ -129,13 +133,20 @@ def _claim_job(job_id):
 
 def prepare_document(filename, data):
     """Extract readable text and create every embedding before storage accepts an upload."""
-    pages, warnings = DocumentExtractor().extract(filename, data)
+    try:
+        pages, warnings = DocumentExtractor().extract(filename, data)
+    except Exception as exc:
+        raise DocumentReadError(
+            "This file could not be read as a document. It was not stored."
+        ) from exc
     all_text = "\n".join(page["text"] for page in pages)
     if not all_text.strip():
-        raise NoExtractableTextError(
+        error = NoExtractableTextError(
             "No readable text was found. The document was not stored. "
             "Upload a text-readable file or run OCR, then try again."
         )
+        error.pages, error.warnings = pages, warnings
+        raise error
 
     chunks = []
     offset = 0
@@ -184,6 +195,13 @@ def process_job(doc_id, job_id, owner_id=None, data=None, filename=None, prepare
     pages = []
     warnings = []
     try:
+        if isinstance(
+            prepared,
+            (DocumentReadError, NoExtractableTextError, EmbeddingCreationError),
+        ):
+            pages = getattr(prepared, "pages", [])
+            warnings = getattr(prepared, "warnings", [])
+            raise prepared
         if data is None:
             data = object_store().get(stored_path)
         if prepared is None:
@@ -305,7 +323,10 @@ def process_job(doc_id, job_id, owner_id=None, data=None, filename=None, prepare
             error=None,
         )
     except Exception as exc:
-        logging.warning("Document processing failed (%s)", type(exc).__name__)
+        cause = exc.__cause__ if isinstance(exc, DocumentReadError) else None
+        logging.warning(
+            "Document processing failed (%s)", type(cause or exc).__name__
+        )
         with session_scope() as s:
             doc = s.get(Document, doc_id)
             if doc:
@@ -327,7 +348,10 @@ def process_job(doc_id, job_id, owner_id=None, data=None, filename=None, prepare
                         )
         error_message = (
             str(exc)
-            if isinstance(exc, (NoExtractableTextError, EmbeddingCreationError, SearchIndexWriteError))
+            if isinstance(
+                exc,
+                (DocumentReadError, NoExtractableTextError, EmbeddingCreationError, SearchIndexWriteError),
+            )
             else f"{type(exc).__name__}: processing failed"
         )
         _job_update(
@@ -450,9 +474,13 @@ async def upload(
     try:
         prepared = await asyncio.to_thread(prepare_document, filename, data)
     except NoExtractableTextError as exc:
-        raise HTTPException(422, str(exc)) from None
+        prepared = exc
+    except DocumentReadError as exc:
+        # Preserve the asynchronous upload contract and create a failed job with
+        # the actionable extraction error for the queue to display.
+        prepared = exc
     except EmbeddingCreationError as exc:
-        raise HTTPException(503, str(exc)) from None
+        prepared = exc
 
     did, jid = str(uuid.uuid4()), str(uuid.uuid4())
     path = DocumentStorage().save(data)

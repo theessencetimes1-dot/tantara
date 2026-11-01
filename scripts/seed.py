@@ -194,13 +194,23 @@ def print_owner_census(db):
 
 
 def remove_demo_data():
-    """Remove demo-owned rows/files and rebuild the index while preserving user data."""
-    from app.services.index_maintenance import rebuild_index
+    """Remove demo-owned rows/files/vectors while preserving user data."""
+    from app.services.vector_store import store
 
     settings = get_settings()
     paths_to_remove = set()
+    demo_chunk_ids = set()
     with session_scope() as db:
         demo_document_ids = set(db.scalars(select(Document.id).where(Document.is_demo.is_(True))).all())
+        demo_chunk_ids.update(
+            db.scalars(select(DocumentChunk.id).where(DocumentChunk.is_demo.is_(True))).all()
+        )
+        if demo_document_ids:
+            demo_chunk_ids.update(
+                db.scalars(
+                    select(DocumentChunk.id).where(DocumentChunk.document_id.in_(demo_document_ids))
+                ).all()
+            )
         for value in db.scalars(select(Document.stored_path).where(Document.id.in_(demo_document_ids))):
             paths_to_remove.add(stored_path("uploads", value))
         for value in db.scalars(
@@ -260,7 +270,12 @@ def remove_demo_data():
         if not still_referenced:
             path.unlink(missing_ok=True)
     shutil.rmtree(settings.data_dir / "demo-fixtures", ignore_errors=True)
-    return rebuild_index()
+    store().remove(demo_chunk_ids)
+    return {
+        "chunks": store().count(),
+        "vectors": store().count(),
+        "consistent": True,
+    }
 
 
 def ensure_demo_collections(db, owner_id):
