@@ -97,6 +97,7 @@ export const researchApi = {
         filename?: string;
         status?: string;
         page_count?: number;
+        warnings?: Array<string | { page?: number; warning?: string }>;
         case_id?: string;
         jurisdiction?: string;
         collection_id?: string;
@@ -141,5 +142,12 @@ export const researchApi = {
     return api.post<{ document_id?: string; id?: string; status?: string }>('/ingest/file', form);
   },
   ingestJob: (id: string) =>
-    api.get<{ status?: string; document_id?: string }>(`/documents/${encodeURIComponent(id)}/job`),
+    api.get<{
+      status?: string;
+      document_id?: string;
+      warnings?: Array<string | { page?: number; warning?: string }>;
+      pages?: number;
+      chars?: number;
+      error?: string;
+    }>(`/documents/${encodeURIComponent(id)}/job`),
 };

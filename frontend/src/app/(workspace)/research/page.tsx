@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createElement, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import {
   ArrowRight,
@@ -48,34 +48,191 @@ const formatHistoryDate = (value?: string) => {
 };
 
 function AnswerText({ text, citations }: { text: string; citations: ResearchSource[] }) {
-  const chunks = text.split(
-    /(\[[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\](?:\s+p\.\s*\d+)?|\[\d+\])/gi,
+  const lines = text.split('\n');
+  const referenceIndex = lines.findIndex((line) =>
+    /^\s*(?:#{1,6}\s*)?(?:\*\*)?(?:references|sources)(?:\*\*)?\s*:?\s*$/i.test(line),
   );
-  const hasInlineRefs = chunks.some((chunk) => /^\[(?:[0-9a-f]{8}-|\d+\])/i.test(chunk));
-  return (
-    <div className="answer-text">
-      <p className="answer-sentence">
-        {chunks.map((chunk, index) => {
-          const ref = chunk.match(/^\[([0-9a-f-]{36}|\d+)\](?:\s+p\.\s*(\d+))?$/i);
-          if (!ref) return chunk;
-          const citationIndex = /^\d+$/.test(ref[1])
-            ? Number(ref[1]) - 1
-            : citations.findIndex(
-                (source) =>
-                  source.chunk_id === ref[1] || source.citation_ref?.replace(/[\[\]]/g, '') === ref[1],
-              );
-          const source = citations[citationIndex];
-          return source ? (
+  const hasReferenceSection = referenceIndex >= 0;
+  const answerLines = hasReferenceSection ? lines.slice(0, referenceIndex) : lines;
+  const referenceNumbers = hasReferenceSection
+    ? Array.from(
+        new Set(
+          Array.from(lines.slice(referenceIndex + 1).join('\n').matchAll(/\[(\d+)\]/g), (match) =>
+            Number(match[1]),
+          ),
+        ),
+      )
+    : [];
+  const inline = (value: string, keyPrefix: string): ReactNode[] => {
+    const tokenPattern =
+      /(\[[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\](?:\s+p\.\s*\d+)?|\[\d+\]|\*\*[^*\n]+\*\*|__[^_\n]+__|\*[^*\n]+\*|_[^_\n]+_|`[^`\n]+`)/gi;
+    const result: React.ReactNode[] = [];
+    let cursor = 0;
+    let tokenIndex = 0;
+    for (const match of value.matchAll(tokenPattern)) {
+      const token = match[0];
+      const start = match.index ?? 0;
+      if (start > cursor) result.push(value.slice(cursor, start));
+      const key = `${keyPrefix}-${tokenIndex++}`;
+      const citation = token.match(/^\[([0-9a-f-]{36}|\d+)\](?:\s+p\.\s*(\d+))?$/i);
+      if (citation) {
+        const citationIndex = /^\d+$/.test(citation[1])
+          ? Number(citation[1]) - 1
+          : citations.findIndex(
+              (source) =>
+                source.chunk_id === citation[1] ||
+                source.citation_ref?.replace(/[\[\]]/g, '') === citation[1],
+            );
+        const source = citations[citationIndex];
+        result.push(
+          source ? (
             <CitationAnchor
-              key={`${source.chunk_id}-${index}`}
+              key={key}
               source={source}
               className="answer-citation"
-              display={citationAccessibleLabel(source)}
+              display={hasReferenceSection ? token : citationAccessibleLabel(source)}
             />
-          ) : null;
-        })}
-      </p>
-      {citations.length > 0 && !hasInlineRefs && (
+          ) : token,
+        );
+      } else if (token.startsWith('**') || token.startsWith('__')) {
+        result.push(<strong key={key}>{inline(token.slice(2, -2), key)}</strong>);
+      } else if (token.startsWith('*') || token.startsWith('_')) {
+        result.push(<em key={key}>{inline(token.slice(1, -1), key)}</em>);
+      } else {
+        result.push(<code key={key}>{token.slice(1, -1)}</code>);
+      }
+      cursor = start + token.length;
+    }
+    if (cursor < value.length) result.push(value.slice(cursor));
+    return result;
+  };
+  const cells = (line: string) =>
+    line
+      .trim()
+      .replace(/^\|/, '')
+      .replace(/\|$/, '')
+      .split('|')
+      .map((cell) => cell.trim());
+  const isTableSeparator = (line: string) =>
+    /^\s*\|?\s*:?-{3,}:?\s*(?:\|\s*:?-{3,}:?\s*)+\|?\s*$/.test(line);
+  const isBlockStart = (index: number) => {
+    const line = answerLines[index] ?? '';
+    return (
+      /^\s{0,3}#{1,6}\s/.test(line) ||
+      /^\s*[-*+]\s+/.test(line) ||
+      /^\s*\d+[.)]\s+/.test(line) ||
+      (answerLines[index + 1] != null && isTableSeparator(answerLines[index + 1]))
+    );
+  };
+  const blocks: ReactNode[] = [];
+  let lineIndex = 0;
+  while (lineIndex < answerLines.length) {
+    const line = answerLines[lineIndex];
+    if (!line.trim()) {
+      lineIndex += 1;
+      continue;
+    }
+    const heading = line.match(/^\s{0,3}(#{1,6})\s+(.+?)\s*#*\s*$/);
+    if (heading) {
+      const level = Math.min(heading[1].length + 1, 6);
+      const tag = `h${level}` as keyof React.JSX.IntrinsicElements;
+      blocks.push(
+        createElement(tag, { key: `heading-${lineIndex}` }, inline(heading[2], `heading-${lineIndex}`)),
+      );
+      lineIndex += 1;
+      continue;
+    }
+    if (lineIndex + 1 < answerLines.length && isTableSeparator(answerLines[lineIndex + 1])) {
+      const headers = cells(line);
+      const rows: string[][] = [];
+      lineIndex += 2;
+      while (lineIndex < answerLines.length && answerLines[lineIndex].trim().startsWith('|')) {
+        rows.push(cells(answerLines[lineIndex]));
+        lineIndex += 1;
+      }
+      blocks.push(
+        <div className="answer-table-wrap" key={`table-${lineIndex}`}>
+          <table>
+            <thead>
+              <tr>
+                {headers.map((cell, cellIndex) => (
+                  <th key={cellIndex}>{inline(cell, `table-head-${lineIndex}-${cellIndex}`)}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row, rowIndex) => (
+                <tr key={rowIndex}>
+                  {headers.map((_, cellIndex) => (
+                    <td key={cellIndex}>
+                      {inline(row[cellIndex] ?? '', `table-cell-${lineIndex}-${rowIndex}-${cellIndex}`)}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>,
+      );
+      continue;
+    }
+    const listMatch = line.match(/^\s*([-*+]|\d+[.)])\s+(.+)$/);
+    if (listMatch) {
+      const ordered = /^\d/.test(listMatch[1]);
+      const items: string[] = [];
+      while (lineIndex < answerLines.length) {
+        const item = answerLines[lineIndex].match(/^\s*([-*+]|\d+[.)])\s+(.+)$/);
+        if (!item || /^\d/.test(item[1]) !== ordered) break;
+        items.push(item[2]);
+        lineIndex += 1;
+      }
+      const List = ordered ? 'ol' : 'ul';
+      blocks.push(
+        <List key={`list-${lineIndex}`}>
+          {items.map((item, itemIndex) => (
+            <li key={itemIndex}>{inline(item, `list-${lineIndex}-${itemIndex}`)}</li>
+          ))}
+        </List>,
+      );
+      continue;
+    }
+    const paragraph = [line.trim()];
+    lineIndex += 1;
+    while (lineIndex < answerLines.length && answerLines[lineIndex].trim() && !isBlockStart(lineIndex)) {
+      paragraph.push(answerLines[lineIndex].trim());
+      lineIndex += 1;
+    }
+    blocks.push(
+      <p className="answer-sentence" key={`paragraph-${lineIndex}`}>
+        {inline(paragraph.join(' '), `paragraph-${lineIndex}`)}
+      </p>,
+    );
+  }
+  const hasInlineRefs = answerLines.some((line) => /\[(?:[0-9a-f]{8}-|\d+)\]/i.test(line));
+  const sourceIndexes = hasReferenceSection
+    ? referenceNumbers.length
+      ? referenceNumbers
+      : citations.map((_, index) => index + 1)
+    : [];
+  return (
+    <div className="answer-text">
+      {blocks}
+      {hasReferenceSection && sourceIndexes.length > 0 ? (
+        <div className="answer-citations" aria-label="References for this answer">
+          <span>References</span>
+          {sourceIndexes.map((number) => {
+            const source = citations[number - 1];
+            return source ? (
+              <CitationAnchor
+                key={`${source.chunk_id}-reference`}
+                source={source}
+                className="answer-citation"
+                display={`[${number}] ${citationAccessibleLabel(source)}`}
+              />
+            ) : null;
+          })}
+        </div>
+      ) : citations.length > 0 && !hasInlineRefs ? (
         <div className="answer-citations" aria-label="Sources for this answer">
           <span>Citations returned with this answer</span>
           {citations.map((source) => (
@@ -87,7 +244,7 @@ function AnswerText({ text, citations }: { text: string; citations: ResearchSour
             />
           ))}
         </div>
-      )}
+      ) : null}
     </div>
   );
 }
@@ -279,6 +436,7 @@ export default function ResearchPage() {
   const [collection, setCollection] = useState('');
   const [jurisdiction, setJurisdiction] = useState('');
   const [draft, setDraft] = useState('');
+  const [lastSubmittedQuestion, setLastSubmittedQuestion] = useState('');
   const [answer, setAnswer] = useState<ResearchAnswer | null>(null);
   const [lexical, setLexical] = useState<ResearchSource[]>([]);
   const [busy, setBusy] = useState(false);
@@ -372,9 +530,11 @@ export default function ResearchPage() {
   };
 
   const sources = useMemo(() => answer?.sources ?? answer?.citations ?? [], [answer]);
-  const ask = async (question = draft) => {
-    if (!question.trim() || busy) return;
-    setDraft(question);
+  const ask = async (question = draft, clearComposer = true) => {
+    const submittedQuestion = question.trim();
+    if (submittedQuestion.length < 3 || busy) return;
+    setLastSubmittedQuestion(submittedQuestion);
+    if (clearComposer) setDraft('');
     setError('');
     setAnswer(null);
     setLexical([]);
@@ -385,7 +545,7 @@ export default function ResearchPage() {
     try {
       const result = await researchApi.ask(
         {
-          question: question.trim(),
+          question: submittedQuestion,
           session_id: selected && (!caseFilter || selected.case_id === caseFilter) ? selected.id : undefined,
           case_id: caseFilter || undefined,
           collection_id: collection || undefined,
@@ -404,7 +564,7 @@ export default function ResearchPage() {
       }
       if (result.status === 'model_unavailable') {
         try {
-          const hits = await researchApi.lexical(question.trim(), controller.signal);
+          const hits = await researchApi.lexical(submittedQuestion, controller.signal);
           setLexical(
             (hits.items ?? []).map((hit) => ({
               document_id: hit.document_id,
@@ -437,6 +597,7 @@ export default function ResearchPage() {
     setAnswer(null);
     setLexical([]);
     setDraft('');
+    setLastSubmittedQuestion('');
     setError('');
     textarea.current?.focus();
   };
@@ -755,6 +916,7 @@ export default function ResearchPage() {
                                     .slice(0, messageIndex)
                                     .reverse()
                                     .find((message) => message.role === 'user')?.content ?? draft,
+                                  false,
                                 )
                               }
                             >
@@ -771,16 +933,25 @@ export default function ResearchPage() {
                             </p>
                             <Link href="/research/documents">Upload a document</Link>
                           </div>
-                        ) : m.role === 'assistant' && messageStatus === 'embedding_unavailable' ? (
+                        ) : m.role === 'assistant' &&
+                          messageStatus === 'embedding_unavailable' &&
+                          (!messageContent.trim() || !(m.citations?.length ?? 0)) ? (
                           <div className="state-callout lexical-state">
                             <strong>Embeddings unavailable</strong>
-                            <p>Only lexical results were available; no grounded answer is shown.</p>
+                            <p>Semantic search is unavailable and no matching keyword excerpts were found.</p>
                           </div>
                         ) : m.role === 'assistant' ? (
-                          <AnswerText
-                            text={messageContent}
-                            citations={answer?.message_id === m.id ? sources : (m.citations ?? [])}
-                          />
+                          <>
+                            {messageStatus === 'embedding_unavailable' && (
+                              <p className="research-degraded-note">
+                                Semantic search is unavailable, so this answer uses matching document text only.
+                              </p>
+                            )}
+                            <AnswerText
+                              text={messageContent}
+                              citations={answer?.message_id === m.id ? sources : (m.citations ?? [])}
+                            />
+                          </>
                         ) : (
                           <p>{m.content}</p>
                         )}
@@ -863,12 +1034,14 @@ export default function ResearchPage() {
                       <CaseRecordAnswer answer={answer} />
                       <ConflictNotices conflicts={answer.conflicts ?? []} sources={sources} />
                     </>
-                  ) : answer.status === 'embedding_unavailable' ? (
+                  ) :
+                  answer.status === 'embedding_unavailable' &&
+                  (!answer.answer?.trim() || sources.length === 0) ? (
                     <div className="state-callout lexical-state">
                       <strong>Embeddings unavailable</strong>
                       <p>
-                        Only lexical results were available. Review the retrieved documents below; no grounded
-                        answer is available.
+                        Semantic search is unavailable and no matching keyword excerpts were found. Review the
+                        available documents below or retry when semantic search is available.
                       </p>
                     </div>
                   ) : answer.status === 'error' ? (
@@ -888,6 +1061,11 @@ export default function ResearchPage() {
                     </div>
                   ) : (
                     <>
+                      {answer.status === 'embedding_unavailable' && (
+                        <p className="research-degraded-note">
+                          Semantic search is unavailable, so this answer uses matching document text only.
+                        </p>
+                      )}
                       <AnswerText text={answer.answer || ''} citations={sources} />
                       <ConflictNotices conflicts={answer.conflicts ?? []} sources={sources} />
                       {hasModelProvenance && (
@@ -943,7 +1121,7 @@ export default function ResearchPage() {
               {error && (
                 <div className="research-error" role="alert">
                   <span>{error}</span>
-                  <button onClick={() => void ask(draft)}>
+                  <button onClick={() => void ask(lastSubmittedQuestion, false)}>
                     <RefreshCw size={13} /> Retry
                   </button>
                 </div>

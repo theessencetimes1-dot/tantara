@@ -79,6 +79,17 @@
   padding: 0;
   border: 0;
 }
+.document-metadata .index-confidence-metadata dd {
+  display: grid;
+  gap: 3px;
+  overflow: visible;
+  white-space: normal;
+}
+.index-confidence-metadata small {
+  color: #7b879a;
+  font-size: 10px;
+  line-height: 1.4;
+}
 
 .document-metadata dt {
   display: block;
@@ -406,6 +417,17 @@
 
 .document-page p {
   overflow-wrap: anywhere;
+}
+.document-page .page-heading {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  margin-bottom: 8px;
+}
+.document-page .index-confidence-page {
+  color: #53627d;
+  font-weight: 650;
 }
 
 .extraction-warnings p {

@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Sparkles } from 'lucide-react';
-import { draftsApi, type Row } from '@/features/drafts/api';
+import { draftsApi, rowsFrom, type Row } from '@/features/drafts/api';
 import { workspaceDateTimeDisplay } from '@/lib/datetime';
 import '@/features/drafts/styles.css';
 
@@ -22,6 +22,9 @@ const TYPES = [
   'Legal Research Memorandum',
 ];
 const textOf = (x: any) => (typeof x === 'string' ? x : (x?.name ?? x?.title ?? x?.label ?? ''));
+const templateSupportsType = (template: Row, documentType: string) =>
+  textOf(template.document_type) === documentType ||
+  template.compatible_document_types?.includes(documentType);
 const safeHtml = (value: string, documents: Row[] = []) =>
   value
     .split('\n')
@@ -35,7 +38,7 @@ const safeHtml = (value: string, documents: Row[] = []) =>
           : 'Source page unavailable';
         return `<p class="draft-evidence" data-chunk-id="${citation[1]}">${citation[4] ? `${citation[4].replaceAll('<', '&lt;').replaceAll('>', '&gt;')} · ` : ''}${source}</p>`;
       }
-      if (/^\[REVIEW(?::|\]:)/.test(line))
+      if (/^\[(?:REVIEW(?::|\]:)|TO BE CONFIRMED\])/i.test(line))
         return `<aside class="draft-review-item"><strong>Needs your review</strong><p>${line.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;')}</p></aside>`;
       const sourceRefs = new Map<string, { title: string; page: string; doc?: Row }>();
       for (const raw of value.split('\n')) {
@@ -142,27 +145,61 @@ export default function DraftsPage() {
     [saving, setSaving] = useState(false),
     [showDiff, setShowDiff] = useState<string>('');
   const [activeTab, setActiveTab] = useState<'Draft' | 'Review' | 'Sources' | 'History'>('Draft');
-  const hasGenerationProvenance = Boolean(draft?.generation_kind || draft?.model?.model || draft?.model_name);
+  const [casesLoading, setCasesLoading] = useState(true);
+  const [caseLoadError, setCaseLoadError] = useState('');
+  const hasGenerationProvenance = Boolean(
+    draft?.generation_kind ||
+    draft?.generation_status ||
+    draft?.response_status ||
+    draft?.status === 'review_template' ||
+    draft?.status === 'template_fallback' ||
+    draft?.model?.model ||
+    (typeof draft?.model === 'string' && draft.model) ||
+    draft?.model_name,
+  );
   const isTemplateScaffold = Boolean(draft?.is_demo && !hasGenerationProvenance);
   const hasUnrecognizedStructure = !recognizedStructure(content);
+
+  const loadCases = useCallback(async () => {
+    setCasesLoading(true);
+    setCaseLoadError('');
+    try {
+      setCases(rowsFrom(await draftsApi.cases()));
+    } catch (e) {
+      setCases([]);
+      setCaseLoadError(e instanceof Error ? e.message : 'Could not load your cases.');
+    } finally {
+      setCasesLoading(false);
+    }
+  }, []);
+
+  const startNewDraft = () => {
+    setDraft(null);
+    setContent('');
+    setCaseId('');
+    setInstitution('');
+    setDocs([]);
+    setSelected([]);
+    setStatus('');
+    setError('');
+    setActiveTab('Draft');
+    router.push('/drafts');
+  };
 
   useEffect(() => {
     draftsApi
       .templates()
       .then((r) => {
-        const rows = r.items ?? [];
+        const rows = rowsFrom(r);
         setTemplates(rows);
-        setTemplate(String(rows.find((x) => textOf(x.document_type ?? x.name) === TYPES[0])?.id ?? ''));
+        setTemplate(String(rows.find((x) => templateSupportsType(x, TYPES[0]))?.id ?? ''));
       })
       .catch((e) => setError(e.message));
     draftsApi
       .list()
-      .then((r) => setRecent(r.items ?? []))
+      .then((r) => setRecent(rowsFrom(r)))
       .catch(() => {});
-    draftsApi
-      .cases()
-      .then((r) => setCases(r.items ?? []))
-      .catch(() => {});
+    void loadCases();
     draftsApi
       .institutions()
       .then((r) => setInstitutions(Array.isArray(r) ? r : (r.items ?? [])))
@@ -177,7 +214,7 @@ export default function DraftsPage() {
           if (d.case_id) setCaseId(d.case_id);
         })
         .catch((e) => setError(`Draft could not be opened: ${e.message}`));
-  }, []);
+  }, [loadCases]);
   useEffect(() => {
     if (caseId)
       draftsApi
@@ -233,12 +270,14 @@ export default function DraftsPage() {
         instructions: promptInstructions,
         source_document_ids: selected,
       });
-      const d = { ...r, id: r.draft_id, title: type, case_id: caseId };
+      const draftId = r.draft_id ?? r.id;
+      if (!draftId) throw new Error('The draft service did not return a draft ID.');
+      const d = { ...r, id: draftId, title: type, case_id: caseId };
       setDraft(d);
       setRecent((rows) => [d, ...rows]);
       setContent(normalizeWhitespace(r.content_markdown ?? ''));
       setActiveTab('Draft');
-      window.history.replaceState(null, '', `/drafts?id=${r.draft_id}`);
+      window.history.replaceState(null, '', `/drafts?id=${encodeURIComponent(String(draftId))}`);
       const cited = (r.content_markdown ?? '').matchAll(/^- \[([^\]]+)\] (.*?), page (\d+)/gm);
       setCitations(
         Array.from(cited, ([, chunk, title, page]) => ({
@@ -251,8 +290,10 @@ export default function DraftsPage() {
       setStatus(
         r.status === 'no_evidence'
           ? 'Insufficient evidence: review the editable template skeleton and add supporting sources.'
+          : r.status === 'template_only'
+            ? 'Generated from the Supabase precedent. No case documents were available, so unsupported facts are marked for confirmation.'
           : r.status === 'model_unavailable'
-            ? 'The local model is unavailable. The editable review skeleton is ready for retry.'
+            ? 'The configured model is unavailable. No draft text was generated; retry when the model is available.'
             : `Generation state: ${r.status}. Review all marked facts before use.`,
       );
     } catch (e: any) {
@@ -355,10 +396,14 @@ export default function DraftsPage() {
         <div>
           <h1>AI Case Drafts</h1>
           <p>Draft from case evidence, review citations, and keep every version.</p>
-          {!draft && (
+          {!draft ? (
             <a className="draft-primary draft-start-link" href="#draft-builder">
               Start a draft
             </a>
+          ) : (
+            <button className="draft-primary draft-start-link" onClick={startNewDraft}>
+              New draft
+            </button>
           )}
         </div>
         <a className="draft-secondary" href="/autofill">
@@ -374,7 +419,7 @@ export default function DraftsPage() {
               setError('');
               void draftsApi
                 .templates()
-                .then((r) => setTemplates(r.items ?? []))
+                .then((r) => setTemplates(rowsFrom(r)))
                 .catch((e) => setError(e.message));
             }}
           >
@@ -412,7 +457,7 @@ export default function DraftsPage() {
                       onClick={() => {
                         setType(t);
                         setTemplate(
-                          String(templates.find((x) => textOf(x.document_type ?? x.name) === t)?.id ?? ''),
+                          String(templates.find((x) => templateSupportsType(x, t))?.id ?? ''),
                         );
                       }}
                     >
@@ -428,6 +473,7 @@ export default function DraftsPage() {
                 <select
                   id="case"
                   className="draft-select"
+                  aria-describedby={caseLoadError ? 'case-load-error' : undefined}
                   value={caseId}
                   onChange={(e) => {
                     const id = e.target.value;
@@ -436,13 +482,31 @@ export default function DraftsPage() {
                     setInstitution(String(cases.find((c) => String(c.id) === id)?.forum ?? ''));
                   }}
                 >
-                  <option value="">Choose a case</option>
+                  <option value="">
+                    {casesLoading
+                      ? 'Loading cases…'
+                      : caseLoadError
+                        ? 'Could not load cases'
+                        : cases.length
+                          ? 'Choose a case'
+                          : 'No cases available'}
+                  </option>
                   {cases.map((c) => (
                     <option key={c.id} value={c.id}>
                       {textOf(c.title ?? c.case_title)}
                     </option>
                   ))}
                 </select>
+                {caseLoadError ? (
+                  <p className="draft-field-note error" id="case-load-error" role="alert">
+                    Could not load your cases: {caseLoadError}{' '}
+                    <button type="button" className="draft-inline-action" onClick={() => void loadCases()}>
+                      Retry
+                    </button>
+                  </p>
+                ) : !casesLoading && cases.length === 0 ? (
+                  <p className="draft-field-note">Create a case before generating a draft.</p>
+                ) : null}
               </div>
               <div className="draft-field">
                 <label className="draft-label" htmlFor="template">
@@ -455,16 +519,20 @@ export default function DraftsPage() {
                   onChange={(e) => {
                     setTemplate(e.target.value);
                     const t = templates.find((x) => String(x.id) === e.target.value);
-                    if (t) setType(textOf(t.document_type ?? t.name));
+                    if (t && !templateSupportsType(t, type)) setType(textOf(t.document_type ?? t.name));
                   }}
                 >
-                  <option value="">Choose template</option>
+                  <option value="">Use the matching Supabase precedent</option>
                   {templates.map((t) => (
                     <option key={t.id} value={t.id}>
                       {textOf(t.name ?? t.title ?? t.document_type)}
                     </option>
                   ))}
                 </select>
+                <p className="draft-field-note">
+                  The selected precedent in Supabase Storage guides the document structure and style. Case facts
+                  come from this case and its selected sources.
+                </p>
               </div>
               <div className="draft-field">
                 <label className="draft-label" htmlFor="institution">
@@ -495,7 +563,11 @@ export default function DraftsPage() {
                 />
               </div>
               <div className="draft-foot">
-                <button className="draft-primary" disabled={busy || !caseId || !template} onClick={generate}>
+                <button
+                  className="draft-primary"
+                  disabled={busy || casesLoading || !caseId}
+                  onClick={generate}
+                >
                   <Sparkles size={16} />
                   {busy ? 'Generating…' : 'Generate Draft'}
                 </button>
@@ -601,9 +673,19 @@ export default function DraftsPage() {
                 </p>
               )}
               <p className="draft-generation-meta">
-                Model: {draft.model?.model ?? draft.model_name ?? 'Not reported'} · Response:{' '}
-                {draft.generation_kind ?? 'Not reported'}
+                Model:{' '}
+                {draft.model?.model ??
+                  draft.model_name ??
+                  (typeof draft.model === 'string' ? draft.model : 'Not reported')}{' '}
+                · Response: {draft.status ?? draft.generation_kind ?? 'Not reported'}
+                {draft.message ? ` · ${draft.message}` : ''}
               </p>
+              {(draft.template_name || templates.find((item) => String(item.id) === String(draft.template_id))?.name) && (
+                <p className="draft-template-source">
+                  Format reference: {draft.template_name ?? templates.find((item) => String(item.id) === String(draft.template_id))?.name}
+                  {draft.template_source ? ` · ${draft.template_source}` : ' · Supabase Storage'}
+                </p>
+              )}
               {activeTab === 'Draft' && isTemplateScaffold && (
                 <section className="draft-template-scaffold" role="status">
                   <h3>Template scaffold — nothing generated yet</h3>
@@ -646,10 +728,13 @@ export default function DraftsPage() {
                           Draft structure is not recognised. Review and edit the text before relying on it.
                         </p>
                       )}
-                    {content.includes('[REVIEW') && (
+                    {/\[REVIEW|\[TO BE CONFIRMED\]/i.test(content) && (
                       <section className="draft-review-summary" aria-label="Review markers">
                         <h3>Review required</h3>
-                        <p>{(content.match(/\[REVIEW(?::|\]:)/g) || []).length} open review item(s)</p>
+                        <p>
+                          {(content.match(/\[REVIEW(?::|\]:)|\[TO BE CONFIRMED\]/gi) || []).length} open
+                          review item(s)
+                        </p>
                       </section>
                     )}
                     <div className="draft-toolbar">
@@ -706,7 +791,7 @@ export default function DraftsPage() {
                   <h3>Review required</h3>
                   {content
                     .split('\n')
-                    .filter((line) => /^\[REVIEW(?::|\]:)/.test(line))
+                    .filter((line) => /^\[(?:REVIEW(?::|\]:)|TO BE CONFIRMED\])/i.test(line))
                     .map((line, i) => (
                       <p className="draft-review-item" key={i}>
                         {line}
@@ -811,8 +896,10 @@ export default function DraftsPage() {
                   <p>
                     {isTemplateScaffold
                       ? 'No citations yet — generate or attach sources.'
-                      : hasGenerationProvenance
-                        ? 'No citations returned by the service.'
+                      : hasGenerationProvenance || draft.status || draft.message
+                        ? draft.status === 'review_template' || draft.generation_kind === 'review_template'
+                          ? 'The AI model did not answer, so the template skeleton was produced.'
+                          : draft.message || 'No citations were returned with this response.'
                         : 'No citations attached yet.'}
                   </p>
                 )}

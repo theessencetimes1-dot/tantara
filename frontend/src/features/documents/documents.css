@@ -236,6 +236,32 @@
 .documents-table .document-status {
   display: inline-flex;
 }
+.index-confidence {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 7px;
+  border-radius: 999px;
+  color: #475569;
+  background: #f1f5f9;
+  font-size: 10px;
+  font-weight: 700;
+}
+.index-confidence.low {
+  color: #a33b32;
+  background: #fff0ed;
+}
+.index-confidence.medium {
+  color: #8b5b12;
+  background: #fff7df;
+}
+.index-confidence.high {
+  color: #14724f;
+  background: #e9f8f0;
+}
+.index-confidence.unknown {
+  color: #64748b;
+  background: #f1f5f9;
+}
 .row-delete {
   display: grid;
   width: 28px;
@@ -549,6 +575,9 @@
   margin-right: 8px;
   color: #bdc4d0;
 }
+.document-card-meta .index-confidence:before {
+  content: none;
+}
 .document-card-actions {
   margin-top: 13px;
   padding-top: 10px;
@@ -648,6 +677,15 @@
   gap: 20px;
   padding: 10px 0;
   border-top: 1px solid #edf0f5;
+}
+.queue-item.terminal {
+  grid-template-columns: 1fr;
+}
+.queue-item.failed > div > span {
+  color: #b42336;
+}
+.queue-item.ready > div > span {
+  color: #17805c;
 }
 .queue-item > div {
   display: grid;

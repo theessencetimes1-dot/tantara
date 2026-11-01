@@ -18,6 +18,7 @@ export type DocumentRecord = {
   source?: string;
   is_demo?: boolean;
   page_count?: number;
+  index_confidence?: number | null;
   case_title?: string;
   visibility: 'private' | 'library';
 };
@@ -25,7 +26,7 @@ export type DocumentRecord = {
 export type IngestionJob = {
   status: string;
   progress: number;
-  steps: string[];
+  steps: Array<string | { key?: string; label?: string; state?: string }>;
   warnings: string[];
   pages?: number;
   chars?: number;
@@ -42,6 +43,13 @@ export const documentsApi = {
   get: (id: string) => api.get<DocumentRecord>(`/documents/${id}`),
   job: (id: string) => api.get<IngestionJob>(`/documents/${id}/job`),
   remove: (id: string) => api.del(`/documents/${id}`),
+  deleteKnowledgeFile: (folderId: string, filename: string) =>
+    api.del(
+      `/admin/storage/knowledge-base/${encodeURIComponent(folderId)}/${filename
+        .split('/')
+        .map((part) => encodeURIComponent(part))
+        .join('/')}`,
+    ),
   patch: (id: string, body: Partial<DocumentRecord>) => api.patch<DocumentRecord>(`/documents/${id}`, body),
   retry: (id: string) => api.post(`/documents/${id}/retry`),
   aiRead: (id: string) => api.post<{ status: string; fields: ExtractionRecord }>(`/documents/${id}/ai-read`),
@@ -57,10 +65,11 @@ export const documentsApi = {
     file: File,
     onProgress: (value: number) => void,
     collectionId?: string,
+    endpoint = '/documents/upload',
   ): Promise<{ document_id: string; status: string }> {
     return new Promise((resolve, reject) => {
       const request = new XMLHttpRequest();
-      request.open('POST', `${apiBase}/documents/upload`);
+      request.open('POST', `${apiBase}${endpoint}`);
       const token = authToken();
       if (token) request.setRequestHeader('Authorization', `Bearer ${token}`);
       request.upload.onprogress = (event) => {

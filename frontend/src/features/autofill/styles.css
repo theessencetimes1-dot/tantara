@@ -37,6 +37,11 @@
   gap: 10px;
   flex-wrap: wrap;
 }
+.auto-template-note {
+  flex-basis: 100%;
+  font-size: 12px;
+  line-height: 1.5;
+}
 .auto-select,
 .auto-input {
   border: 1px solid #dfe4ec;

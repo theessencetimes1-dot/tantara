@@ -15,12 +15,20 @@ import {
   Eye,
 } from 'lucide-react';
 import { documentsApi, type DocumentRecord, type IngestionJob } from '@/features/documents/api';
+import { getUploadQueueStateLabel, getUploadQueueSteps } from '@/features/documents/upload-queue-state.mjs';
 import { DocumentStatus } from '@/features/documents/DocumentStatus';
 import { PdfDocumentViewer } from '@/features/viewer/PdfDocumentViewer';
 import { api } from '@/lib/api/client';
 import '@/features/documents/documents.css';
 
-type UploadItem = { name: string; progress: number; status: string; error?: string; id?: string };
+type UploadItem = {
+  name: string;
+  progress: number;
+  status: string;
+  error?: string;
+  id?: string;
+  job?: IngestionJob;
+};
 
 export default function DocumentsPage() {
   const queryClient = useQueryClient();
@@ -66,38 +74,94 @@ export default function DocumentsPage() {
 
   const uploadFiles = async (files: FileList | File[]) => {
     const batch = Array.from(files);
-    setUploads(batch.map((file) => ({ name: file.name, progress: 0, status: 'Uploading' })));
+    setUploads(
+      batch.map((file) => ({
+        name: file.name,
+        progress: 0,
+        status: 'Checking text and creating embeddings',
+      })),
+    );
     await Promise.all(
       batch.map(async (file, index) => {
         try {
           const result = await documentsApi.upload(file, (progress) =>
-            setUploads((items) => items.map((item, at) => (at === index ? { ...item, progress } : item))),
+            setUploads((items) =>
+              items.map((item, at) =>
+                at === index
+                  ? {
+                      ...item,
+                      progress,
+                      status:
+                        progress >= 100
+                          ? 'Checking text and creating embeddings'
+                          : `Sending for validation · ${progress}%`,
+                    }
+                  : item,
+              ),
+            ),
           );
           setUploads((items) =>
             items.map((item, at) =>
-              at === index ? { ...item, progress: 100, status: 'Processing', id: result.document_id } : item,
+              at === index ? { ...item, progress: 100, status: 'Indexing', id: result.document_id } : item,
             ),
           );
           await queryClient.invalidateQueries({ queryKey: ['documents'] });
+          const started = Date.now();
+          while (Date.now() - started < 10 * 60 * 1000) {
+            const job = await documentsApi.job(result.document_id);
+            const state = String(job?.status ?? 'queued').toLowerCase();
+            const label = getUploadQueueStateLabel(job);
+            setUploads((items) =>
+              items.map((item, at) =>
+                at === index
+                  ? {
+                      ...item,
+                      status: label,
+                      progress: Math.max(item.progress, job.progress || 0),
+                      job,
+                      error: state === 'failed' ? job.error || 'Document processing failed' : undefined,
+                    }
+                  : item,
+              ),
+            );
+            await queryClient.invalidateQueries({ queryKey: ['documents'] });
+            if (state === 'ready' || state === 'completed' || state === 'failed') break;
+            await new Promise((resolve) => window.setTimeout(resolve, 3000));
+          }
+          if (Date.now() - started >= 10 * 60 * 1000) {
+            setUploads((items) =>
+              items.map((item, at) =>
+                at === index
+                  ? { ...item, status: 'Failed', error: 'Still processing after 10 minutes. Retry again.' }
+                  : item,
+              ),
+            );
+          }
         } catch (error) {
           const failure = error as Error & {
             status?: number;
             body?: { error?: { details?: { existing_document?: { id: string } } } };
           };
           const duplicate = failure.status === 409;
+          const failureText = failure.message.toLowerCase();
+          const failureStatus =
+            failureText.includes('readable text') || failureText.includes('searchable text')
+              ? 'Text check failed'
+              : failureText.includes('embeddings could not be created')
+                ? 'Embedding creation failed'
+                : duplicate && failure.message === 'Already in the law library'
+                  ? 'Already in library'
+                  : duplicate
+                    ? 'Duplicate document'
+                    : 'Upload failed';
           setUploads((items) =>
             items.map((item, at) =>
               at === index
                 ? {
                     ...item,
-                    status:
-                      duplicate && failure.message === 'Already in the law library'
-                        ? 'Already in library'
-                        : duplicate
-                          ? 'Duplicate document'
-                          : 'Upload failed',
+                    status: item.id ? 'Failed' : failureStatus,
                     error: failure.message,
-                    id: failure.body?.error?.details?.existing_document?.id,
+                    id: failure.body?.error?.details?.existing_document?.id || item.id,
                   }
                 : item,
             ),
@@ -105,6 +169,55 @@ export default function DocumentsPage() {
         }
       }),
     );
+  };
+
+  const retryUpload = async (id: string) => {
+    setUploads((items) =>
+      items.map((item) =>
+        item.id === id
+          ? { ...item, status: 'Checking text and creating embeddings', error: undefined }
+          : item,
+      ),
+    );
+    try {
+      await documentsApi.retry(id);
+      for (let attempt = 0; attempt < 200; attempt += 1) {
+        const job = await documentsApi.job(id);
+        const state = String(job?.status ?? 'queued').toLowerCase();
+        const status = getUploadQueueStateLabel(job);
+        setUploads((items) =>
+          items.map((item) =>
+            item.id === id
+              ? {
+                  ...item,
+                  status,
+                  progress: Math.max(item.progress, job.progress || 0),
+                  job,
+                  error: state === 'failed' ? job.error || 'Document processing failed' : undefined,
+                }
+              : item,
+          ),
+        );
+        await queryClient.invalidateQueries({ queryKey: ['documents'] });
+        if (state === 'ready' || state === 'completed' || state === 'failed') return;
+        await new Promise((resolve) => window.setTimeout(resolve, 3000));
+      }
+      setUploads((items) =>
+        items.map((item) =>
+          item.id === id
+            ? { ...item, status: 'Failed', error: 'Still processing after 10 minutes. Retry again.' }
+            : item,
+        ),
+      );
+    } catch (error) {
+      setUploads((items) =>
+        items.map((item) =>
+          item.id === id
+            ? { ...item, status: 'Failed', error: error instanceof Error ? error.message : 'Retry failed' }
+            : item,
+        ),
+      );
+    }
   };
 
   const remove = async (document: DocumentRecord) => {
@@ -135,7 +248,10 @@ export default function DocumentsPage() {
         <div>
           <p className="documents-eyebrow">Workspace</p>
           <h1>Documents</h1>
-          <p>Upload, review, and find arbitration records.</p>
+          <p>
+            Upload, review, and find arbitration records. Index confidence estimates readable text page by
+            page.
+          </p>
         </div>
         <button className="documents-button documents-button-primary" onClick={() => picker.current?.click()}>
           <UploadCloud size={17} /> Upload documents
@@ -185,17 +301,56 @@ export default function DocumentsPage() {
             </button>
           </div>
           {uploads.map((item) => (
-            <div className="queue-item" key={item.name}>
+            <div
+              className={`queue-item ${
+                [
+                  'Ready',
+                  'Failed',
+                  'Text check failed',
+                  'Embedding creation failed',
+                  'Upload failed',
+                  'Duplicate document',
+                ].includes(item.status)
+                  ? 'terminal'
+                  : ''
+              } ${item.status === 'Ready' ? 'ready' : item.status.includes('failed') || item.status === 'Failed' ? 'failed' : ''}`}
+              key={item.name}
+            >
               <div>
                 <strong>{item.name}</strong>
-                <span>{item.error || item.status}</span>
+                <span>{item.error ? `${item.status}: ${item.error}` : item.status}</span>
                 {item.id && item.status === 'Already in library' && (
                   <Link href={`/documents/${item.id}`}>
                     Open existing document <ArrowUpRight size={13} />
                   </Link>
                 )}
+                {item.id && item.status === 'Failed' && (
+                  <button onClick={() => void retryUpload(item.id!)}>Retry</button>
+                )}
+                {item.id && item.status === 'Ready' && (
+                  <Link href={`/documents/${item.id}`}>
+                    Open <ArrowUpRight size={13} />
+                  </Link>
+                )}
+                {item.job && item.status !== 'Ready' && (
+                  <small>
+                    {item.job.progress}%
+                    {getUploadQueueSteps(item.job).length
+                      ? ` · ${getUploadQueueSteps(item.job).join(' · ')}`
+                      : ''}
+                  </small>
+                )}
               </div>
-              <progress max="100" value={item.progress} aria-label={`${item.name} upload progress`} />
+              {![
+                'Ready',
+                'Failed',
+                'Text check failed',
+                'Embedding creation failed',
+                'Upload failed',
+                'Duplicate document',
+              ].includes(item.status) && (
+                <progress max="100" value={item.progress} aria-label={`${item.name} upload progress`} />
+              )}
             </div>
           ))}
         </section>
@@ -333,6 +488,9 @@ export default function DocumentsPage() {
                       <th scope="col">File</th>
                       <th scope="col">Case</th>
                       <th scope="col">Pages</th>
+                      <th scope="col" title="Estimated from words, OCR confidence, and warnings on each page">
+                        Index confidence
+                      </th>
                       <th scope="col">Uploaded</th>
                       <th scope="col">Status</th>
                       <th scope="col">
@@ -451,6 +609,7 @@ function DocumentRow({
   });
   const uploaded = document.created_at ? new Date(document.created_at).toLocaleDateString() : '—';
   const pageCount = document.page_count ?? document.pages;
+  const confidence = document.index_confidence;
   return (
     <tr
       className={previewed ? 'document-row previewed' : 'document-row'}
@@ -478,10 +637,32 @@ function DocumentRow({
       </td>
       <td>{document.case_id ? <Link href={`/cases/${document.case_id}`}>{caseTitle || '—'}</Link> : '—'}</td>
       <td>{pageCount == null ? '—' : pageCount}</td>
+      <td>
+        <span
+          className={`index-confidence ${confidence == null ? 'unknown' : confidence < 50 ? 'low' : confidence < 80 ? 'medium' : 'high'}`}
+          title="Page based estimate using word count, OCR confidence, and extraction warnings."
+        >
+          {confidence == null ? '—' : `${confidence}%`}
+        </span>
+      </td>
       <td>{uploaded}</td>
       <td>
         {document.visibility === 'library' && <span className="document-library-badge">Law library</span>}
         <DocumentStatus status={job.data?.status || document.status} />
+        {['queued', 'processing'].includes(job.data?.status || document.status) &&
+          document.created_at &&
+          Date.now() - new Date(document.created_at).getTime() > 5 * 60 * 1000 &&
+          document.visibility !== 'library' && (
+            <button
+              className="row-retry"
+              onClick={(event) => {
+                event.stopPropagation();
+                onRetry();
+              }}
+            >
+              Still processing — retry?
+            </button>
+          )}
         {document.visibility !== 'library' && job.data?.status === 'failed' && (
           <button
             className="row-retry"
@@ -554,6 +735,11 @@ function DocumentCard({
       <div className="document-card-meta">
         <span>{document.document_type || 'Document'}</span>
         <span>{document.pages ? `${document.pages} pages` : '—'}</span>
+        <span
+          className={`index-confidence ${document.index_confidence == null ? 'unknown' : document.index_confidence < 50 ? 'low' : document.index_confidence < 80 ? 'medium' : 'high'}`}
+        >
+          {document.index_confidence == null ? 'Confidence —' : `Confidence ${document.index_confidence}%`}
+        </span>
       </div>
       {job.data && (
         <div className="document-job">
@@ -568,6 +754,10 @@ function DocumentCard({
           )}
         </div>
       )}
+      {['queued', 'processing'].includes(job.data?.status || document.status) &&
+        document.created_at &&
+        Date.now() - new Date(document.created_at).getTime() > 5 * 60 * 1000 &&
+        document.visibility !== 'library' && <button onClick={onRetry}>Still processing — retry?</button>}
       <div className="document-card-actions">
         <Link href={`/documents/${document.id}`}>
           Open document <ArrowUpRight size={13} />

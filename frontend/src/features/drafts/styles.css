@@ -46,6 +46,24 @@
 .draft-field {
   margin-bottom: 18px;
 }
+.draft-field-note {
+  margin: 7px 0 0 !important;
+  font-size: 12px;
+  line-height: 1.45;
+}
+.draft-field-note.error {
+  color: #9c332b;
+}
+.draft-inline-action {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: #5147bd;
+  font: inherit;
+  font-weight: 650;
+  text-decoration: underline;
+  cursor: pointer;
+}
 .draft-input,
 .draft-select,
 .draft-textarea {
@@ -335,6 +353,12 @@
   font-size: 11px;
   margin: -8px 0 14px !important;
   color: #748096;
+}
+.draft-template-source {
+  margin: -8px 0 14px !important;
+  color: #5147bd;
+  font-size: 11px;
+  line-height: 1.45;
 }
 .draft-unrecognized,
 .draft-template-scaffold {

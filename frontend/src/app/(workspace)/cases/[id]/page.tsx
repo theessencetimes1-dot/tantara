@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { ApiError } from '@/lib/api/client';
 import { workspaceDateTimeInput, workspaceDateTimeIso } from '@/lib/datetime';
 import { casesApi } from '@/features/cases/api';
+import { clientsApi } from '@/features/clients/api';
 import { RefreshCw } from 'lucide-react';
 import { StrategyPanel } from '@/features/cases/components/strategy';
 import '@/features/cases/styles.css';
@@ -117,6 +118,11 @@ export default function CaseDetailPage() {
   const c = useQuery({
     queryKey: ['case', id],
     queryFn: () => casesApi.get(id),
+  });
+  const clients = useQuery({
+    queryKey: ['clients', 'case-labels'],
+    queryFn: () => clientsApi.list('?page_size=100'),
+    enabled: !!c.data,
   });
   const overview = useQuery({
     queryKey: ['case-overview', id],
@@ -264,6 +270,22 @@ export default function CaseDetailPage() {
           <p className="subheading">
             {item.reference_number || 'No reference'} · {item.status || 'Status unavailable'} ·{' '}
             {item.forum || item.institution || 'Institution unavailable'}
+          </p>
+          <p className="case-header-parties">
+            {item.claimant || 'Claimant unavailable'} vs {item.respondent || 'Respondent unavailable'} ·{' '}
+            {item.client_id
+              ? clients.data?.items.find((client) => client.id === item.client_id)?.name ||
+                (item as any).client_name ||
+                'Client loading'
+              : 'No client assigned'}{' '}
+            ·{' '}
+            {item.claim_amount != null
+              ? new Intl.NumberFormat('en-IN', {
+                  style: 'currency',
+                  currency: item.claim_currency || 'INR',
+                  maximumFractionDigits: 2,
+                }).format(item.claim_amount)
+              : 'Amount unavailable'}
           </p>
         </div>
         <Link className="matter-action" href={`/cases/${id}/edit`}>

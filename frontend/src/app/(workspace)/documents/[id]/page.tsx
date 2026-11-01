@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import type { ReactNode } from 'react';
-import { useParams, useSearchParams } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { api, authToken } from '@/lib/api/client';
 import { RefreshCw, FileText, Download, Sparkles, Pencil, Check } from 'lucide-react';
@@ -29,15 +29,27 @@ type Doc = {
   source_label?: string;
   processed_at?: string;
   visibility?: 'private' | 'library';
+  index_confidence?: number | null;
 };
 type ExtractionWarning = string | { page?: number; warning: string };
-type Page = { page_number: number; text?: string; ocr_confidence?: number; warnings?: ExtractionWarning[] };
+type Page = {
+  page_number: number;
+  text?: string;
+  ocr_confidence?: number;
+  index_confidence?: number;
+  word_count?: number;
+  warnings?: ExtractionWarning[];
+};
 
 function formatExtractionWarning(warning: ExtractionWarning) {
   if (typeof warning === 'string') return warning;
   return warning.page != null ? `Page ${warning.page}: ${warning.warning}` : warning.warning;
 }
 type Extraction = {
+  status?: string;
+  model?: string | null;
+  source?: string | null;
+  message?: string;
   review_required?: boolean;
   fields?: Record<
     string,
@@ -94,6 +106,55 @@ function renderExtractionValue(value: unknown): ReactNode {
   return String(value);
 }
 
+function StructuredExtractionValue({ value, onPage }: { value: unknown; onPage: (page: number) => void }) {
+  if (Array.isArray(value) && value.every((item) => item && typeof item === 'object')) {
+    return (
+      <ul>
+        {value.map((item, index) => {
+          const row = item as Record<string, unknown>;
+          if ('name' in row && 'role' in row)
+            return (
+              <li key={index}>
+                <strong>{String(row.name || 'Unnamed')}</strong> · {String(row.role || 'Role unavailable')}
+              </li>
+            );
+          if ('date' in row)
+            return (
+              <li key={index}>
+                <strong>{String(row.date || 'Date unavailable')}</strong>
+                {row.description ? ` · ${String(row.description)}` : ''}
+              </li>
+            );
+          return <li key={index}>{renderExtractionValue(item)}</li>;
+        })}
+      </ul>
+    );
+  }
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    const row = value as Record<string, unknown>;
+    if ('found' in row)
+      return row.found ? (
+        <div>
+          <blockquote>{String(row.quote || 'Clause found; quote unavailable.')}</blockquote>
+          {typeof row.page === 'number' && (
+            <a
+              href={`?page=${row.page}`}
+              onClick={(event) => {
+                event.preventDefault();
+                onPage(row.page as number);
+              }}
+            >
+              Page {row.page}
+            </a>
+          )}
+        </div>
+      ) : (
+        <span className="ai-read-not-found">Not extracted</span>
+      );
+  }
+  return renderExtractionValue(value);
+}
+
 function extractionSourcePage(value: unknown): number | undefined {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
   const fields = value as Record<string, unknown>;
@@ -132,23 +193,38 @@ function formatMetadataDate(value?: string) {
 
 export default function DocumentDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const router = useRouter();
   const searchParams = useSearchParams();
-  const doc = useQuery({ queryKey: ['documents', id], queryFn: () => api.get<Doc>(`/documents/${id}`) });
+  const validId = typeof id === 'string' && id.length > 0 && id !== 'undefined';
+  const doc = useQuery({
+    queryKey: ['documents', id],
+    queryFn: () => api.get<Doc>(`/documents/${id}`),
+    enabled: validId,
+  });
   const text = useQuery({
     queryKey: ['documents', id, 'text'],
     queryFn: () => api.get<{ text?: string; pages?: Page[] }>(`/documents/${id}/text`),
+    enabled: validId,
   });
   const pages = useQuery({
     queryKey: ['documents', id, 'pages'],
     queryFn: () => api.get<{ pages?: Page[] }>(`/documents/${id}/pages`),
+    enabled: validId,
   });
   const extraction = useQuery({
     queryKey: ['documents', id, 'ai-read'],
     queryFn: () => api.get<Extraction>(`/documents/${id}/ai-read`),
+    enabled: validId,
   });
   const aiSettings = useQuery({
     queryKey: ['settings', 'ai'],
-    queryFn: () => documentsApi.aiStatus(),
+    queryFn: () =>
+      api.get<{
+        provider?: string;
+        model?: string | null;
+        reachable?: boolean;
+        enable_cloud_providers?: boolean;
+      }>('/ai/status'),
   });
   const [reading, setReading] = useState(false);
   const [editingField, setEditingField] = useState<string | null>(null);
@@ -161,7 +237,7 @@ export default function DocumentDetailPage() {
   const [submittedChunkSearch, setSubmittedChunkSearch] = useState('');
   const chunkHits = useQuery({
     queryKey: ['document-chunks', id, submittedChunkSearch],
-    enabled: submittedChunkSearch.trim().length > 1,
+    enabled: validId && submittedChunkSearch.trim().length > 1,
     queryFn: () =>
       api.get<{ items: ChunkHit[] }>(
         `/search/documents?query=${encodeURIComponent(submittedChunkSearch)}&page_size=100`,
@@ -315,6 +391,17 @@ export default function DocumentDetailPage() {
                 <dt>Pages</dt> <dd>{doc.data.page_count ?? pageItems?.length ?? '—'}</dd>
               </div>
               <div
+                className="metadata-definition-row index-confidence-metadata"
+                role="group"
+                aria-label={`Index confidence ${doc.data.index_confidence == null ? 'not available' : `${doc.data.index_confidence}%`}`}
+              >
+                <dt>Index confidence</dt>
+                <dd>
+                  <strong>{doc.data.index_confidence == null ? '—' : `${doc.data.index_confidence}%`}</strong>
+                  <small>Estimated across pages using extracted words, OCR confidence, and warnings.</small>
+                </dd>
+              </div>
+              <div
                 className="metadata-definition-row"
                 role="group"
                 aria-label={`Characters ${extractedCharacters == null ? '—' : extractedCharacters.toLocaleString()}`}
@@ -382,11 +469,21 @@ export default function DocumentDetailPage() {
                 <h2>
                   <Sparkles size={17} /> Document extraction
                 </h2>
-                <p>Local text extraction · candidate only · review before relying on it.</p>
-                {(aiSettings.data?.runtime_status?.model || aiSettings.data?.model) && (
-                  <small className="ai-configured-model">
-                    Configured model (not used for these fields):{' '}
-                    {aiSettings.data.runtime_status?.model || aiSettings.data.model}
+                <p>
+                  {extraction.data?.source ||
+                    (extraction.data?.status === 'local_extraction'
+                      ? 'Local text matches'
+                      : 'Candidate extraction')}{' '}
+                  · review before relying on it.
+                </p>
+                <small className="ai-configured-model">
+                  {extraction.data?.model
+                    ? `Model: ${extraction.data.model}${extraction.data.source ? ` · ${extraction.data.source}` : ''}`
+                    : 'Model unavailable — showing local text matches'}
+                </small>
+                {aiSettings.data?.reachable === false && (
+                  <small className="ai-status-notice" role="status">
+                    AI model is currently unreachable; local text matches are shown for review.
                   </small>
                 )}
               </div>
@@ -453,7 +550,14 @@ export default function DocumentDetailPage() {
             {extraction.data?.fields && showExtractionFields && (
               <div className="ai-read-fields">
                 {Object.entries(extraction.data.fields).map(([key, field]) => {
-                  const value = key === 'summary' ? deduplicateExtractedText(field.value) : field.value;
+                  const rawField = field as unknown as {
+                    value?: unknown;
+                    provenance?: string;
+                    source?: string;
+                    review_required?: boolean;
+                  };
+                  const rawValue = 'value' in rawField ? rawField.value : field;
+                  const value = key === 'summary' ? deduplicateExtractedText(rawValue) : rawValue;
                   const sourcePage = extractionSourcePage(value);
                   const provenanceKey = field.provenance || 'candidate_extraction';
                   return (
@@ -483,14 +587,23 @@ export default function DocumentDetailPage() {
                               <div>{renderExtractionValue(value)}</div>
                             </details>
                           ) : (
-                            renderExtractionValue(value)
+                            <StructuredExtractionValue
+                              value={value}
+                              onPage={(page) => {
+                                router.push(`?page=${page}`, { scroll: false });
+                              }}
+                            />
                           )}
                           <small className="ai-read-provenance">
-                            {provenanceLabel(field.provenance, field.source)}
-                            {field.source &&
-                              !field.source.toLowerCase().includes('local text extraction') &&
-                              ` · ${field.source}`}
-                            {field.review_required ? ' · Review required' : ''}
+                            {provenanceLabel(
+                              rawField.provenance,
+                              extraction.data.status === 'model_generated'
+                                ? extraction.data.source || rawField.source
+                                : rawField.source,
+                            )}
+                            {rawField.review_required || rawField.provenance !== 'extracted_reviewed'
+                              ? ' · Needs your review'
+                              : ''}
                           </small>
                           {sourcePage ? (
                             <a className="ai-source-page" href={`?page=${sourcePage}`}>
@@ -580,6 +693,12 @@ export default function DocumentDetailPage() {
             !chunkHits.data.items.some((hit) => hit.document_id === id) && (
               <p className="muted">No matching chunks in this document.</p>
             )}
+          {pageItems[0]?.text && (
+            <p className="document-first-page-preview">
+              <strong>First page preview:</strong> {pageItems[0].text.slice(0, 500)}
+              {pageItems[0].text.length > 500 ? '…' : ''}
+            </p>
+          )}
           <details className="document-page-text-list" open={searchParams.has('page')}>
             <summary>Extracted text by page</summary>
             <div className="document-pages">
@@ -591,6 +710,11 @@ export default function DocumentDetailPage() {
                     </a>
                     {p.ocr_confidence != null && (
                       <small className="muted">OCR confidence {Math.round(p.ocr_confidence * 100)}%</small>
+                    )}
+                    {p.index_confidence != null && (
+                      <small className="index-confidence-page">
+                        Index confidence {p.index_confidence}% · {p.word_count ?? 0} words
+                      </small>
                     )}
                   </div>
                   <p>

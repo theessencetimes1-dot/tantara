@@ -41,6 +41,13 @@ export function PdfDocumentViewer({
   useEffect(() => {
     let active = true;
     let loadingTask: import('pdfjs-dist').PDFDocumentLoadingTask | undefined;
+    if (!documentId || documentId === 'undefined') {
+      setError('Document ID is unavailable.');
+      setLoading(false);
+      return () => {
+        active = false;
+      };
+    }
     setError('');
     setLoading(true);
     setPdf(null);

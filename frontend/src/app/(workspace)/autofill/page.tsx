@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { autofillApi, type AutofillField } from '@/features/autofill/api';
+import { draftsApi, rowsFrom, type Row } from '@/features/drafts/api';
 import { dateKey, normalizeAutofillField, validDate } from '@/features/autofill/normalize';
 import '@/features/autofill/styles.css';
 const provenanceLabel = (p: string) =>
@@ -16,6 +17,9 @@ export default function AutofillPage() {
     [fields, setFields] = useState<AutofillField[]>([]),
     [sourceDocs, setSourceDocs] = useState<any[]>([]),
     [drafts, setDrafts] = useState<any[]>([]),
+    [templates, setTemplates] = useState<Row[]>([]),
+    [templateId, setTemplateId] = useState(''),
+    [documentType, setDocumentType] = useState('Statement of Claim'),
     [draftId, setDraftId] = useState(''),
     [draftContent, setDraftContent] = useState(''),
     [choices, setChoices] = useState<Record<string, 'accept' | 'reject' | 'edit'>>({}),
@@ -23,6 +27,7 @@ export default function AutofillPage() {
     [busy, setBusy] = useState(false),
     [message, setMessage] = useState(''),
     [error, setError] = useState(''),
+    [templateLoadError, setTemplateLoadError] = useState(''),
     [previewed, setPreviewed] = useState(false);
   const refresh = async (id: string, preserveChoices = false) => {
     const [result, docs] = await Promise.all([autofillApi.get(id), autofillApi.documents(id)]);
@@ -46,6 +51,14 @@ export default function AutofillPage() {
       .cases()
       .then((r) => setCases(r.items ?? []))
       .catch((e) => setError(e.message));
+    draftsApi
+      .templates()
+      .then((r) => {
+        const rows = rowsFrom(r);
+        setTemplates(rows);
+        setTemplateId(String(rows.find((template) => template.compatible_document_types?.includes('Statement of Claim'))?.id ?? rows[0]?.id ?? ''));
+      })
+      .catch((e) => setTemplateLoadError(`Drafting precedents unavailable: ${e.message}`));
   }, []);
   useEffect(() => {
     if (!caseId) return;
@@ -102,6 +115,37 @@ export default function AutofillPage() {
       );
     } catch (e: any) {
       setError(`Preview failed: ${e.message}`);
+    } finally {
+      setBusy(false);
+    }
+  };
+  const generateDraft = async () => {
+    if (!caseId || busy) return;
+    setBusy(true);
+    setError('');
+    setMessage('Generating a draft from the selected Supabase precedent…');
+    try {
+      const generated = await draftsApi.generate({
+        case_id: caseId,
+        document_type: documentType,
+        template_id: templateId || undefined,
+      });
+      const id = String(generated.draft_id ?? generated.id ?? '');
+      if (!id) throw new Error('The draft service did not return a draft ID.');
+      const created = { ...generated, id, case_id: caseId, title: documentType };
+      setDrafts((rows) => [created, ...rows.filter((row) => String(row.id) !== id)]);
+      setDraftId(id);
+      setDraftContent(String(generated.content_markdown ?? ''));
+      setChoices({});
+      setPreviewed(false);
+      setMessage(
+        generated.status === 'template_only'
+          ? 'Draft generated from the stored precedent. No case documents were available, so unsupported facts are marked for confirmation.'
+          : `Draft generated from ${generated.template_name ?? 'the selected Supabase precedent'}. Review it, then accept fields to apply them.`,
+      );
+    } catch (e: any) {
+      setMessage('');
+      setError(`Draft generation failed: ${e.message}`);
     } finally {
       setBusy(false);
     }
@@ -221,6 +265,77 @@ export default function AutofillPage() {
               </option>
             ))}
           </select>
+          <label htmlFor="autofill-type">
+            <strong>Document type</strong>
+          </label>
+          <select
+            id="autofill-type"
+            className="auto-select"
+            value={documentType}
+            onChange={(e) => {
+              const type = e.target.value;
+              setDocumentType(type);
+              const matching = templates.find((template) => template.compatible_document_types?.includes(type));
+              if (matching) setTemplateId(String(matching.id));
+            }}
+          >
+            {[
+              'Statement of Claim',
+              'Statement of Defence',
+              'Rejoinder',
+              'Notice Invoking Arbitration',
+              'Request for Arbitration',
+              'Application for Appointment of Arbitrator',
+              'Procedural Application',
+              'Interim Relief Application',
+              'Jurisdictional Objection',
+              'Witness Statements and Evidence Index',
+              'Written Submissions',
+              'Set Aside or Challenge Award',
+              'Recognition and Enforcement of Awards',
+              'Settlement Agreement and Consent Award',
+              'Chronology of Events',
+              'List of Dates',
+              'Case Summary',
+              'Legal Research Memorandum',
+            ].map((type) => (
+              <option value={type} key={type}>
+                {type}
+              </option>
+            ))}
+          </select>
+          <label htmlFor="autofill-template">
+            <strong>Supabase precedent</strong>
+          </label>
+          <select
+            id="autofill-template"
+            className="auto-select"
+            value={templateId}
+            onChange={(e) => {
+              const id = e.target.value;
+              setTemplateId(id);
+              const selected = templates.find((template) => String(template.id) === id);
+              if (selected && !selected.compatible_document_types?.includes(documentType))
+                setDocumentType(String(selected.document_type ?? documentType));
+            }}
+            disabled={!templates.length}
+          >
+            <option value="" disabled>
+              {templates.length ? 'Choose a stored precedent' : 'No Supabase precedents available'}
+            </option>
+            {templates.map((template) => (
+              <option value={template.id} key={template.id}>
+                {template.name}
+              </option>
+            ))}
+          </select>
+          <button className="auto-button" disabled={!caseId || busy || !templates.length} onClick={generateDraft}>
+            {busy ? 'Generating…' : 'Generate from precedent'}
+          </button>
+          <p className="auto-template-note">
+            {templateLoadError ||
+              'The selected Supabase precedent supplies the document structure and style. Case facts come from the selected case and its source documents.'}
+          </p>
           <button className="auto-button" disabled={!caseId || busy} onClick={doPreview}>
             {busy ? 'Loading…' : 'Preview fields'}
           </button>

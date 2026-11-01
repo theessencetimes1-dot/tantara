@@ -1,10 +1,13 @@
 import { api, apiBase, authToken, ApiError } from '@/lib/api/client';
 
 export type Row = Record<string, any>;
+export type RowsResponse = { items?: Row[] } | Row[];
+export const rowsFrom = (response: RowsResponse | undefined) =>
+  Array.isArray(response) ? response : (response?.items ?? []);
 export const draftsApi = {
-  templates: () => api.get<{ items?: Row[] }>('/draft-templates'),
-  list: () => api.get<{ items?: Row[] }>('/drafts?page=1&page_size=21'),
-  cases: () => api.get<{ items?: Row[] }>('/cases?page=1&page_size=100'),
+  templates: () => api.get<RowsResponse>('/draft-templates'),
+  list: () => api.get<RowsResponse>('/drafts?page=1&page_size=21'),
+  cases: () => api.get<RowsResponse>('/cases?page=1&page_size=100'),
   institutions: () => api.get<{ items?: any[] } | any[]>('/meta/institutions'),
   documents: (caseId: string) =>
     api.get<{ items?: Row[] }>(`/documents?case_id=${encodeURIComponent(caseId)}&page=1&page_size=100`),

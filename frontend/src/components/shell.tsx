@@ -21,6 +21,7 @@ import {
   X,
   ArrowRight,
   CheckSquare,
+  Database,
 } from 'lucide-react';
 import { api, clearToken } from '@/lib/api/client';
 import { toast } from 'sonner';
@@ -213,6 +214,15 @@ export function Shell({ children }: { children: React.ReactNode }) {
               {label}
             </Link>
           ))}
+          {displayRole === 'admin' && (
+            <Link
+              href="/admin/storage"
+              aria-current={path.startsWith('/admin/storage') ? 'page' : undefined}
+              onClick={() => setOpen(false)}
+            >
+              <Database size={19} /> Storage admin
+            </Link>
+          )}
         </nav>
         <div className="sidebar-art">
           <div>

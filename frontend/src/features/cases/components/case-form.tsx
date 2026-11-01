@@ -5,10 +5,11 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { ApiError } from '@/lib/api/client';
 import { endpoints } from '@/lib/api/endpoints';
+import { clientsApi, type Client } from '@/features/clients/api';
 import { casesApi, Matter } from '../api';
 import '../styles.css';
 const schema = z.object({
@@ -75,6 +76,7 @@ const caseFields = new Set<keyof Values>([
 type ValidationDetail = { loc?: Array<string | number>; msg?: string };
 export function CaseForm({ caseId }: { caseId?: string }) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const clients = useQuery({
     queryKey: ['clients', 'select'],
     queryFn: () => endpoints.clients.list('?page_size=100'),
@@ -89,17 +91,50 @@ export function CaseForm({ caseId }: { caseId?: string }) {
     enabled: !!caseId,
   });
   const [serverError, setServerError] = useState('');
+  const [clientName, setClientName] = useState('');
+  const [showAddClient, setShowAddClient] = useState(false);
+  const [addingClient, setAddingClient] = useState(false);
+  const [clientNotice, setClientNotice] = useState('');
   const {
     register,
     handleSubmit,
     reset,
     setError,
+    setValue,
+    watch,
     clearErrors,
     formState: { errors, isDirty, isSubmitting },
   } = useForm<Values>({
     resolver: zodResolver(schema),
     defaultValues: { claim_currency: 'INR', status: 'active' },
   });
+  const selectedClientId = watch('client_id');
+  const addClient = async (name = clientName) => {
+    const cleanName = name.trim();
+    if (!cleanName) return;
+    setAddingClient(true);
+    setClientNotice('');
+    try {
+      const created = (await clientsApi.create({ name: cleanName })) as Client;
+      queryClient.setQueryData(['clients', 'select'], (current: unknown) => {
+        const list = current as { items?: Client[] } | undefined;
+        const items = list?.items ?? [];
+        return {
+          ...(list ?? {}),
+          items: items.some((client) => client.id === created.id) ? items : [...items, created],
+        };
+      });
+      setValue('client_id', created.id, { shouldDirty: true, shouldValidate: true });
+      setClientName('');
+      setShowAddClient(false);
+      setClientNotice(`${created.name} added and selected`);
+      await clients.refetch();
+    } catch (error) {
+      setServerError(error instanceof Error ? error.message : 'Unable to add client');
+    } finally {
+      setAddingClient(false);
+    }
+  };
   useEffect(() => {
     if (existing.data) reset(existing.data as unknown as Values);
   }, [existing.data, reset]);
@@ -119,6 +154,7 @@ export function CaseForm({ caseId }: { caseId?: string }) {
     try {
       const payload = normalizeCasePayload(v);
       const result = caseId ? await casesApi.update(caseId, payload) : await casesApi.create(payload);
+      queryClient.setQueryData(['case', result.id], result);
       toast.success(caseId ? 'Case updated' : 'Case created');
       router.push(`/cases/${result.id}`);
     } catch (e) {
@@ -181,14 +217,68 @@ export function CaseForm({ caseId }: { caseId?: string }) {
           {input('respondent', 'Respondent')}
           <label>
             Client
-            <select {...register('client_id')}>
-              <option value="">Select client</option>
-              {((clients.data as any)?.items || []).map((c: any) => (
+            <select
+              aria-label="Client"
+              {...register('client_id')}
+              value={selectedClientId ?? ''}
+              onChange={(event) => setValue('client_id', event.target.value, { shouldDirty: true })}
+            >
+              <option value="">
+                {clients.isLoading
+                  ? 'Loading clients…'
+                  : (clients.data as any)?.items?.length
+                    ? 'Select client'
+                    : 'No clients yet — add one'}
+              </option>
+              {((clients.data as any)?.items || []).map((c: Client) => (
                 <option key={c.id} value={c.id}>
-                  {c.name || c.title}
+                  {c.name || String(c.title || '')}
                 </option>
               ))}
+              {selectedClientId &&
+                !(clients.data as any)?.items?.some((client: Client) => client.id === selectedClientId) &&
+                existing.data && (
+                  <option value={selectedClientId}>
+                    {(existing.data as any).client_name || 'Current client'}
+                  </option>
+                )}
             </select>
+            <div className="client-picker-create">
+              <button
+                type="button"
+                aria-expanded={showAddClient}
+                onClick={() => setShowAddClient((open) => !open)}
+              >
+                ＋ Add client
+              </button>
+              {showAddClient && (
+                <>
+                  <input
+                    aria-label="New client name"
+                    placeholder="Type a client name"
+                    value={clientName.trim() ? clientName : ''}
+                    onFocus={() => {
+                      if (!clientName) setClientName('');
+                    }}
+                    onChange={(event) => setClientName(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter') {
+                        event.preventDefault();
+                        void addClient();
+                      }
+                    }}
+                  />
+                  {clientName.trim() && (
+                    <button type="button" disabled={addingClient} onClick={() => void addClient()}>
+                      {addingClient ? 'Adding…' : `Add “${clientName.trim()}”`}
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
+            <span className="sr-only" role="status" aria-live="polite">
+              {clientNotice}
+            </span>
           </label>
           <label>
             Forum / institution

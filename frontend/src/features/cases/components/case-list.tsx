@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { ArrowRight, Plus, RefreshCw, Search } from 'lucide-react';
 import { casesApi, Matter } from '../api';
+import { clientsApi } from '@/features/clients/api';
 import { matterStatusClass, matterStatusLabel } from '../status';
 import '../styles.css';
 const tabs = [
@@ -42,6 +43,11 @@ export function CaseList({
     queryFn: () => casesApi.list(query),
   });
   const rows = data.data?.items ?? [];
+  const clients = useQuery({
+    queryKey: ['clients', 'case-list-labels'],
+    queryFn: () => clientsApi.list('?page_size=100'),
+  });
+  const clientNames = new Map((clients.data?.items ?? []).map((client) => [client.id, client.name]));
   const countQuery = useQuery({
     queryKey: ['cases', 'counts'],
     queryFn: async () => {
@@ -148,6 +154,7 @@ export function CaseList({
                   <tr>
                     <th>Case Title</th>
                     <th>Tribunal / Institution</th>
+                    <th>Client</th>
                     <th>Next Hearing</th>
                     <th>Status</th>
                     <th aria-label="Actions" />
@@ -209,6 +216,9 @@ export function CaseList({
                       <Link href={`/cases/${c.id}`}>{c.title}</Link>
                     </td>
                     <td>{c.forum || c.institution || '—'}</td>
+                    <td>
+                      {c.client_id ? clientNames.get(c.client_id) || (c as any).client_name || '—' : '—'}
+                    </td>
                     <td>
                       {c.next_hearing_at
                         ? new Date(c.next_hearing_at).toLocaleDateString('en-IN', {
@@ -277,6 +287,9 @@ export function CaseList({
               <article className="matter-mobile-case" key={c.id}>
                 <Link href={`/cases/${c.id}`}>{c.title}</Link>
                 <span>{c.forum || c.institution || '—'}</span>
+                <span>
+                  {c.client_id ? clientNames.get(c.client_id) || (c as any).client_name || '—' : 'No client'}
+                </span>
                 <span>
                   Next hearing:{' '}
                   {c.next_hearing_at

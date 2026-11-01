@@ -80,6 +80,34 @@
   gap: 12px;
   margin: 0 0 14px;
 }
+.client-picker-create {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 7px;
+}
+.client-picker-create input {
+  min-width: 180px;
+}
+.client-picker-create button {
+  min-height: 36px;
+  border: 1px solid #cbd5e1;
+  border-radius: 7px;
+  padding: 6px 10px;
+  background: #fff;
+  color: #101e4e;
+  cursor: pointer;
+}
+.client-picker-create button:focus-visible,
+.client-picker-create input:focus-visible {
+  outline: 2px solid #4f46e5;
+  outline-offset: 2px;
+}
+.case-header-parties {
+  margin: 7px 0 0;
+  color: #526078;
+  font-size: 13px;
+}
 .matter-title {
   font-size: 25px;
   font-weight: 700;

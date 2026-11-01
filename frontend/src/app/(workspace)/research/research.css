@@ -412,11 +412,96 @@
   padding-left: 13px;
 }
 .answer-sentence {
-  display: inline;
-  margin: 0;
+  display: block;
+  margin: 0 0 10px;
   color: #2e3b59;
   font-size: 12px;
   line-height: 1.7;
+}
+.answer-text h3 {
+  margin: 13px 0 7px;
+  color: #202a45;
+  font-size: 13px;
+  line-height: 1.45;
+}
+.answer-text h3:first-child {
+  margin-top: 0;
+}
+.answer-text ul {
+  margin: 0 0 10px;
+  padding-left: 19px;
+  color: #2e3b59;
+  font-size: 12px;
+  line-height: 1.7;
+}
+.answer-text ol {
+  margin: 0 0 10px;
+  padding-left: 22px;
+  color: #2e3b59;
+  font-size: 12px;
+  line-height: 1.7;
+}
+.answer-text strong {
+  color: #202a45;
+  font-weight: 700;
+}
+.answer-text em {
+  font-style: italic;
+}
+.answer-text code {
+  border-radius: 4px;
+  padding: 1px 4px;
+  background: #f0f1f6;
+  color: #34304e;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.95em;
+}
+.answer-text h2,
+.answer-text h3,
+.answer-text h4,
+.answer-text h5,
+.answer-text h6 {
+  margin: 13px 0 7px;
+  color: #202a45;
+  font-size: 13px;
+  line-height: 1.45;
+}
+.answer-text h2:first-child,
+.answer-text h3:first-child,
+.answer-text h4:first-child,
+.answer-text h5:first-child,
+.answer-text h6:first-child {
+  margin-top: 0;
+}
+.answer-table-wrap {
+  max-width: 100%;
+  margin: 0 0 12px;
+  overflow-x: auto;
+}
+.answer-text table {
+  width: 100%;
+  border-collapse: collapse;
+  color: #2e3b59;
+  font-size: 11px;
+  line-height: 1.5;
+}
+.answer-text th,
+.answer-text td {
+  padding: 7px 9px;
+  border: 1px solid #e3e6ef;
+  text-align: left;
+  vertical-align: top;
+}
+.answer-text th {
+  background: #f5f6fb;
+  color: #202a45;
+  font-weight: 700;
+}
+.research-degraded-note {
+  margin: 0 0 9px;
+  color: #6b5a22;
+  font-size: 11px;
+  line-height: 1.5;
 }
 .answer-citation {
   display: inline-flex;
@@ -853,12 +938,19 @@
   gap: 8px;
 }
 .research-docs-list a {
+  display: grid;
+  gap: 4px;
   padding: 12px;
   border: 1px solid #ebedf2;
   border-radius: 8px;
   color: #343f5b;
   text-decoration: none;
   font-size: 12px;
+}
+.research-docs-list a small {
+  color: #8a5a22;
+  font-size: 11px;
+  line-height: 1.45;
 }
 .research-docs-list a:hover {
   border-color: #9795ee;

@@ -119,6 +119,7 @@ async function answerQuestion(page: Page, question: string, via: 'button' | 'sug
       await page.getByRole('textbox', { name: 'Research question' }).fill(question);
       await page.getByRole('button', { name: 'Ask', exact: true }).click();
     }
+    await expect(page.getByRole('textbox', { name: 'Research question' })).toHaveValue('');
     const response = await responsePromise;
     expect(response.ok(), `Ask failed: ${await response.text()}`).toBeTruthy();
     payload = await response.json();
@@ -219,6 +220,22 @@ test.describe('Research Desk live API controls', () => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto('/research');
     await waitSettled(page);
+  });
+
+  test('Enter submits and clears the question while Shift+Enter keeps a newline', async ({ page }) => {
+    const composer = page.getByRole('textbox', { name: 'Research question' });
+    await composer.fill('What does the agreement say about interim relief?');
+    await composer.press('Shift+Enter');
+    await expect(composer).toHaveValue('What does the agreement say about interim relief?\n');
+
+    const response = page.waitForResponse(
+      (candidate) =>
+        candidate.url().endsWith('/api/v1/ai/ask') && candidate.request().method() === 'POST',
+      { timeout: 30_000 },
+    );
+    await composer.press('Enter');
+    await expect(composer).toHaveValue('');
+    expect((await response).ok()).toBeTruthy();
   });
 
   test.afterEach(async ({ page }) => {
