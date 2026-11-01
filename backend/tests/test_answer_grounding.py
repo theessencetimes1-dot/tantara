@@ -1,4 +1,5 @@
 import io
+import os
 import re
 import time
 import uuid
@@ -97,7 +98,10 @@ def _ensure_researcher():
         )
 
 
-def test_answer_quotes_page_two_evidence_and_surfaces_case_conflict(client):
+def test_answer_quotes_page_two_evidence_and_surfaces_case_conflict(client, monkeypatch):
+    from app import main
+
+    monkeypatch.setattr(main, "llm_answer", lambda *_args, **_kwargs: "The seat of arbitration is Chennai [1].")
     headers = _auth(client)
     case = _create_case(client, headers)
     document_id = _upload_pdf(client, headers, case["id"])
@@ -272,7 +276,11 @@ def test_root_health_and_legacy_multipart_ingest_contract_remain_intact(client):
     assert job["status"] == "ready"
 
 
-def test_query_and_session_message_share_ask_grounding_payload(client):
+def test_query_and_session_message_share_ask_grounding_payload(client, monkeypatch):
+    from app import main
+
+    if os.environ.get("TANTARA_TESTS_USE_LIVE_LLM") != "1":
+        monkeypatch.setattr(main, "llm_answer", lambda *_args, **_kwargs: "The seat is Chennai [1].")
     headers = _auth(client)
     _upload_pdf(client, headers)
     body = {"question": "What is the seat of arbitration in the probe memorandum?", "top_k": 30}

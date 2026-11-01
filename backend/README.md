@@ -36,6 +36,8 @@ See `.env.example`. Local defaults:
 
 Anthropic, Voyage, and Supabase libraries remain optional adapters. They are disabled unless explicitly selected and configured. The local LLM's embeddings endpoint is not used.
 
+Set `TANTARA_BOOTSTRAP_ADMIN_EMAIL` and `TANTARA_BOOTSTRAP_ADMIN_PASSWORD` to provision an administrator during startup. The password is hashed in the database; keep the setting in a deployment secret manager. Admin folder and file uploads are available at `/admin/storage` in the frontend when `OBJECT_STORAGE=supabase` is configured with the Supabase URL, service role key, and bucket.
+
 ## Storage and retrieval
 
 `app/models.py` contains SQLAlchemy 2.x models for users, cases, clients, hearings, tasks, documents, document pages/chunks, drafts and versions, research, bundles, community, preferences, ingestion jobs, audit events, and extraction fields. Request handlers use per-operation SQLAlchemy sessions and typed repository methods. Active domain tables have real columns, foreign keys, checks, and indexes; vector values are held in FAISS and a rebuild-only float32 BLOB on each chunk. FTS5 triggers track chunk insert/update/delete.

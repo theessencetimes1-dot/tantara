@@ -58,12 +58,14 @@ def answer(question, top_k=5, jurisdiction="India", document_types=None, owner_i
             "model": None,
             "disclaimer": DISCLAIMER,
         }
+    from app.main import configured_llm_model
+
     settings = get_settings()
     return {
         "status": retrieval_status,
         "answer": generated,
         "answer_kind": "model_generated",
         "sources": sources,
-        "model": {"provider": settings.ai_provider, "model": settings.local_llm_model},
+        "model": {"provider": settings.ai_provider, "model": configured_llm_model()},
         "disclaimer": DISCLAIMER,
     }

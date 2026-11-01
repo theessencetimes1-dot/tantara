@@ -76,8 +76,33 @@ class Settings(BaseSettings):
     max_upload_mb: int = 25
     chunk_size_chars: int = 1800
     chunk_overlap_chars: int = 250
+    ingestion_claim_timeout_seconds: int = Field(default=600, gt=0)
+    # Per-minute limits: 1200 per authenticated user, 60 uploads per user, 20 auth attempts per IP.
+    rate_limit_authenticated_per_minute: int = Field(
+        default=1200,
+        validation_alias=AliasChoices("TANTARA_RATE_LIMIT_AUTHENTICATED_PER_MINUTE", "RATE_LIMIT_AUTHENTICATED_PER_MINUTE"),
+        gt=0,
+    )
+    rate_limit_upload_per_minute: int = Field(
+        default=60,
+        validation_alias=AliasChoices("TANTARA_RATE_LIMIT_UPLOAD_PER_MINUTE", "RATE_LIMIT_UPLOAD_PER_MINUTE"),
+        gt=0,
+    )
+    rate_limit_anonymous_auth_per_minute: int = Field(
+        default=20,
+        validation_alias=AliasChoices("TANTARA_RATE_LIMIT_ANONYMOUS_AUTH_PER_MINUTE", "RATE_LIMIT_ANONYMOUS_AUTH_PER_MINUTE"),
+        gt=0,
+    )
     default_top_k: int = 5
     tantara_admin_password: str = "tantara-local"
+    bootstrap_admin_email: str = Field(
+        default="",
+        validation_alias=AliasChoices("TANTARA_BOOTSTRAP_ADMIN_EMAIL", "BOOTSTRAP_ADMIN_EMAIL"),
+    )
+    bootstrap_admin_password: str = Field(
+        default="",
+        validation_alias=AliasChoices("TANTARA_BOOTSTRAP_ADMIN_PASSWORD", "BOOTSTRAP_ADMIN_PASSWORD"),
+    )
     cors_origins: str = Field(
         default=DEFAULT_CORS_ORIGINS,
         validation_alias=AliasChoices("CORS_ORIGINS", "TANTARA_CORS_ORIGINS"),

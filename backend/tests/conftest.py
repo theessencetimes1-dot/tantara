@@ -1,7 +1,15 @@
+import os
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+# Tests must not call a developer's reachable QA model: generated wording can
+# vary between identical requests and make otherwise deterministic assertions flaky.
+# Set TANTARA_TESTS_USE_LIVE_LLM=1 to explicitly opt into the configured provider.
+if os.environ.get("TANTARA_TESTS_USE_LIVE_LLM") != "1":
+    os.environ["AI_PROVIDER"] = "local"
+    os.environ["TANTARA_LOCAL_LLM_BASE_URL"] = "http://127.0.0.1:9/v1"
 
 import pytest
 from fastapi.testclient import TestClient

@@ -84,7 +84,10 @@ class RetrievalService:
             logging.getLogger(__name__).exception("query embedding failed")
             query_vector = None
             status = "embedding_unavailable"
-        clauses = [or_(Document.owner_id == owner_id, Document.visibility == "library")]
+        clauses = [
+            or_(Document.owner_id == owner_id, Document.visibility == "library"),
+            Document.status == "ready",
+        ]
         if case_id:
             clauses.append(Document.case_id == case_id)
         elif case_ids:
@@ -115,7 +118,7 @@ class RetrievalService:
             )
             rows = session.execute(stmt).all()
             allowed = {r.id: r for r in rows}
-            where = "(d.owner_id=:owner OR d.visibility='library')"
+            where = "(d.owner_id=:owner OR d.visibility='library') AND d.status='ready'"
             # Hyphenated legal references are tokenized as their word parts so X-P2
             # retrieves the same evidence pool as X and does not become a dead FTS term.
             tokens = re.findall(r"[\w]{2,}", question)
@@ -142,38 +145,44 @@ class RetrievalService:
                 lexical = _lexical_ids(session, where, params, tokens)
             except Exception:
                 lexical = []
-        vector_store = store()
-        with INDEX_LOCK:
-            with SessionLocal() as session:
-                expected_vector_ids = set(
-                    session.scalars(
-                        select(DocumentChunk.id).join(Document, Document.id == DocumentChunk.document_id)
-                    ).all()
-                )
-            indexed_ids = vector_store.id_set()
-            if expected_vector_ids != indexed_ids:
-                logging.getLogger(__name__).warning(
-                    "vector index out of sync: %s chunks in the database, %s in the %s index",
-                    len(expected_vector_ids),
-                    len(indexed_ids),
-                    vector_store.backend,
-                )
-                try:
-                    repair = reconcile_index()
-                except Exception:
-                    logging.getLogger(__name__).exception("index reconciliation failed")
-                    repair = {"consistent": False}
-                if not repair.get("consistent"):
-                    status = "embedding_unavailable"
-            semantic = []
-            if query_vector is not None:
-                try:
+        semantic = []
+        try:
+            vector_store = store()
+            with INDEX_LOCK:
+                with SessionLocal() as session:
+                    expected_vector_ids = set(
+                        session.scalars(
+                            select(DocumentChunk.id)
+                            .join(Document, Document.id == DocumentChunk.document_id)
+                            .where(
+                                Document.status == "ready",
+                                DocumentChunk.embedding_blob.is_not(None),
+                            )
+                        ).all()
+                    )
+                indexed_ids = vector_store.id_set()
+                if expected_vector_ids != indexed_ids:
+                    logging.getLogger(__name__).warning(
+                        "vector index out of sync: %s chunks in the database, %s in the %s index",
+                        len(expected_vector_ids),
+                        len(indexed_ids),
+                        vector_store.backend,
+                    )
+                    try:
+                        repair = reconcile_index()
+                    except Exception:
+                        logging.getLogger(__name__).exception("index reconciliation failed")
+                        repair = {"consistent": False}
+                    if not repair.get("consistent"):
+                        status = "embedding_unavailable"
+                if query_vector is not None:
                     semantic = vector_store.search(query_vector, vector_store.count())
-                except Exception:
-                    # Lexical retrieval still works, so answer from it and say so.
-                    logging.getLogger(__name__).exception("vector search failed")
-                    semantic = []
-                    status = "embedding_unavailable"
+        except Exception:
+            # A broken vector backend must not hide searchable text from freshly
+            # uploaded documents. The lexical candidates above remain usable.
+            logging.getLogger(__name__).exception("semantic search unavailable; continuing with lexical results")
+            semantic = []
+            status = "embedding_unavailable"
         semantic_scores = {cid: similarity for cid, similarity in semantic if cid in allowed}
         semantic_ids = [cid for cid in semantic_scores]
         return (

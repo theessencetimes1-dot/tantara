@@ -4,16 +4,16 @@ import numpy as np
 from sqlalchemy import select
 
 from app.db import SessionLocal
-from app.models import DocumentChunk
+from app.models import Document, DocumentChunk
 from app.services.vector_store import store
 
 
 def rebuild_index():
     with SessionLocal() as s:
         rows = s.execute(
-            select(DocumentChunk.id, DocumentChunk.embedding_blob).where(
-                DocumentChunk.embedding_blob.is_not(None)
-            )
+            select(DocumentChunk.id, DocumentChunk.embedding_blob)
+            .join(Document, Document.id == DocumentChunk.document_id)
+            .where(Document.status == "ready", DocumentChunk.embedding_blob.is_not(None))
         ).all()
     vectors = []
     for chunk_id, blob in rows:
@@ -26,7 +26,14 @@ def rebuild_index():
 
 def reconcile_index():
     with SessionLocal() as s:
-        expected_ids = set(s.scalars(select(DocumentChunk.id)).all())
+        # Chunks can be keyword-searchable even when embedding generation failed.
+        expected_ids = set(
+            s.scalars(
+                select(DocumentChunk.id)
+                .join(Document, Document.id == DocumentChunk.document_id)
+                .where(Document.status == "ready", DocumentChunk.embedding_blob.is_not(None))
+            ).all()
+        )
     index_ids = store().id_set()
     if index_ids != expected_ids:
         return rebuild_index()

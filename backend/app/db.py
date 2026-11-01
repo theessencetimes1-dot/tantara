@@ -136,6 +136,36 @@ def init_db():
             )
             session.commit()
 
+    # An administrator is provisioned only when the operator supplies both
+    # bootstrap settings. The password is stored as a hash and never shipped in
+    # source or deployment defaults.
+    settings = get_settings()
+    admin_email = settings.bootstrap_admin_email.strip().lower()
+    admin_password = settings.bootstrap_admin_password
+    if admin_email and admin_password:
+        import uuid
+
+        from app.security import hash_password
+
+        with SessionLocal() as session:
+            admin = session.scalar(select(User).where(User.email == admin_email))
+            if admin is None:
+                admin = User(
+                    id=str(uuid.uuid4()),
+                    name="TANTARA Administrator",
+                    email=admin_email,
+                    password_hash=hash_password(admin_password),
+                    role="admin",
+                    avatar_initials="AD",
+                    title="Administrator",
+                )
+                session.add(admin)
+            else:
+                admin.role = "admin"
+                admin.password_hash = hash_password(admin_password)
+                admin.title = "Administrator"
+            session.commit()
+
 
 # Transitional name retained for optional external adapters only. Domain services use ORM sessions.
 def connect():

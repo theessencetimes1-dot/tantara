@@ -104,6 +104,22 @@ def select_supports(question: str, hits: list[dict], limit: int = 3):
                 )
             )
     candidates.sort(key=lambda pair: pair[0], reverse=True)
+    if not candidates:
+        # Hybrid retrieval can find a passage through semantic similarity even
+        # when the document uses different words from the question (for example,
+        # "coverage period" for a question about a warranty). Keep those ranked
+        # excerpts available to the answer model instead of discarding all hits.
+        return [
+            {
+                "chunk_id": hit["chunk_id"],
+                "document_id": hit["document_id"],
+                "page_number": hit["page_number"],
+                "quote": hit["snippet"].strip(),
+                "_hit": hit,
+            }
+            for hit in hits[:limit]
+            if hit.get("snippet", "").strip()
+        ]
     supports = []
     seen_chunks = set()
     seen_quotes = set()

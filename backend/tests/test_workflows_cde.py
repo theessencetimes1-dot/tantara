@@ -47,7 +47,10 @@ def _case_and_document(client, headers):
     return case.json(), document_id
 
 
-def test_workflow_c_grounded_answer_saved_citation_and_delete(client):
+def test_workflow_c_grounded_answer_saved_citation_and_delete(client, monkeypatch):
+    from app import main
+
+    monkeypatch.setattr(main, "llm_answer", lambda *_args, **_kwargs: "The seat of arbitration is Mumbai [1].")
     headers = _login(client)
     case, document_id = _case_and_document(client, headers)
     search = client.get(
@@ -84,7 +87,14 @@ def test_workflow_c_grounded_answer_saved_citation_and_delete(client):
     assert deleted.status_code == 200 and deleted.json()["deleted"] is True
 
 
-def test_workflow_d_grounded_draft_versions_regeneration_and_exports(client):
+def test_workflow_d_grounded_draft_versions_regeneration_and_exports(client, monkeypatch):
+    from app import main
+
+    monkeypatch.setattr(
+        main,
+        "llm_answer",
+        lambda _question, hits, **_kwargs: f"The seat of arbitration is Mumbai [{hits[0]['chunk_id']}].",
+    )
     headers = _login(client)
     case, document_id = _case_and_document(client, headers)
     evidence = client.get(
@@ -139,3 +149,39 @@ def test_workflow_d_grounded_draft_versions_regeneration_and_exports(client):
             with zipfile.ZipFile(io.BytesIO(exported.content)) as archive:
                 document_xml = archive.read("word/document.xml").decode()
             assert "Verified Seat" in document_xml
+
+
+def test_generated_and_exported_draft_uses_party_participants_when_case_fields_are_blank(client):
+    from docx import Document as WordDoc
+    from pypdf import PdfReader
+
+    headers = _login(client)
+    case = client.post("/api/v1/cases", headers=headers, json={"title": "Participant-only parties"}).json()
+    for name, role in (("Northstar Industries Ltd", "claimant"), ("Cedar Works LLC", "respondent")):
+        response = client.post(
+            f"/api/v1/cases/{case['id']}/participants",
+            headers=headers,
+            json={"name": name, "party_role": role},
+        )
+        assert response.status_code == 200
+
+    generated = client.post(
+        "/api/v1/drafts/generate",
+        headers=headers,
+        json={"case_id": case["id"], "document_type": "Statement of Claim"},
+    )
+    assert generated.status_code == 200
+    assert "**Parties:** Northstar Industries Ltd v. Cedar Works LLC" in generated.json()["content_markdown"]
+
+    draft_id = generated.json()["draft_id"]
+    docx_response = client.get(f"/api/v1/drafts/{draft_id}/export?format=docx", headers=headers)
+    assert docx_response.status_code == 200
+    docx = WordDoc(io.BytesIO(docx_response.content))
+    docx_text = "\n".join(paragraph.text for paragraph in docx.paragraphs)
+    assert "Northstar Industries Ltd v. Cedar Works LLC" in docx_text
+
+    pdf_response = client.get(f"/api/v1/drafts/{draft_id}/export?format=pdf", headers=headers)
+    assert pdf_response.status_code == 200
+    pdf = PdfReader(io.BytesIO(pdf_response.content))
+    pdf_text = "\n".join(page.extract_text() or "" for page in pdf.pages)
+    assert "Northstar Industries Ltd v. Cedar Works LLC" in pdf_text
