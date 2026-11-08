@@ -24,10 +24,8 @@ spec:
         app.kubernetes.io/part-of: tantara
     spec:
       terminationGracePeriodSeconds: 30
-      nodeSelector:
-        # Two tunnel replicas sit on the one healthy app node; `worker` is reboot-looping,
-        # see the note in 10-backend.yaml.
-        kubernetes.io/hostname: smallllm
+      # No nodeSelector — see the note in 10-backend.yaml. The anti-affinity below is only
+      # `preferred`, so both replicas still schedule when a single node is available.
       affinity:
         podAntiAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:

@@ -23,13 +23,14 @@ spec:
         app.kubernetes.io/part-of: tantara
     spec:
       terminationGracePeriodSeconds: 60
+      # Scheduling, 8 Nov: the owner asked for "any available node", and the hard limit is
+      # that only nodes whose k3s knows 192.168.0.100:5000 is a plain-HTTP registry can pull
+      # this image. Measured on this cluster: `labour` and `worker` can (they already run the
+      # `demo` namespace images from it), `worker2` fails with "server gave HTTP response to
+      # HTTPS client", and fixing that needs root on the node. `app: app` is therefore the
+      # widest safe selector; `labour` is tainted so this lands on `worker`.
       nodeSelector:
-        # Pinned to smallllm: `worker` (the node carrying the `app: app` label) is in a
-        # reboot loop — four distinct boot ids in ~35 min on 2026-10-29, each of which
-        # orphans in-flight ingestion jobs because the queue lives in the container's
-        # memory. Revert by labelling a healthy node `app: app` and restoring
-        # `nodeSelector: {app: app}` here and in 20-frontend.yaml / 40-tunnel.yaml.
-        kubernetes.io/hostname: smallllm
+        app: app
       imagePullSecrets:
         - name: tantara-registry
       securityContext:

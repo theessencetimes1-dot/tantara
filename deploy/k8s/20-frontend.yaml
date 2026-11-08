@@ -19,10 +19,9 @@ spec:
         app.kubernetes.io/part-of: tantara
     spec:
       terminationGracePeriodSeconds: 30
+      # Same registry constraint as the backend — see the note in 10-backend.yaml.
       nodeSelector:
-        # Kept on the same node as tantara-backend. `worker`, the node carrying the
-        # `app: app` label, is reboot-looping — see the note in 10-backend.yaml.
-        kubernetes.io/hostname: smallllm
+        app: app
       imagePullSecrets:
         - name: tantara-registry
       securityContext:

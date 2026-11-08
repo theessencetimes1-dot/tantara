@@ -18,6 +18,7 @@ spec:
         app.kubernetes.io/part-of: tantara
     spec:
       restartPolicy: Never
+      # Same registry constraint as the backend — see the note in 10-backend.yaml.
       nodeSelector:
         app: app
       imagePullSecrets:

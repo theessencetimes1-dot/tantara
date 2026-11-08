@@ -19,7 +19,14 @@ metadata:
     app.kubernetes.io/part-of: tantara
 data:
   DATA_DIR: /data
-  AI_PROVIDER: local
+  # The LAN model host (192.168.0.101, the `smallllm` machine) is offline, so the
+  # workspace runs on the Anthropic API exactly as production did — owner's call on
+  # 8 Nov ("use the claude api instead of local"). The key itself is not here: it comes
+  # from the tantara-secrets Secret, rendered by deploy/render-config.py.
+  AI_PROVIDER: anthropic
+  CLAUDE_MODEL: claude-haiku-5-5
+  ENABLE_CLOUD_PROVIDERS: "true"
+  # Only read while AI_PROVIDER is `local`; kept so the revert is one line.
   LOCAL_LLM_BASE_URL: http://192.168.0.101:8080/v1
   LOCAL_LLM_MODEL: MiniCPM5-2B
   EMBEDDING_PROVIDER: fastembed
@@ -31,7 +38,6 @@ data:
   S3_ENDPOINT: http://192.168.0.100:9000
   S3_BUCKET: tantara
   ANALYTICS_BACKEND: "none"
-  ENABLE_CLOUD_PROVIDERS: "false"
   MAX_UPLOAD_MB: "25"
   CORS_ORIGINS: https://tantra.theessencetimes.com,http://tantra.local:8082
   TANTARA_WORKSPACE_TIME_ZONE: Asia/Kolkata

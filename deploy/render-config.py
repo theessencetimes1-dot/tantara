@@ -100,7 +100,7 @@ def main() -> int:
     required = {
         "postgres": ["host", "port", "database", "user", "password"],
         "minio": ["endpoint", "MINIO_ACCESS_KEY", "MINIO_SECRET_KEY"],
-        "cloudflare_tunnel": ["tunnel_token", "subdomain", "domain"],
+        "cloudflare_tunnel": ["tunnel_token", "domain"],
     }
     missing = [
         f"{section}.{key}"
@@ -111,7 +111,19 @@ def main() -> int:
     if missing:
         raise SystemExit("credentials file is missing: " + ", ".join(missing))
 
-    hostname = args.hostname or f"{cloudflare['subdomain']}.{cloudflare['domain']}"
+    # `subdomain` used to live in the credentials file; the Cloudflare side has since been
+    # edited by hand (it now carries `path: /api`), so the public hostname is accepted from
+    # --hostname as well. Without either there is nothing sensible to route the tunnel to.
+    subdomain = cloudflare.get("subdomain") or cloudflare.get("hostname")
+    if args.hostname:
+        hostname = args.hostname
+    elif subdomain:
+        hostname = f"{subdomain}.{cloudflare['domain']}"
+    else:
+        raise SystemExit(
+            "no public hostname: credentials file has no cloudflare_tunnel.subdomain, so pass "
+            "--hostname <host>, e.g. --hostname tantra.theessencetimes.com"
+        )
     out = args.out
     out.mkdir(parents=True, exist_ok=True, mode=0o700)
 
@@ -119,19 +131,25 @@ def main() -> int:
         f"postgresql+psycopg://{postgres['user']}:{postgres['password']}"
         f"@{postgres['host']}:{postgres['port']}/{postgres['database']}"
     )
+    # The owner's choice on 8 Nov: the LAN model host (192.168.0.101) is down, so the
+    # workspace runs on the Anthropic API like production does. The backend only reads
+    # `ANTHROPIC_API_KEY` + `CLAUDE_MODEL` and uses the SDK's own endpoint, so
+    # `CLAUDE_API_URL` in the credentials file is deliberately not wired here — an
+    # OpenAI-compatible proxy URL would be silently ignored.
+    claude = sections.get("CLAUDE_PROD") or {}
+    env_lines = [
+        f"DATABASE_URL={database_url}",
+        f"S3_ACCESS_KEY={minio['MINIO_ACCESS_KEY']}",
+        f"S3_SECRET_KEY={minio['MINIO_SECRET_KEY']}",
+        f"TANTARA_ADMIN_PASSWORD={admin_password()}",
+    ]
+    if claude.get("CLAUDE_API_KEY"):
+        env_lines += [
+            f"ANTHROPIC_API_KEY={claude['CLAUDE_API_KEY']}",
+            f"CLAUDE_MODEL={claude.get('CLAUDE_MODEL') or 'claude-haiku-5-5'}",
+        ]
     env_path = out / "secrets.env"
-    env_path.write_text(
-        "\n".join(
-            [
-                f"DATABASE_URL={database_url}",
-                f"S3_ACCESS_KEY={minio['MINIO_ACCESS_KEY']}",
-                f"S3_SECRET_KEY={minio['MINIO_SECRET_KEY']}",
-                f"TANTARA_ADMIN_PASSWORD={admin_password()}",
-                "",
-            ]
-        ),
-        encoding="utf-8",
-    )
+    env_path.write_text("\n".join(env_lines) + "\n", encoding="utf-8")
     env_path.chmod(0o600)
 
     tunnel = tunnel_credentials(cloudflare["tunnel_token"])

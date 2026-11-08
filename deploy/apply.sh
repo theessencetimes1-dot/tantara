@@ -20,11 +20,13 @@ export KUBECONFIG="${KUBECONFIG:-$REPO_ROOT/sensitive/kubeconfig}"
 TAG=""
 SEED=0
 DNS=0
+HOSTNAME_OVERRIDE="${TANTARA_HOSTNAME:-}"
 while [ $# -gt 0 ]; do
   case "$1" in
     --tag) TAG="$2"; shift 2 ;;
     --seed) SEED=1; shift ;;
     --dns) DNS=1; shift ;;
+    --hostname) HOSTNAME_OVERRIDE="$2"; shift 2 ;;
     *) echo "unknown argument: $1" >&2; exit 2 ;;
   esac
 done
@@ -43,7 +45,11 @@ chmod 700 "$WORKDIR"
 trap 'rm -rf "$WORKDIR"' EXIT
 
 echo "==> rendering deployment inputs (tag $TAG)"
-python3 "$REPO_ROOT/deploy/render-config.py" --out "$WORKDIR"
+if [ -n "$HOSTNAME_OVERRIDE" ]; then
+  python3 "$REPO_ROOT/deploy/render-config.py" --out "$WORKDIR" --hostname "$HOSTNAME_OVERRIDE"
+else
+  python3 "$REPO_ROOT/deploy/render-config.py" --out "$WORKDIR"
+fi
 
 kubectl apply -f "$REPO_ROOT/deploy/k8s/00-namespace.yaml"
 
@@ -75,7 +81,11 @@ done
 echo "==> waiting for rollouts"
 kubectl -n "$NAMESPACE" rollout status deployment/tantara-backend --timeout=420s
 kubectl -n "$NAMESPACE" rollout status deployment/tantara-frontend --timeout=300s
-kubectl -n "$NAMESPACE" rollout status deployment/tantara-tunnel --timeout=300s
+# The tunnel is the public door, not the app: if it cannot start (revoked token, the
+# hostname no longer assigned to this tunnel) the workspace is still reachable through
+# the LAN ingress, so warn instead of failing the apply.
+kubectl -n "$NAMESPACE" rollout status deployment/tantara-tunnel --timeout=300s \
+  || echo "WARNING: tantara-tunnel is not ready — run: kubectl -n $NAMESPACE logs deploy/tantara-tunnel"
 
 if [ "$SEED" = "1" ]; then
   echo "==> demo workspace loader"
